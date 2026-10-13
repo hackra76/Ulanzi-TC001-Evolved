@@ -1,6 +1,9 @@
 #include "NetworkManager.h"
 #include <ArduinoJson.h>
 #include "YouTubeService.h"
+#include "WeatherService.h"
+#include "CryptoService.h"
+#include "Sensors.h"
 
 static Preferences s_prefs;
 static WebServer s_server(80);
@@ -16,6 +19,20 @@ static IPAddress s_apNetmask(255, 255, 255, 0);
 static uint16_t s_rotateSec = DEFAULT_ROTATE_SEC;
 static String s_ytChannel = "";
 static String s_ytApiKey = "";
+
+// Ambient & Screen
+static bool s_autoBri = true;
+static bool s_nightMode = true;
+static uint8_t s_nightStart = DEFAULT_NIGHT_START;
+static uint8_t s_nightEnd = DEFAULT_NIGHT_END;
+
+// Weather
+static float s_wLat = DEFAULT_WEATHER_LAT;
+static float s_wLon = DEFAULT_WEATHER_LON;
+static String s_wCity = DEFAULT_WEATHER_CITY;
+
+// Crypto
+static String s_cryptoSym = DEFAULT_CRYPTO_SYM;
 
 static uint32_t s_connectStartMs = 0;
 static uint32_t s_lastWifiCheckMs = 0;
@@ -33,13 +50,12 @@ static String buildPortalHtml() {
 <style>
   :root {
     --bg: #090d16;
-    --card: rgba(22, 30, 49, 0.88);
+    --card: rgba(22, 30, 49, 0.92);
     --border: rgba(255, 255, 255, 0.1);
     --accent: #38bdf8;
     --accent-glow: rgba(56, 189, 248, 0.25);
     --text: #f1f5f9;
     --text-muted: #94a3b8;
-    --red: #ef4444;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -50,17 +66,17 @@ static String buildPortalHtml() {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.25rem;
+    padding: 1.5rem 1rem;
     background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #090d16 100%);
   }
   .card {
     width: 100%;
-    max-width: 440px;
+    max-width: 480px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 1.25rem;
     padding: 2rem;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px);
     box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 40px var(--accent-glow);
   }
   .header { text-align: center; margin-bottom: 1.5rem; }
@@ -86,20 +102,37 @@ static String buildPortalHtml() {
     letter-spacing: 0.05em;
     color: var(--accent);
     margin: 1.25rem 0 0.75rem 0;
-    padding-bottom: 0.25rem;
+    padding-bottom: 0.35rem;
     border-bottom: 1px solid var(--border);
   }
   .field { margin-bottom: 1rem; }
+  .row { display: flex; gap: 0.75rem; }
+  .row .field { flex: 1; }
   label {
     display: block;
     font-size: 0.8rem;
     font-weight: 600;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.35rem;
     color: var(--text-muted);
   }
-  input, select {
+  .chk-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    margin-bottom: 0.6rem;
+  }
+  .chk-label input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  input[type="text"], input[type="password"], input[type="number"], select {
     width: 100%;
-    padding: 0.75rem 0.9rem;
+    padding: 0.75rem 0.85rem;
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid var(--border);
     border-radius: 0.65rem;
@@ -130,7 +163,7 @@ static String buildPortalHtml() {
   .btn-submit {
     width: 100%;
     padding: 0.85rem;
-    margin-top: 1.25rem;
+    margin-top: 1.5rem;
     background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
     border: none;
     border-radius: 0.75rem;
@@ -149,10 +182,11 @@ static String buildPortalHtml() {
   <div class="header">
     <div class="badge">Pixel Clock Setup</div>
     <h1>Ulanzi TC001 Evolved</h1>
-    <p class="sub">Configure Wi-Fi, Screen Rotation, and YouTube Analytics</p>
+    <p class="sub">Configure Network, Screen Ambient Intelligence, Weather, and Tickers</p>
   </div>
   <form action="/save" method="POST">
-    <div class="section-title">&#x1F4F6; Wi-Fi Connection</div>
+    
+    <div class="section-title">&#x1F4F6; Wi-Fi Network</div>
     <div class="field">
       <label for="ssid">Network Name (SSID)</label>
       <input type="text" id="ssid" name="ssid" value="{{SSID}}" placeholder="Enter Wi-Fi SSID" required autocomplete="off">
@@ -166,13 +200,58 @@ static String buildPortalHtml() {
       <input type="password" id="password" name="password" placeholder="Leave empty if unchanged">
     </div>
 
-    <div class="section-title">&#x23F1; Carousel Display</div>
+    <div class="section-title">&#x1F319; Ambient Intelligence & Display</div>
+    <label class="chk-label">
+      <input type="checkbox" name="auto_bri" value="1" {{AUTO_BRI_CHK}}>
+      Auto-Brightness via LDR Light Sensor
+    </label>
+    <label class="chk-label">
+      <input type="checkbox" name="night_mode" value="1" {{NIGHT_MODE_CHK}}>
+      Night Mode (Quiet Dim Red Clock)
+    </label>
+    <div class="row">
+      <div class="field">
+        <label for="night_start">Night Start Hour</label>
+        <input type="number" id="night_start" name="night_start" min="0" max="23" value="{{NIGHT_START}}">
+      </div>
+      <div class="field">
+        <label for="night_end">Night End Hour</label>
+        <input type="number" id="night_end" name="night_end" min="0" max="23" value="{{NIGHT_END}}">
+      </div>
+    </div>
     <div class="field">
-      <label for="rotate">Rotate Delay (seconds, 3 - 120)</label>
+      <label for="rotate">Carousel Rotate Delay (seconds, 3 - 120)</label>
       <input type="number" id="rotate" name="rotate" min="3" max="120" value="{{ROTATE}}" required>
     </div>
 
-    <div class="section-title">&#x25B6; YouTube Analytics</div>
+    <div class="section-title">&#x26C5; Real Outdoor Weather (Open-Meteo)</div>
+    <div class="field">
+      <label for="w_city">City Name</label>
+      <input type="text" id="w_city" name="w_city" value="{{W_CITY}}" placeholder="e.g. Bratislava">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="w_lat">Latitude</label>
+        <input type="text" id="w_lat" name="w_lat" value="{{W_LAT}}" placeholder="48.1486">
+      </div>
+      <div class="field">
+        <label for="w_lon">Longitude</label>
+        <input type="text" id="w_lon" name="w_lon" value="{{W_LON}}" placeholder="17.1077">
+      </div>
+    </div>
+
+    <div class="section-title">&#x1F4B0; Crypto Ticker (Binance Live)</div>
+    <div class="field">
+      <label for="c_sym">Cryptocurrency Pair</label>
+      <select id="c_sym" name="c_sym">
+        <option value="BTC" {{C_BTC_SEL}}>Bitcoin (BTC / USDT)</option>
+        <option value="ETH" {{C_ETH_SEL}}>Ethereum (ETH / USDT)</option>
+        <option value="SOL" {{C_SOL_SEL}}>Solana (SOL / USDT)</option>
+        <option value="BNB" {{C_BNB_SEL}}>Binance Coin (BNB / USDT)</option>
+      </select>
+    </div>
+
+    <div class="section-title">&#x25B6; YouTube Channel Analytics</div>
     <div class="field">
       <label for="yt_channel">Channel ID or @Handle</label>
       <input type="text" id="yt_channel" name="yt_channel" value="{{YT_CHANNEL}}" placeholder="e.g. @MKBHD or UCxxxxxxxx">
@@ -184,7 +263,7 @@ static String buildPortalHtml() {
 
     <button type="submit" class="btn-submit">Save & Apply Settings</button>
   </form>
-  <div class="footer">Ulanzi TC001 Evolved &bull; Firmware v1.0.0</div>
+  <div class="footer">Ulanzi TC001 Evolved &bull; Firmware v1.1.0</div>
 </div>
 <script>
 function scanNetworks() {
@@ -216,6 +295,20 @@ function selectNetwork(val) {
 
     html.replace("{{SSID}}", s_ssid);
     html.replace("{{ROTATE}}", String(s_rotateSec));
+    html.replace("{{AUTO_BRI_CHK}}", s_autoBri ? "checked" : "");
+    html.replace("{{NIGHT_MODE_CHK}}", s_nightMode ? "checked" : "");
+    html.replace("{{NIGHT_START}}", String(s_nightStart));
+    html.replace("{{NIGHT_END}}", String(s_nightEnd));
+
+    html.replace("{{W_CITY}}", s_wCity);
+    html.replace("{{W_LAT}}", String(s_wLat, 4));
+    html.replace("{{W_LON}}", String(s_wLon, 4));
+
+    html.replace("{{C_BTC_SEL}}", s_cryptoSym == "BTC" ? "selected" : "");
+    html.replace("{{C_ETH_SEL}}", s_cryptoSym == "ETH" ? "selected" : "");
+    html.replace("{{C_SOL_SEL}}", s_cryptoSym == "SOL" ? "selected" : "");
+    html.replace("{{C_BNB_SEL}}", s_cryptoSym == "BNB" ? "selected" : "");
+
     html.replace("{{YT_CHANNEL}}", s_ytChannel);
     html.replace("{{YT_KEY}}", s_ytApiKey.length() > 0 ? "********" : "");
     return html;
@@ -323,14 +416,36 @@ static void handleSave() {
         }
     }
 
-    // 3. Process YouTube Analytics
+    // 3. Process Ambient & Night Mode
+    Network_SetAutoBrightness(s_server.hasArg("auto_bri"));
+    Network_SetNightMode(s_server.hasArg("night_mode"));
+    if (s_server.hasArg("night_start") && s_server.hasArg("night_end")) {
+        uint8_t st = (uint8_t)constrain(s_server.arg("night_start").toInt(), 0, 23);
+        uint8_t en = (uint8_t)constrain(s_server.arg("night_end").toInt(), 0, 23);
+        Network_SetNightSchedule(st, en);
+    }
+
+    // 4. Process Outdoor Weather
+    if (s_server.hasArg("w_lat") && s_server.hasArg("w_lon")) {
+        float lat = s_server.arg("w_lat").toFloat();
+        float lon = s_server.arg("w_lon").toFloat();
+        String city = s_server.hasArg("w_city") ? s_server.arg("w_city") : "";
+        Network_SetWeatherLocation(lat, lon, city);
+    }
+
+    // 5. Process Crypto Symbol
+    if (s_server.hasArg("c_sym")) {
+        Network_SetCryptoSymbol(s_server.arg("c_sym"));
+    }
+
+    // 6. Process YouTube Analytics
     if (s_server.hasArg("yt_channel")) {
         String ch = s_server.arg("yt_channel");
         String key = s_server.arg("yt_key");
         ch.trim();
         key.trim();
         if (key == "********") {
-            key = s_ytApiKey; // Preserve existing key
+            key = s_ytApiKey;
         }
         Network_SaveYouTubeConfig(ch, key);
     }
@@ -352,8 +467,24 @@ static void handleStatus() {
     doc["ssid"] = Network_GetSSID();
     doc["rssi"] = Network_GetRSSI();
     doc["rotate_sec"] = s_rotateSec;
-    doc["yt_channel"] = s_ytChannel;
+
+    // Ambient & Sensor telemetry
+    const SensorData& s = Sensors_GetData();
+    doc["temperature_in"] = s.temperature;
+    doc["humidity_in"] = s.humidity;
+    doc["battery_volts"] = s.batteryVolts;
+    doc["battery_pct"] = s.batteryPercent;
+    doc["ldr_raw"] = s.ldrRaw;
+    doc["auto_bri"] = s_autoBri;
+    doc["night_mode"] = s_nightMode;
+
+    // Services
+    doc["weather_temp"] = Weather_GetFormattedTemp();
+    doc["weather_city"] = Weather_GetCity();
+    doc["crypto_symbol"] = Crypto_GetSymbol();
+    doc["crypto_price"] = Crypto_GetFormattedPrice();
     doc["yt_subscribers"] = YouTube_GetFormattedSubs();
+
     String out;
     serializeJson(doc, out);
     s_server.send(200, "application/json", out);
@@ -375,6 +506,19 @@ void Network_Init() {
     if (s_rotateSec < MIN_ROTATE_SEC || s_rotateSec > MAX_ROTATE_SEC) {
         s_rotateSec = DEFAULT_ROTATE_SEC;
     }
+
+    s_autoBri = s_prefs.getBool(PREF_KEY_AUTO_BRI, true);
+    s_nightMode = s_prefs.getBool(PREF_KEY_NIGHT_MODE, true);
+    s_nightStart = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_START, DEFAULT_NIGHT_START);
+    s_nightEnd = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_END, DEFAULT_NIGHT_END);
+
+    s_wLat = s_prefs.getFloat(PREF_KEY_WEATHER_LAT, DEFAULT_WEATHER_LAT);
+    s_wLon = s_prefs.getFloat(PREF_KEY_WEATHER_LON, DEFAULT_WEATHER_LON);
+    s_wCity = s_prefs.getString(PREF_KEY_WEATHER_CITY, DEFAULT_WEATHER_CITY);
+    Weather_SetConfig(s_wLat, s_wLon, s_wCity);
+
+    s_cryptoSym = s_prefs.getString(PREF_KEY_CRYPTO_SYM, DEFAULT_CRYPTO_SYM);
+    Crypto_SetSymbol(s_cryptoSym);
 
     s_ytChannel = s_prefs.getString(PREF_KEY_YT_CHANNEL, "");
     s_ytApiKey = s_prefs.getString(PREF_KEY_YT_APIKEY, "");
@@ -557,5 +701,69 @@ void Network_SaveYouTubeConfig(const String& channel, const String& apiKey) {
     s_prefs.putString(PREF_KEY_YT_CHANNEL, s_ytChannel);
     s_prefs.putString(PREF_KEY_YT_APIKEY, s_ytApiKey);
     YouTube_SetCredentials(s_ytChannel, s_ytApiKey);
-    Serial.printf("[Settings] Saved YouTube channel '%s' to NVS\n", s_ytChannel.c_str());
+}
+
+bool Network_GetAutoBrightness() {
+    return s_autoBri;
+}
+
+void Network_SetAutoBrightness(bool en) {
+    s_autoBri = en;
+    s_prefs.putBool(PREF_KEY_AUTO_BRI, s_autoBri);
+}
+
+bool Network_GetNightMode() {
+    return s_nightMode;
+}
+
+void Network_SetNightMode(bool en) {
+    s_nightMode = en;
+    s_prefs.putBool(PREF_KEY_NIGHT_MODE, s_nightMode);
+}
+
+uint8_t Network_GetNightStartHour() {
+    return s_nightStart;
+}
+
+uint8_t Network_GetNightEndHour() {
+    return s_nightEnd;
+}
+
+void Network_SetNightSchedule(uint8_t startHour, uint8_t endHour) {
+    s_nightStart = startHour;
+    s_nightEnd = endHour;
+    s_prefs.putUChar(PREF_KEY_NIGHT_START, s_nightStart);
+    s_prefs.putUChar(PREF_KEY_NIGHT_END, s_nightEnd);
+}
+
+float Network_GetWeatherLat() {
+    return s_wLat;
+}
+
+float Network_GetWeatherLon() {
+    return s_wLon;
+}
+
+String Network_GetWeatherCity() {
+    return s_wCity;
+}
+
+void Network_SetWeatherLocation(float lat, float lon, const String& city) {
+    s_wLat = lat;
+    s_wLon = lon;
+    s_wCity = city;
+    s_prefs.putFloat(PREF_KEY_WEATHER_LAT, s_wLat);
+    s_prefs.putFloat(PREF_KEY_WEATHER_LON, s_wLon);
+    s_prefs.putString(PREF_KEY_WEATHER_CITY, s_wCity);
+    Weather_SetConfig(s_wLat, s_wLon, s_wCity);
+}
+
+String Network_GetCryptoSymbol() {
+    return s_cryptoSym;
+}
+
+void Network_SetCryptoSymbol(const String& sym) {
+    s_cryptoSym = sym;
+    s_prefs.putString(PREF_KEY_CRYPTO_SYM, s_cryptoSym);
+    Crypto_SetSymbol(s_cryptoSym);
 }

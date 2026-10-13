@@ -39,3 +39,22 @@ void Network_SetRotateDelaySec(uint16_t sec);
 String Network_GetYouTubeChannel();
 String Network_GetYouTubeApiKey();
 void Network_SaveYouTubeConfig(const String& channel, const String& apiKey);
+
+// Ambient & Screen Management
+bool Network_GetAutoBrightness();
+void Network_SetAutoBrightness(bool en);
+bool Network_GetNightMode();
+void Network_SetNightMode(bool en);
+uint8_t Network_GetNightStartHour();
+uint8_t Network_GetNightEndHour();
+void Network_SetNightSchedule(uint8_t startHour, uint8_t endHour);
+
+// Outdoor Weather
+float Network_GetWeatherLat();
+float Network_GetWeatherLon();
+String Network_GetWeatherCity();
+void Network_SetWeatherLocation(float lat, float lon, const String& city);
+
+// Crypto Ticker
+String Network_GetCryptoSymbol();
+void Network_SetCryptoSymbol(const String& sym);

@@ -9,14 +9,18 @@
 #include "Icons.h"
 #include "NetworkManager.h"
 #include "YouTubeService.h"
+#include "WeatherService.h"
+#include "CryptoService.h"
 
 // --- Application Modes ---
 enum AppMode {
     APP_CLOCK = 0,
-    APP_WEATHER,
-    APP_AIRSPACE,
-    APP_YOUTUBE,
-    APP_BATTERY,
+    APP_INDOOR,     // Local SHT30 environment
+    APP_OUTDOOR,    // Live Open-Meteo weather
+    APP_CRYPTO,     // Live Binance Crypto price
+    APP_YOUTUBE,    // Live YouTube Subscriber count
+    APP_AIRSPACE,   // Live ADS-B radar flight ticker
+    APP_BATTERY,    // Battery & power telemetry
     APP_COUNT
 };
 
@@ -34,6 +38,9 @@ static bool s_ipSplashDone = false;
 static bool s_skipAP = false;
 static uint8_t s_ipSplashPasses = 0;
 
+// Night Mode Wake State
+static uint32_t s_nightWakeUntilMs = 0;
+
 static void checkNtpSync() {
     if (Network_IsConnected() && !s_ntpSynced) {
         configTzTime("CET-1CEST,M3.5.0,M10.5.0/3", "pool.ntp.org", "time.google.com");
@@ -47,14 +54,24 @@ static void checkNtpSync() {
     }
 }
 
+static bool isNightTime() {
+    if (!Network_GetNightMode()) return false;
+    int h = (s_seconds / 3600) % 24;
+    uint8_t start = Network_GetNightStartHour();
+    uint8_t end = Network_GetNightEndHour();
+    if (start > end) { // e.g. 23:00 to 07:00
+        return (h >= start || h < end);
+    } else { // e.g. 01:00 to 06:00
+        return (h >= start && h < end);
+    }
+}
+
 static void renderClockApp() {
     DisplayMatrix_Clear();
     
-    // Draw pulsing heart or wifi indicator
     bool blink = (s_seconds % 2) == 0;
     DisplayMatrix_DrawIcon(0, 0, ICON_HEART);
 
-    // Format HH:MM
     int h = (s_seconds / 3600) % 24;
     int m = (s_seconds / 60) % 60;
     char buf[10];
@@ -64,7 +81,22 @@ static void renderClockApp() {
     DisplayMatrix_Show();
 }
 
-static void renderWeatherApp() {
+static void renderNightClock() {
+    DisplayMatrix_Clear();
+    
+    // Dim red night clock with crescent moon
+    DisplayMatrix_DrawIcon(0, 0, ICON_MOON);
+
+    int h = (s_seconds / 3600) % 24;
+    int m = (s_seconds / 60) % 60;
+    char buf[10];
+    snprintf(buf, sizeof(buf), "%02d:%02d", h, m);
+
+    DisplayMatrix_DrawText(9, 1, buf, 0x8000); // Dim Red (RGB565)
+    DisplayMatrix_Show();
+}
+
+static void renderIndoorApp() {
     DisplayMatrix_Clear();
     const SensorData& s = Sensors_GetData();
 
@@ -80,10 +112,26 @@ static void renderWeatherApp() {
     DisplayMatrix_Show();
 }
 
-static void renderAirspaceApp() {
+static void renderOutdoorApp() {
     DisplayMatrix_Clear();
-    DisplayMatrix_DrawIcon(0, 0, ICON_PLANE);
-    DisplayMatrix_DrawText(9, 1, "RYR45", C_CYAN);
+
+    const uint16_t* icon = Weather_GetConditionIcon();
+    DisplayMatrix_DrawIcon(0, 0, icon);
+
+    const char* tempStr = Weather_GetFormattedTemp();
+    DisplayMatrix_DrawText(9, 1, tempStr, C_CYAN);
+    DisplayMatrix_Show();
+}
+
+static void renderCryptoApp() {
+    DisplayMatrix_Clear();
+
+    const uint16_t* icon = Crypto_GetIcon();
+    DisplayMatrix_DrawIcon(0, 0, icon);
+
+    const char* priceStr = Crypto_GetFormattedPrice();
+    uint16_t col = (strcmp(Crypto_GetSymbol(), "ETH") == 0) ? C_CYAN : C_YELLOW;
+    DisplayMatrix_DrawText(9, 1, priceStr, col);
     DisplayMatrix_Show();
 }
 
@@ -93,6 +141,13 @@ static void renderYouTubeApp() {
 
     const char* subs = YouTube_GetFormattedSubs();
     DisplayMatrix_DrawText(9, 1, subs, C_WHITE);
+    DisplayMatrix_Show();
+}
+
+static void renderAirspaceApp() {
+    DisplayMatrix_Clear();
+    DisplayMatrix_DrawIcon(0, 0, ICON_PLANE);
+    DisplayMatrix_DrawText(9, 1, "RYR45", C_CYAN);
     DisplayMatrix_Show();
 }
 
@@ -112,9 +167,11 @@ static void renderBatteryApp() {
 static void renderCurrentApp() {
     switch (s_currentApp) {
         case APP_CLOCK:    renderClockApp();    break;
-        case APP_WEATHER:  renderWeatherApp();  break;
-        case APP_AIRSPACE: renderAirspaceApp(); break;
+        case APP_INDOOR:   renderIndoorApp();   break;
+        case APP_OUTDOOR:  renderOutdoorApp();  break;
+        case APP_CRYPTO:   renderCryptoApp();   break;
         case APP_YOUTUBE:  renderYouTubeApp();  break;
+        case APP_AIRSPACE: renderAirspaceApp(); break;
         case APP_BATTERY:  renderBatteryApp();  break;
         default:           renderClockApp();    break;
     }
@@ -132,6 +189,8 @@ void setup() {
     Sensors_Init();
     DisplayMatrix_Init();
     YouTube_Init();
+    Weather_Init();
+    Crypto_Init();
 
     // Startup splash & sound
     Buzzer_Click();
@@ -154,14 +213,25 @@ void loop() {
     // 1. Service Network state machine & Captive Portal WebServer
     Network_Poll();
 
-    // 2. Background YouTube subscriber count fetch
+    // 2. Background HTTP Services polling
     YouTube_Update();
+    Weather_Update();
+    Crypto_Update();
 
     // 3. Clock second counter tick
     if (now - s_lastSecTick >= 1000) {
         s_lastSecTick += 1000;
         s_seconds++;
         checkNtpSync();
+
+        // Auto-Brightness check (smoothly updates when enabled and not in night mode)
+        bool activeNight = isNightTime() && (now >= s_nightWakeUntilMs);
+        if (activeNight) {
+            DisplayMatrix_SetBrightness(1); // Ultra dim for sleeping bedroom
+        } else if (Network_GetAutoBrightness()) {
+            uint8_t autoBri = Sensors_CalculateAutoBrightness(MIN_AUTO_BRI, MAX_AUTO_BRI);
+            DisplayMatrix_SetBrightness(autoBri);
+        }
     }
 
     // 4. Poll buttons
@@ -169,7 +239,6 @@ void loop() {
 
     // 5. Handle initial provisioning / AP mode screen
     if (Network_IsAPActive() && !s_skipAP) {
-        // Allow skipping AP mode on button press
         if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK ||
             Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
             Buzzer_Click();
@@ -178,7 +247,6 @@ void loop() {
             return;
         }
 
-        // Scroll AP SSID and IP across display with pinned AP icon
         String apTicker = "AP: " + Network_GetAPSSID() + "  IP: " + Network_GetAPIP() + "  ";
         DisplayMatrix_ScrollTicker(apTicker.c_str(), C_ORANGE, ICON_AP, 45);
         return;
@@ -212,7 +280,24 @@ void loop() {
         return;
     }
 
-    // 8. Standard App Navigation & Button Events
+    // 8. Night Mode enforcement
+    bool nightActive = isNightTime() && (now >= s_nightWakeUntilMs);
+    if (nightActive) {
+        // Any button press temporarily wakes the screen for 12 seconds
+        if (Buttons_GetEvent(BTN_ID_OK) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_LEFT) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_RIGHT) != BTN_NONE) {
+            Buzzer_Click();
+            s_nightWakeUntilMs = now + 12000;
+            DisplayMatrix_SetBrightness(20);
+        } else {
+            // Render quiet dim red clock without rotating apps
+            renderNightClock();
+            return;
+        }
+    }
+
+    // 9. Standard App Navigation & Button Events
     if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
         s_currentApp = (AppMode)((s_currentApp + 1) % APP_COUNT);
@@ -225,7 +310,8 @@ void loop() {
         s_autoRotate = false;
     } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
         Buzzer_Click();
-        // Cycle brightness
+        // Cycle manual brightness (pauses auto-brightness until reboot or web portal re-enable)
+        Network_SetAutoBrightness(false);
         uint8_t cur = DisplayMatrix_GetBrightness();
         uint8_t next = (cur <= 20) ? 35 : (cur <= 45 ? 75 : 15);
         DisplayMatrix_SetBrightness(next);
@@ -234,21 +320,21 @@ void loop() {
         s_autoRotate = !s_autoRotate;
     }
 
-    // 9. Auto rotation carousel tick with dynamic rotate delay from Settings
+    // 10. Auto rotation carousel tick with dynamic rotate delay from Settings
     uint32_t rotateMs = (uint32_t)Network_GetRotateDelaySec() * 1000UL;
     if (s_autoRotate && (now - s_lastAppSwitch >= rotateMs)) {
         s_lastAppSwitch = now;
         s_currentApp = (AppMode)((s_currentApp + 1) % APP_COUNT);
     }
 
-    // 10. Sensor background update (every 2 seconds)
+    // 11. Sensor background update (every 2 seconds)
     static uint32_t s_lastSensorUpdate = 0;
     if (now - s_lastSensorUpdate >= 2000) {
         s_lastSensorUpdate = now;
         Sensors_Update();
     }
 
-    // 11. Render active app screen (~20 FPS)
+    // 12. Render active app screen (~20 FPS)
     static uint32_t s_lastRender = 0;
     if (now - s_lastRender >= 50) {
         s_lastRender = now;

@@ -55,7 +55,32 @@
 #define PREF_KEY_YT_APIKEY      "yt_key"
 #define YT_FETCH_INTERVAL_MS    300000 // 5 minutes
 
+// --- Ambient Intelligence & Screen Management ---
+#define PREF_KEY_AUTO_BRI       "auto_bri"
+#define PREF_KEY_NIGHT_MODE     "night_en"
+#define PREF_KEY_NIGHT_START    "night_st"
+#define PREF_KEY_NIGHT_END      "night_end"
+#define DEFAULT_NIGHT_START     23
+#define DEFAULT_NIGHT_END       7
+#define MIN_AUTO_BRI            2
+#define MAX_AUTO_BRI            85
+
+// --- Outdoor Weather (Open-Meteo) ---
+#define PREF_KEY_WEATHER_LAT    "w_lat"
+#define PREF_KEY_WEATHER_LON    "w_lon"
+#define PREF_KEY_WEATHER_CITY   "w_city"
+#define DEFAULT_WEATHER_LAT     48.1486f
+#define DEFAULT_WEATHER_LON     17.1077f
+#define DEFAULT_WEATHER_CITY    "Bratislava"
+#define WEATHER_FETCH_INTERVAL_MS 900000 // 15 minutes
+
+// --- Crypto & Financial Tickers (Binance Public API) ---
+#define PREF_KEY_CRYPTO_SYM     "c_sym"
+#define DEFAULT_CRYPTO_SYM      "BTC"
+#define CRYPTO_FETCH_INTERVAL_MS 60000 // 1 minute
+
 // --- Firmware Metadata ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
-#define FW_VERSION          "1.0.0"
+#define FW_VERSION          "1.1.0"
+
 

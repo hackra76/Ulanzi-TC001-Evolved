@@ -136,4 +136,77 @@ static const uint16_t ICON_YOUTUBE[64] = {
     0,     C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, 0
 };
 
+// 8x8 Cloud Icon
+static const uint16_t ICON_CLOUD[64] = {
+    0, 0, 0, C_WHITE, C_WHITE, 0, 0, 0,
+    0, 0, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0, 0,
+    0, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0,
+    C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+    C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+    0, C_GRAY, C_GRAY, C_GRAY, C_GRAY, C_GRAY, C_GRAY, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+// 8x8 Snowflake Icon
+static const uint16_t ICON_SNOW[64] = {
+    0, 0, 0, C_CYAN, C_CYAN, 0, 0, 0,
+    C_CYAN, 0, C_CYAN, C_CYAN, C_CYAN, C_CYAN, 0, C_CYAN,
+    0, C_CYAN, 0, C_WHITE, C_WHITE, 0, C_CYAN, 0,
+    C_CYAN, C_CYAN, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_CYAN, C_CYAN,
+    C_CYAN, C_CYAN, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_CYAN, C_CYAN,
+    0, C_CYAN, 0, C_WHITE, C_WHITE, 0, C_CYAN, 0,
+    C_CYAN, 0, C_CYAN, C_CYAN, C_CYAN, C_CYAN, 0, C_CYAN,
+    0, 0, 0, C_CYAN, C_CYAN, 0, 0, 0
+};
+
+// 8x8 Thunderstorm Icon
+static const uint16_t ICON_STORM[64] = {
+    0, C_GRAY, C_GRAY, C_GRAY, C_GRAY, C_GRAY, 0, 0,
+    C_GRAY, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_GRAY, 0, 0,
+    C_GRAY, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_GRAY, 0,
+    0, C_GRAY, C_GRAY, C_YELLOW, C_GRAY, C_GRAY, 0, 0,
+    0, 0, C_YELLOW, C_YELLOW, 0, 0, 0, 0,
+    0, 0, 0, C_YELLOW, C_YELLOW, 0, 0, 0,
+    0, 0, C_YELLOW, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+// 8x8 Bitcoin Icon (Orange coin with white B)
+static const uint16_t ICON_BTC[64] = {
+    0, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, 0,
+    C_ORANGE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_ORANGE, C_ORANGE, C_ORANGE,
+    C_ORANGE, C_WHITE, C_WHITE, C_ORANGE, C_ORANGE, C_WHITE, C_WHITE, C_ORANGE,
+    C_ORANGE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_ORANGE, C_ORANGE,
+    C_ORANGE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_ORANGE, C_ORANGE,
+    C_ORANGE, C_WHITE, C_WHITE, C_ORANGE, C_ORANGE, C_WHITE, C_WHITE, C_ORANGE,
+    C_ORANGE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_ORANGE, C_ORANGE, C_ORANGE,
+    0, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, 0
+};
+
+// 8x8 Ethereum Icon (Cyan/White Diamond)
+static const uint16_t ICON_ETH[64] = {
+    0, 0, 0, C_WHITE, C_WHITE, 0, 0, 0,
+    0, 0, C_CYAN, C_WHITE, C_WHITE, C_CYAN, 0, 0,
+    0, C_CYAN, C_CYAN, C_WHITE, C_WHITE, C_CYAN, C_CYAN, 0,
+    C_CYAN, C_CYAN, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_CYAN, C_CYAN,
+    0, C_CYAN, C_CYAN, C_WHITE, C_WHITE, C_CYAN, C_CYAN, 0,
+    0, 0, C_CYAN, C_WHITE, C_WHITE, C_CYAN, 0, 0,
+    0, 0, 0, C_CYAN, C_CYAN, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+// 8x8 Crescent Moon Icon (Night Mode)
+static const uint16_t ICON_MOON[64] = {
+    0, 0, 0, C_YELLOW, C_YELLOW, 0, 0, 0,
+    0, 0, C_YELLOW, C_YELLOW, 0, 0, 0, 0,
+    0, C_YELLOW, C_YELLOW, 0, 0, 0, 0, 0,
+    0, C_YELLOW, C_YELLOW, 0, 0, 0, 0, 0,
+    0, C_YELLOW, C_YELLOW, 0, 0, 0, 0, 0,
+    0, C_YELLOW, C_YELLOW, 0, 0, 0, 0, 0,
+    0, 0, C_YELLOW, C_YELLOW, 0, 0, 0, 0,
+    0, 0, 0, C_YELLOW, C_YELLOW, 0, 0, 0
+};
+
+
 

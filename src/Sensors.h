@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "Config.h"
 
 struct SensorData {
     float temperature;   // Celsius
@@ -13,3 +14,6 @@ struct SensorData {
 void Sensors_Init();
 void Sensors_Update();
 const SensorData& Sensors_GetData();
+
+uint16_t Sensors_GetSmoothedLDR();
+uint8_t Sensors_CalculateAutoBrightness(uint8_t minBri = MIN_AUTO_BRI, uint8_t maxBri = MAX_AUTO_BRI);
