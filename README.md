@@ -1,4 +1,4 @@
-# ESP-Ulanzi-TC001 (Smart Pixel Desktop Clock)
+# Ulanzi TC001 Evolved
 
 Firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** running on the ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 temperature & humidity sensor, battery telemetry, ambient light sensor, and buzzer.
 

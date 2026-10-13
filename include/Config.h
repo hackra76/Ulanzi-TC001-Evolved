@@ -39,5 +39,5 @@
 #define BATTERY_MAX_VOLTS   4.18f// 100%
 
 // --- Firmware Metadata ---
-#define FW_NAME             "ESP-Ulanzi-TC001"
+#define FW_NAME             "Ulanzi TC001 Evolved"
 #define FW_VERSION          "1.0.0"
