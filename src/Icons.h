@@ -124,3 +124,16 @@ static const uint16_t ICON_AP[64] = {
     C_ORANGE, 0, 0, 0, 0, 0, 0, C_ORANGE
 };
 
+// 8x8 YouTube Play Button Icon
+static const uint16_t ICON_YOUTUBE[64] = {
+    0,     C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, 0,
+    C_RED, C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, C_RED,
+    C_RED, C_RED, C_WHITE, C_RED,   C_RED, C_RED, C_RED, C_RED,
+    C_RED, C_RED, C_WHITE, C_WHITE, C_RED, C_RED, C_RED, C_RED,
+    C_RED, C_RED, C_WHITE, C_WHITE, C_RED, C_RED, C_RED, C_RED,
+    C_RED, C_RED, C_WHITE, C_RED,   C_RED, C_RED, C_RED, C_RED,
+    C_RED, C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, C_RED,
+    0,     C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, 0
+};
+
+

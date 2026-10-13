@@ -45,6 +45,17 @@
 #define PREF_KEY_SSID           "wifi_ssid"
 #define PREF_KEY_PASS           "wifi_pass"
 
+// --- Carousel & YouTube Analytics ---
+#define PREF_KEY_ROTATE_SEC     "rot_sec"
+#define DEFAULT_ROTATE_SEC      8
+#define MIN_ROTATE_SEC          3
+#define MAX_ROTATE_SEC          120
+
+#define PREF_KEY_YT_CHANNEL     "yt_chan"
+#define PREF_KEY_YT_APIKEY      "yt_key"
+#define YT_FETCH_INTERVAL_MS    300000 // 5 minutes
+
 // --- Firmware Metadata ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
 #define FW_VERSION          "1.0.0"
+

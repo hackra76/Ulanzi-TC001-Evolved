@@ -31,3 +31,11 @@ void Network_StartAP();
 void Network_ConnectStation();
 void Network_SaveCredentials(const String& ssid, const String& pass);
 void Network_ForgetCredentials();
+
+// Settings & Preferences
+uint16_t Network_GetRotateDelaySec();
+void Network_SetRotateDelaySec(uint16_t sec);
+
+String Network_GetYouTubeChannel();
+String Network_GetYouTubeApiKey();
+void Network_SaveYouTubeConfig(const String& channel, const String& apiKey);

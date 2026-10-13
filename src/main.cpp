@@ -8,12 +8,14 @@
 #include "Buzzer.h"
 #include "Icons.h"
 #include "NetworkManager.h"
+#include "YouTubeService.h"
 
 // --- Application Modes ---
 enum AppMode {
     APP_CLOCK = 0,
     APP_WEATHER,
     APP_AIRSPACE,
+    APP_YOUTUBE,
     APP_BATTERY,
     APP_COUNT
 };
@@ -21,7 +23,6 @@ enum AppMode {
 static AppMode s_currentApp = APP_CLOCK;
 static uint32_t s_lastAppSwitch = 0;
 static bool s_autoRotate = true;
-static const uint32_t AUTO_ROTATE_MS = 8000;
 
 // Clock seconds counter (synced with NTP or fallback increment)
 static uint32_t s_seconds = 12 * 3600 + 34 * 60; // 12:34:00 default
@@ -86,6 +87,15 @@ static void renderAirspaceApp() {
     DisplayMatrix_Show();
 }
 
+static void renderYouTubeApp() {
+    DisplayMatrix_Clear();
+    DisplayMatrix_DrawIcon(0, 0, ICON_YOUTUBE);
+
+    const char* subs = YouTube_GetFormattedSubs();
+    DisplayMatrix_DrawText(9, 1, subs, C_WHITE);
+    DisplayMatrix_Show();
+}
+
 static void renderBatteryApp() {
     DisplayMatrix_Clear();
     const SensorData& s = Sensors_GetData();
@@ -104,6 +114,7 @@ static void renderCurrentApp() {
         case APP_CLOCK:    renderClockApp();    break;
         case APP_WEATHER:  renderWeatherApp();  break;
         case APP_AIRSPACE: renderAirspaceApp(); break;
+        case APP_YOUTUBE:  renderYouTubeApp();  break;
         case APP_BATTERY:  renderBatteryApp();  break;
         default:           renderClockApp();    break;
     }
@@ -120,6 +131,7 @@ void setup() {
     Buttons_Init();
     Sensors_Init();
     DisplayMatrix_Init();
+    YouTube_Init();
 
     // Startup splash & sound
     Buzzer_Click();
@@ -142,17 +154,20 @@ void loop() {
     // 1. Service Network state machine & Captive Portal WebServer
     Network_Poll();
 
-    // 2. Clock second counter tick
+    // 2. Background YouTube subscriber count fetch
+    YouTube_Update();
+
+    // 3. Clock second counter tick
     if (now - s_lastSecTick >= 1000) {
         s_lastSecTick += 1000;
         s_seconds++;
         checkNtpSync();
     }
 
-    // 3. Poll buttons
+    // 4. Poll buttons
     Buttons_Poll();
 
-    // 4. Handle initial provisioning / AP mode screen
+    // 5. Handle initial provisioning / AP mode screen
     if (Network_IsAPActive() && !s_skipAP) {
         // Allow skipping AP mode on button press
         if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK ||
@@ -169,7 +184,7 @@ void loop() {
         return;
     }
 
-    // 5. Handle connecting state ticker
+    // 6. Handle connecting state ticker
     if (Network_GetState() == NET_STATE_CONNECTING && !s_skipAP) {
         if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
             Buzzer_Click();
@@ -181,13 +196,13 @@ void loop() {
         return;
     }
 
-    // 6. Handle post-connect IP announcement ticker
+    // 7. Handle post-connect IP announcement ticker
     if (Network_IsConnected() && !s_ipSplashDone) {
         String ipTicker = "Connected! IP: " + Network_GetLocalIP() + "   ";
         bool passComplete = DisplayMatrix_ScrollTicker(ipTicker.c_str(), C_GREEN, ICON_WIFI, 40);
         if (passComplete) {
             s_ipSplashPasses++;
-            if (s_ipSplashPasses >= 1) { // Announce IP pass
+            if (s_ipSplashPasses >= 1) {
                 s_ipSplashDone = true;
                 Buzzer_Click();
                 DisplayMatrix_ResetTicker();
@@ -197,7 +212,7 @@ void loop() {
         return;
     }
 
-    // 7. Standard App Navigation & Button Events
+    // 8. Standard App Navigation & Button Events
     if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
         s_currentApp = (AppMode)((s_currentApp + 1) % APP_COUNT);
@@ -219,20 +234,21 @@ void loop() {
         s_autoRotate = !s_autoRotate;
     }
 
-    // 8. Auto rotation tick
-    if (s_autoRotate && (now - s_lastAppSwitch >= AUTO_ROTATE_MS)) {
+    // 9. Auto rotation carousel tick with dynamic rotate delay from Settings
+    uint32_t rotateMs = (uint32_t)Network_GetRotateDelaySec() * 1000UL;
+    if (s_autoRotate && (now - s_lastAppSwitch >= rotateMs)) {
         s_lastAppSwitch = now;
         s_currentApp = (AppMode)((s_currentApp + 1) % APP_COUNT);
     }
 
-    // 9. Sensor background update (every 2 seconds)
+    // 10. Sensor background update (every 2 seconds)
     static uint32_t s_lastSensorUpdate = 0;
     if (now - s_lastSensorUpdate >= 2000) {
         s_lastSensorUpdate = now;
         Sensors_Update();
     }
 
-    // 10. Render active app screen (~20 FPS)
+    // 11. Render active app screen (~20 FPS)
     static uint32_t s_lastRender = 0;
     if (now - s_lastRender >= 50) {
         s_lastRender = now;
