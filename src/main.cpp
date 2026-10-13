@@ -11,6 +11,7 @@
 #include "YouTubeService.h"
 #include "WeatherService.h"
 #include "CryptoService.h"
+#include "OtaManager.h"
 
 // --- Application Modes ---
 enum AppMode {
@@ -202,6 +203,7 @@ void setup() {
 
     // Initialize Network & Captive Portal
     Network_Init();
+    DisplayMatrix_SetBrightness(Network_GetDayBrightness());
 
     s_lastAppSwitch = millis();
     s_lastSecTick = millis();
@@ -209,6 +211,18 @@ void setup() {
 
 void loop() {
     uint32_t now = millis();
+
+    // 0. High priority: OTA flashing indicator
+    if (OTA_IsBusy()) {
+        DisplayMatrix_Clear();
+        DisplayMatrix_DrawIcon(0, 0, ICON_WIFI);
+        char otaBuf[8];
+        snprintf(otaBuf, sizeof(otaBuf), "%d%%", OTA_GetProgress());
+        DisplayMatrix_DrawText(9, 1, otaBuf, C_CYAN);
+        DisplayMatrix_Show();
+        delay(30);
+        return;
+    }
 
     // 1. Service Network state machine & Captive Portal WebServer
     Network_Poll();
@@ -224,13 +238,15 @@ void loop() {
         s_seconds++;
         checkNtpSync();
 
-        // Auto-Brightness check (smoothly updates when enabled and not in night mode)
+        // Dynamic Brightness: Day/Night + Ambient Sensor Control
         bool activeNight = isNightTime() && (now >= s_nightWakeUntilMs);
         if (activeNight) {
-            DisplayMatrix_SetBrightness(1); // Ultra dim for sleeping bedroom
+            DisplayMatrix_SetBrightness(Network_GetNightBrightness());
         } else if (Network_GetAutoBrightness()) {
-            uint8_t autoBri = Sensors_CalculateAutoBrightness(MIN_AUTO_BRI, MAX_AUTO_BRI);
+            uint8_t autoBri = Sensors_CalculateAutoBrightness(MIN_AUTO_BRI, Network_GetDayBrightness());
             DisplayMatrix_SetBrightness(autoBri);
+        } else {
+            DisplayMatrix_SetBrightness(Network_GetDayBrightness());
         }
     }
 
@@ -289,9 +305,10 @@ void loop() {
             Buttons_GetEvent(BTN_ID_RIGHT) != BTN_NONE) {
             Buzzer_Click();
             s_nightWakeUntilMs = now + 12000;
-            DisplayMatrix_SetBrightness(20);
+            DisplayMatrix_SetBrightness(Network_GetDayBrightness());
         } else {
             // Render quiet dim red clock without rotating apps
+            DisplayMatrix_SetBrightness(Network_GetNightBrightness());
             renderNightClock();
             return;
         }
@@ -310,10 +327,11 @@ void loop() {
         s_autoRotate = false;
     } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
         Buzzer_Click();
-        // Cycle manual brightness (pauses auto-brightness until reboot or web portal re-enable)
+        // Cycle manual brightness (pauses auto-brightness until re-enabled in web portal)
         Network_SetAutoBrightness(false);
         uint8_t cur = DisplayMatrix_GetBrightness();
-        uint8_t next = (cur <= 20) ? 35 : (cur <= 45 ? 75 : 15);
+        uint8_t next = (cur <= 15) ? 35 : (cur <= 50 ? 80 : 10);
+        Network_SetDayBrightness(next);
         DisplayMatrix_SetBrightness(next);
     } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_LONG_PRESS) {
         Buzzer_Alert();

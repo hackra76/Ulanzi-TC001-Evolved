@@ -60,8 +60,12 @@
 #define PREF_KEY_NIGHT_MODE     "night_en"
 #define PREF_KEY_NIGHT_START    "night_st"
 #define PREF_KEY_NIGHT_END      "night_end"
+#define PREF_KEY_DAY_BRI        "day_bri"
+#define PREF_KEY_NIGHT_BRI      "ngt_bri"
 #define DEFAULT_NIGHT_START     23
 #define DEFAULT_NIGHT_END       7
+#define DEFAULT_DAY_BRI         35
+#define DEFAULT_NIGHT_BRI       2
 #define MIN_AUTO_BRI            2
 #define MAX_AUTO_BRI            85
 
@@ -79,8 +83,10 @@
 #define DEFAULT_CRYPTO_SYM      "BTC"
 #define CRYPTO_FETCH_INTERVAL_MS 60000 // 1 minute
 
-// --- Firmware Metadata ---
+// --- Firmware Metadata & OTA ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
-#define FW_VERSION          "1.1.0"
+#define FW_VERSION          "1.2.0"
+#define GITHUB_REPO         "hackra76/Ulanzi-TC001-Evolved"
+
 
 

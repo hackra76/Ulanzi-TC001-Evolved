@@ -4,6 +4,7 @@
 #include "WeatherService.h"
 #include "CryptoService.h"
 #include "Sensors.h"
+#include "OtaManager.h"
 
 static Preferences s_prefs;
 static WebServer s_server(80);
@@ -25,6 +26,8 @@ static bool s_autoBri = true;
 static bool s_nightMode = true;
 static uint8_t s_nightStart = DEFAULT_NIGHT_START;
 static uint8_t s_nightEnd = DEFAULT_NIGHT_END;
+static uint8_t s_dayBri = DEFAULT_DAY_BRI;
+static uint8_t s_nightBri = DEFAULT_NIGHT_BRI;
 
 // Weather
 static float s_wLat = DEFAULT_WEATHER_LAT;
@@ -141,6 +144,16 @@ static String buildPortalHtml() {
     outline: none;
     transition: all 0.2s ease;
   }
+  input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 9999px;
+    outline: none;
+    accent-color: var(--accent);
+    cursor: pointer;
+    margin: 0.5rem 0;
+  }
   input:focus, select:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-glow);
@@ -152,14 +165,15 @@ static String buildPortalHtml() {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--accent);
-    padding: 0.35rem 0.75rem;
+    padding: 0.4rem 0.85rem;
     border-radius: 0.5rem;
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     margin-top: 0.4rem;
+    transition: background 0.2s;
   }
-  .scan-btn:hover { background: rgba(56, 189, 248, 0.1); }
+  .scan-btn:hover { background: rgba(56, 189, 248, 0.12); }
   .btn-submit {
     width: 100%;
     padding: 0.85rem;
@@ -182,7 +196,7 @@ static String buildPortalHtml() {
   <div class="header">
     <div class="badge">Pixel Clock Setup</div>
     <h1>Ulanzi TC001 Evolved</h1>
-    <p class="sub">Configure Network, Screen Ambient Intelligence, Weather, and Tickers</p>
+    <p class="sub">Configure Network, Ambient Screen, Weather, Tickers & Firmware</p>
   </div>
   <form action="/save" method="POST">
     
@@ -205,10 +219,28 @@ static String buildPortalHtml() {
       <input type="checkbox" name="auto_bri" value="1" {{AUTO_BRI_CHK}}>
       Auto-Brightness via LDR Light Sensor
     </label>
-    <label class="chk-label">
+    
+    <div class="field">
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+        <label for="day_bri" style="margin:0;">Day Brightness Ceiling</label>
+        <span id="day_bri_val" style="color:var(--accent); font-weight:700;">{{DAY_BRI}}%</span>
+      </div>
+      <input type="range" id="day_bri" name="day_bri" min="5" max="100" value="{{DAY_BRI}}" oninput="document.getElementById('day_bri_val').innerText = this.value + '%'">
+    </div>
+
+    <label class="chk-label" style="margin-top:0.75rem;">
       <input type="checkbox" name="night_mode" value="1" {{NIGHT_MODE_CHK}}>
       Night Mode (Quiet Dim Red Clock)
     </label>
+
+    <div class="field">
+      <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+        <label for="night_bri" style="margin:0;">Night Mode Brightness</label>
+        <span id="night_bri_val" style="color:var(--accent); font-weight:700;">{{NIGHT_BRI}}%</span>
+      </div>
+      <input type="range" id="night_bri" name="night_bri" min="1" max="25" value="{{NIGHT_BRI}}" oninput="document.getElementById('night_bri_val').innerText = this.value + '%'">
+    </div>
+
     <div class="row">
       <div class="field">
         <label for="night_start">Night Start Hour</label>
@@ -219,12 +251,58 @@ static String buildPortalHtml() {
         <input type="number" id="night_end" name="night_end" min="0" max="23" value="{{NIGHT_END}}">
       </div>
     </div>
+
     <div class="field">
       <label for="rotate">Carousel Rotate Delay (seconds, 3 - 120)</label>
       <input type="number" id="rotate" name="rotate" min="3" max="120" value="{{ROTATE}}" required>
     </div>
 
     <div class="section-title">&#x26C5; Real Outdoor Weather (Open-Meteo)</div>
+    <div class="field">
+      <label for="city_preset">Select Predefined City</label>
+      <select id="city_preset" onchange="applyCityPreset(this.value)">
+        <option value="">-- Choose City Preset --</option>
+        <optgroup label="Slovakia">
+          <option value="Bratislava|48.1486|17.1077">Bratislava</option>
+          <option value="Košice|48.7164|21.2611">Košice</option>
+          <option value="Banská Bystrica|48.7363|19.1462">Banská Bystrica</option>
+          <option value="Žilina|49.2232|18.7394">Žilina</option>
+          <option value="Nitra|48.3061|18.0764">Nitra</option>
+          <option value="Prešov|48.9984|21.2339">Prešov</option>
+          <option value="Trnava|48.3774|17.5883">Trnava</option>
+          <option value="Trenčín|48.8945|18.0444">Trenčín</option>
+          <option value="Poprad|49.0512|20.2970">Poprad</option>
+        </optgroup>
+        <optgroup label="Czech Republic">
+          <option value="Praha|50.0755|14.4378">Praha</option>
+          <option value="Brno|49.1951|16.6068">Brno</option>
+          <option value="Ostrava|49.8209|18.2625">Ostrava</option>
+          <option value="Plzeň|49.7384|13.3736">Plzeň</option>
+          <option value="Olomouc|49.5938|17.2509">Olomouc</option>
+        </optgroup>
+        <optgroup label="Europe">
+          <option value="Vienna|48.2082|16.3738">Vienna (Wien)</option>
+          <option value="Budapest|47.4979|19.0402">Budapest</option>
+          <option value="Warsaw|52.2297|21.0122">Warsaw (Warszawa)</option>
+          <option value="Berlin|52.5200|13.4050">Berlin</option>
+          <option value="London|51.5074|-0.1278">London</option>
+          <option value="Paris|48.8566|2.3522">Paris</option>
+          <option value="Rome|41.9028|12.4964">Rome</option>
+          <option value="Madrid|40.4168|-3.7038">Madrid</option>
+          <option value="Amsterdam|52.3676|4.9041">Amsterdam</option>
+          <option value="Zurich|47.3769|8.5417">Zurich</option>
+        </optgroup>
+        <optgroup label="North America & Worldwide">
+          <option value="New York|40.7128|-74.0060">New York</option>
+          <option value="Los Angeles|34.0522|-118.2437">Los Angeles</option>
+          <option value="Toronto|43.6532|-79.3832">Toronto</option>
+          <option value="Tokyo|35.6762|139.6503">Tokyo</option>
+          <option value="Dubai|25.2048|55.2708">Dubai</option>
+          <option value="Sydney|-33.8688|151.2093">Sydney</option>
+        </optgroup>
+      </select>
+    </div>
+
     <div class="field">
       <label for="w_city">City Name</label>
       <input type="text" id="w_city" name="w_city" value="{{W_CITY}}" placeholder="e.g. Bratislava">
@@ -263,7 +341,28 @@ static String buildPortalHtml() {
 
     <button type="submit" class="btn-submit">Save & Apply Settings</button>
   </form>
-  <div class="footer">Ulanzi TC001 Evolved &bull; Firmware v1.1.0</div>
+
+  <div class="section-title" style="margin-top:1.75rem;">&#x1F680; Firmware Update (OTA)</div>
+  <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
+    Running Version: <strong style="color:var(--accent);">v{{FW_VERSION}}</strong>
+  </div>
+  <div class="field">
+    <label for="ota_file">Flash Local Binary (.bin)</label>
+    <input type="file" id="ota_file" accept=".bin" style="padding:0.4rem;">
+    <button type="button" class="scan-btn" style="margin-top:0.5rem; width:100%; justify-content:center;" onclick="uploadFirmware()">&#x21E7; Flash Firmware File</button>
+    <div id="ota_progress" style="display:none; margin-top:0.75rem;">
+      <div style="background:rgba(15,23,42,0.8); border-radius:9999px; height:8px; overflow:hidden;">
+        <div id="ota_bar" style="background:var(--accent); width:0%; height:100%; transition:width 0.2s;"></div>
+      </div>
+      <div id="ota_msg" style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.35rem;"></div>
+    </div>
+  </div>
+  <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
+    <button type="button" class="scan-btn" style="width:100%; justify-content:center;" onclick="checkCloudOta()">&#x2601; Check GitHub Releases</button>
+    <div id="cloud_ota_res" style="font-size:0.8rem; margin-top:0.5rem; text-align:center;"></div>
+  </div>
+
+  <div class="footer">Ulanzi TC001 Evolved &bull; Firmware v{{FW_VERSION}}</div>
 </div>
 <script>
 function scanNetworks() {
@@ -288,6 +387,85 @@ function scanNetworks() {
 function selectNetwork(val) {
   if (val) document.getElementById('ssid').value = val;
 }
+function applyCityPreset(val) {
+  if (!val) return;
+  const parts = val.split('|');
+  if (parts.length === 3) {
+    document.getElementById('w_city').value = parts[0];
+    document.getElementById('w_lat').value = parts[1];
+    document.getElementById('w_lon').value = parts[2];
+  }
+}
+function uploadFirmware() {
+  const fileInput = document.getElementById('ota_file');
+  if (!fileInput.files.length) {
+    alert('Please select a .bin firmware file first');
+    return;
+  }
+  const file = fileInput.files[0];
+  const formData = new FormData();
+  formData.append('update', file);
+
+  const prog = document.getElementById('ota_progress');
+  const bar = document.getElementById('ota_bar');
+  const msg = document.getElementById('ota_msg');
+  prog.style.display = 'block';
+  msg.textContent = 'Uploading: 0%';
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/update', true);
+  xhr.upload.onprogress = function(e) {
+    if (e.lengthComputable) {
+      const pct = Math.round((e.loaded / e.total) * 100);
+      bar.style.width = pct + '%';
+      msg.textContent = 'Uploading & Flashing: ' + pct + '%';
+    }
+  };
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      bar.style.width = '100%';
+      bar.style.background = '#10b981';
+      msg.innerHTML = '<strong style="color:#10b981;">✓ Flash Complete! Rebooting clock...</strong>';
+      setTimeout(() => location.reload(), 6000);
+    } else {
+      bar.style.background = '#ef4444';
+      msg.innerHTML = '<strong style="color:#ef4444;">✗ Update Error: ' + xhr.responseText + '</strong>';
+    }
+  };
+  xhr.onerror = function() {
+    bar.style.background = '#ef4444';
+    msg.innerHTML = '<strong style="color:#ef4444;">✗ Network connection error</strong>';
+  };
+  xhr.send(formData);
+}
+function checkCloudOta() {
+  const res = document.getElementById('cloud_ota_res');
+  res.innerHTML = '<span style="color:var(--text-muted);">Checking GitHub Releases...</span>';
+  fetch('/api/ota/check')
+    .then(r => r.json())
+    .then(data => {
+      if (data.has_update) {
+        res.innerHTML = '<div style="color:#10b981; font-weight:700; margin-bottom:0.35rem;">★ New Version Available: v' + data.latest_version + '</div>' +
+          '<button type="button" class="scan-btn" style="background:#0284c7; color:#fff; border:none;" onclick="installCloudOta(\'' + data.download_url + '\')">Install v' + data.latest_version + ' Now</button>';
+      } else {
+        res.innerHTML = '<span style="color:#10b981;">✓ Firmware is up to date (v' + data.current_version + ')</span>';
+      }
+    })
+    .catch(() => {
+      res.innerHTML = '<span style="color:#ef4444;">Cannot reach GitHub releases</span>';
+    });
+}
+function installCloudOta(url) {
+  const res = document.getElementById('cloud_ota_res');
+  res.innerHTML = '<span style="color:var(--accent);">Downloading and flashing from GitHub... Watch clock display!</span>';
+  const fd = new FormData();
+  fd.append('url', url);
+  fetch('/api/ota/install', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      setTimeout(() => location.reload(), 10000);
+    });
+}
 </script>
 </body>
 </html>
@@ -299,6 +477,8 @@ function selectNetwork(val) {
     html.replace("{{NIGHT_MODE_CHK}}", s_nightMode ? "checked" : "");
     html.replace("{{NIGHT_START}}", String(s_nightStart));
     html.replace("{{NIGHT_END}}", String(s_nightEnd));
+    html.replace("{{DAY_BRI}}", String(s_dayBri));
+    html.replace("{{NIGHT_BRI}}", String(s_nightBri));
 
     html.replace("{{W_CITY}}", s_wCity);
     html.replace("{{W_LAT}}", String(s_wLat, 4));
@@ -311,6 +491,7 @@ function selectNetwork(val) {
 
     html.replace("{{YT_CHANNEL}}", s_ytChannel);
     html.replace("{{YT_KEY}}", s_ytApiKey.length() > 0 ? "********" : "");
+    html.replace("{{FW_VERSION}}", FW_VERSION);
     return html;
 }
 
@@ -416,13 +597,21 @@ static void handleSave() {
         }
     }
 
-    // 3. Process Ambient & Night Mode
+    // 3. Process Ambient, Day/Night Brightness & Night Mode
     Network_SetAutoBrightness(s_server.hasArg("auto_bri"));
     Network_SetNightMode(s_server.hasArg("night_mode"));
     if (s_server.hasArg("night_start") && s_server.hasArg("night_end")) {
         uint8_t st = (uint8_t)constrain(s_server.arg("night_start").toInt(), 0, 23);
         uint8_t en = (uint8_t)constrain(s_server.arg("night_end").toInt(), 0, 23);
         Network_SetNightSchedule(st, en);
+    }
+    if (s_server.hasArg("day_bri")) {
+        uint8_t db = (uint8_t)constrain(s_server.arg("day_bri").toInt(), 5, 100);
+        Network_SetDayBrightness(db);
+    }
+    if (s_server.hasArg("night_bri")) {
+        uint8_t nb = (uint8_t)constrain(s_server.arg("night_bri").toInt(), 1, 25);
+        Network_SetNightBrightness(nb);
     }
 
     // 4. Process Outdoor Weather
@@ -467,6 +656,7 @@ static void handleStatus() {
     doc["ssid"] = Network_GetSSID();
     doc["rssi"] = Network_GetRSSI();
     doc["rotate_sec"] = s_rotateSec;
+    doc["firmware_version"] = FW_VERSION;
 
     // Ambient & Sensor telemetry
     const SensorData& s = Sensors_GetData();
@@ -476,6 +666,8 @@ static void handleStatus() {
     doc["battery_pct"] = s.batteryPercent;
     doc["ldr_raw"] = s.ldrRaw;
     doc["auto_bri"] = s_autoBri;
+    doc["day_bri"] = s_dayBri;
+    doc["night_bri"] = s_nightBri;
     doc["night_mode"] = s_nightMode;
 
     // Services
@@ -511,6 +703,8 @@ void Network_Init() {
     s_nightMode = s_prefs.getBool(PREF_KEY_NIGHT_MODE, true);
     s_nightStart = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_START, DEFAULT_NIGHT_START);
     s_nightEnd = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_END, DEFAULT_NIGHT_END);
+    s_dayBri = (uint8_t)s_prefs.getUChar(PREF_KEY_DAY_BRI, DEFAULT_DAY_BRI);
+    s_nightBri = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_BRI, DEFAULT_NIGHT_BRI);
 
     s_wLat = s_prefs.getFloat(PREF_KEY_WEATHER_LAT, DEFAULT_WEATHER_LAT);
     s_wLon = s_prefs.getFloat(PREF_KEY_WEATHER_LON, DEFAULT_WEATHER_LON);
@@ -533,6 +727,9 @@ void Network_Init() {
     s_server.on("/save", HTTP_POST, handleSave);
     s_server.on("/scan", HTTP_GET, handleScan);
     s_server.on("/status", HTTP_GET, handleStatus);
+
+    // Initialize Over-The-Air Update System
+    OTA_Init(s_server);
 
     // Captive Portal OS detection probes
     s_server.on("/generate_204", HTTP_GET, handleCaptiveRedirect);
@@ -584,6 +781,9 @@ void Network_StartAP() {
 
 void Network_Poll() {
     uint32_t now = millis();
+
+    // Service OTA Reboot Timer
+    OTA_Poll();
 
     if (s_pendingReconnect && (now >= s_reconnectTriggerMs)) {
         s_pendingReconnect = false;
@@ -734,6 +934,24 @@ void Network_SetNightSchedule(uint8_t startHour, uint8_t endHour) {
     s_nightEnd = endHour;
     s_prefs.putUChar(PREF_KEY_NIGHT_START, s_nightStart);
     s_prefs.putUChar(PREF_KEY_NIGHT_END, s_nightEnd);
+}
+
+uint8_t Network_GetDayBrightness() {
+    return s_dayBri;
+}
+
+void Network_SetDayBrightness(uint8_t bri) {
+    s_dayBri = constrain(bri, (uint8_t)5, (uint8_t)100);
+    s_prefs.putUChar(PREF_KEY_DAY_BRI, s_dayBri);
+}
+
+uint8_t Network_GetNightBrightness() {
+    return s_nightBri;
+}
+
+void Network_SetNightBrightness(uint8_t bri) {
+    s_nightBri = constrain(bri, (uint8_t)1, (uint8_t)25);
+    s_prefs.putUChar(PREF_KEY_NIGHT_BRI, s_nightBri);
 }
 
 float Network_GetWeatherLat() {

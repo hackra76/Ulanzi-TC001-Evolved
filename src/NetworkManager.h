@@ -49,6 +49,12 @@ uint8_t Network_GetNightStartHour();
 uint8_t Network_GetNightEndHour();
 void Network_SetNightSchedule(uint8_t startHour, uint8_t endHour);
 
+uint8_t Network_GetDayBrightness();
+void Network_SetDayBrightness(uint8_t bri);
+uint8_t Network_GetNightBrightness();
+void Network_SetNightBrightness(uint8_t bri);
+
+
 // Outdoor Weather
 float Network_GetWeatherLat();
 float Network_GetWeatherLon();
