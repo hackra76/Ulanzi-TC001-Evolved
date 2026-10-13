@@ -1,0 +1,7 @@
+.pio
+.cache
+.vscode/
+.clangd
+compile_commands.json
+__pycache__/
+*.pyc
