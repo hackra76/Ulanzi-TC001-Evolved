@@ -38,6 +38,13 @@
 #define BATTERY_MIN_VOLTS   3.3f // 0%
 #define BATTERY_MAX_VOLTS   4.18f// 100%
 
+// --- Wi-Fi & Provisioning Configuration ---
+#define WIFI_AP_SSID_PREFIX     "Ulanzi-Setup-"
+#define WIFI_CONNECT_TIMEOUT_MS 12000
+#define PREF_NAMESPACE          "ulanzi_cfg"
+#define PREF_KEY_SSID           "wifi_ssid"
+#define PREF_KEY_PASS           "wifi_pass"
+
 // --- Firmware Metadata ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
 #define FW_VERSION          "1.0.0"

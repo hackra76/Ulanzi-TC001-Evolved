@@ -99,3 +99,28 @@ static const uint16_t ICON_BATTERY[64] = {
     0, C_GRAY, C_GRAY, C_GRAY, C_GRAY, C_GRAY, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0
 };
+
+// 8x8 Wi-Fi Station Icon
+static const uint16_t ICON_WIFI[64] = {
+    0, C_CYAN, C_CYAN, C_CYAN, C_CYAN, C_CYAN, C_CYAN, 0,
+    C_CYAN, 0, 0, 0, 0, 0, 0, C_CYAN,
+    0, 0, C_CYAN, C_CYAN, C_CYAN, C_CYAN, 0, 0,
+    0, C_CYAN, 0, 0, 0, 0, C_CYAN, 0,
+    0, 0, 0, C_CYAN, C_CYAN, 0, 0, 0,
+    0, 0, C_CYAN, 0, 0, C_CYAN, 0, 0,
+    0, 0, 0, C_CYAN, C_CYAN, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+// 8x8 SoftAP / Hotspot Icon
+static const uint16_t ICON_AP[64] = {
+    C_ORANGE, 0, 0, 0, 0, 0, 0, C_ORANGE,
+    0, C_ORANGE, 0, C_WHITE, C_WHITE, 0, C_ORANGE, 0,
+    0, 0, C_ORANGE, C_WHITE, C_WHITE, C_ORANGE, 0, 0,
+    0, 0, 0, C_ORANGE, C_ORANGE, 0, 0, 0,
+    0, 0, 0, C_ORANGE, C_ORANGE, 0, 0, 0,
+    0, 0, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, 0, 0,
+    0, C_ORANGE, 0, 0, 0, 0, C_ORANGE, 0,
+    C_ORANGE, 0, 0, 0, 0, 0, 0, C_ORANGE
+};
+

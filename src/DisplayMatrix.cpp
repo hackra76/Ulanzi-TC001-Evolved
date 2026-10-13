@@ -9,6 +9,8 @@ static Adafruit_NeoMatrix s_matrix = Adafruit_NeoMatrix(
 );
 
 static uint8_t s_brightness = DEFAULT_BRIGHTNESS;
+static int16_t s_scrollX = MATRIX_WIDTH;
+static uint32_t s_lastScrollMs = 0;
 
 void DisplayMatrix_Init() {
     s_matrix.begin();
@@ -52,6 +54,52 @@ void DisplayMatrix_DrawText(int16_t x, int16_t y, const char* text, uint16_t col
     s_matrix.setCursor(x, y);
     s_matrix.setTextColor(color);
     s_matrix.print(text);
+}
+
+int16_t DisplayMatrix_GetTextWidth(const char* text) {
+    if (!text) return 0;
+    return (int16_t)(strlen(text) * 6);
+}
+
+void DisplayMatrix_ResetTicker() {
+    s_scrollX = MATRIX_WIDTH;
+    s_lastScrollMs = millis();
+}
+
+bool DisplayMatrix_ScrollTicker(const char* text, uint16_t color, const uint16_t* pinnedIcon, int speedMs) {
+    if (!text) return true;
+    uint32_t now = millis();
+    int16_t textWidth = DisplayMatrix_GetTextWidth(text);
+    int16_t leftBoundary = (pinnedIcon != nullptr) ? 9 : 0;
+    int16_t endX = leftBoundary - textWidth;
+
+    if (now - s_lastScrollMs >= (uint32_t)speedMs) {
+        s_lastScrollMs = now;
+        s_scrollX--;
+    }
+
+    bool finished = false;
+    if (s_scrollX < endX) {
+        s_scrollX = MATRIX_WIDTH;
+        finished = true;
+    }
+
+    s_matrix.clear();
+    // Render text at current scroll offset
+    DisplayMatrix_DrawText(s_scrollX, 1, text, color);
+
+    // If an icon is pinned on the left, clear columns 0..8 and redraw icon + spacer column
+    if (pinnedIcon != nullptr) {
+        for (int16_t x = 0; x <= 8; x++) {
+            for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                s_matrix.drawPixel(x, y, C_BLACK);
+            }
+        }
+        DisplayMatrix_DrawIcon(0, 0, pinnedIcon);
+    }
+
+    DisplayMatrix_Show();
+    return finished;
 }
 
 Adafruit_NeoMatrix& DisplayMatrix_GetMatrix() {
