@@ -5,6 +5,7 @@
 #include "CryptoService.h"
 #include "Sensors.h"
 #include "OtaManager.h"
+#include "DisplayMatrix.h"
 
 static Preferences s_prefs;
 static WebServer s_server(80);
@@ -17,7 +18,12 @@ static String s_apSSID = "";
 static IPAddress s_apIP(192, 168, 4, 1);
 static IPAddress s_apNetmask(255, 255, 255, 0);
 
+static bool s_autoRotate = true;
+static uint8_t s_activeApp = 0;
 static uint16_t s_rotateSec = DEFAULT_ROTATE_SEC;
+static uint8_t s_carouselMask = 0x7F; // Bitmask of enabled carousel screens (default: all 7 active)
+static uint8_t s_carouselOrder[7] = {0, 1, 2, 3, 4, 5, 6}; // Screen display sequence
+static uint8_t s_batteryMode = 2; // 0: Percentage, 1: Voltage, 2: Alternating
 static String s_ytChannel = "";
 static String s_ytApiKey = "";
 
@@ -36,6 +42,33 @@ static String s_wCity = DEFAULT_WEATHER_CITY;
 
 // Crypto
 static String s_cryptoSym = DEFAULT_CRYPTO_SYM;
+
+// Clock, Date & Layout Settings (Awtrix Style)
+static uint8_t s_clockMode = 1;       // 0: Time Only, 1: Combined, 2: Date Only
+static bool s_showSeconds = false;    // Option to show seconds in time display
+static bool s_weekdayBar = true;      // 7 bars under time
+static bool s_weekdayStartMon = true; // Start Monday
+static uint8_t s_weekdayActiveColIdx = 0;   // 0: Cyan, 1: Orange, 2: Green, 3: Yellow, 4: Red, 5: White
+static uint8_t s_weekdayInactColIdx = 0;    // 0: Dim Slate, 1: Dark Gray, 2: Dim Amber, 3: Off
+static uint8_t s_dateFormat = 0;      // 0: DD.MM., 1: DD MMM, 2: MM/DD, 3: DAY DD
+static uint8_t s_clockIcon = 0;       // 0: Dynamic Calendar, 1: Heart, 2: Clock Face, 3: None
+static uint8_t s_textAlign = 0;       // 0: Left-Aligned with Icon (Awtrix), 1: Centered
+
+static const uint16_t s_wdActiveColors[] = {
+    0x07FF, // 0: Cyan (#00F0FF)
+    0xFD20, // 1: Orange (#FF8800)
+    0x07E0, // 2: Green (#00FF00)
+    0xFFE0, // 3: Yellow (#FFFF00)
+    0xF800, // 4: Red (#FF2200)
+    0xFFFF  // 5: White (#FFFFFF)
+};
+
+static const uint16_t s_wdInactiveColors[] = {
+    0x4228, // 0: Dim Slate (#404850) - clearly visible inactive segments
+    0x2104, // 1: Dark Slate (#202830)
+    0x3100, // 2: Dim Amber (#302000)
+    0x0000  // 3: Off (Black)
+};
 
 static uint32_t s_connectStartMs = 0;
 static uint32_t s_lastWifiCheckMs = 0;
@@ -188,17 +221,94 @@ static String buildPortalHtml() {
     box-shadow: 0 8px 20px rgba(56, 189, 248, 0.35);
   }
   .btn-submit:hover { opacity: 0.95; }
+  #toast {
+    position: fixed;
+    top: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0284c7;
+    color: white;
+    padding: 0.65rem 1.4rem;
+    border-radius: 9999px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px rgba(56,189,248,0.4);
+    z-index: 1000;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: none;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .reorder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.85rem;
+  }
+  .reorder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 0.45rem 0.75rem;
+    transition: background 0.2s;
+  }
+  .reorder-item:hover {
+    background: rgba(30, 41, 59, 0.85);
+  }
+  .reorder-btns {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .btn-sm {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 0.35rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+  }
+  .btn-sm:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
   .footer { text-align: center; margin-top: 1.25rem; font-size: 0.75rem; color: var(--text-muted); }
 </style>
 </head>
 <body>
+<div id="toast"></div>
 <div class="card">
   <div class="header">
     <div class="badge">Pixel Clock Setup</div>
     <h1>Ulanzi TC001 Evolved</h1>
     <p class="sub">Configure Network, Ambient Screen, Weather, Tickers & Firmware</p>
   </div>
-  <form action="/save" method="POST">
+
+  <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.3); border-radius:1rem; padding:1rem; margin-bottom:1.5rem; text-align:center; box-shadow:0 0 25px rgba(56,189,248,0.15);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+      <span style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em;">&#x1F4FA; Live Display Stream</span>
+      <a href="/api/display/screenshot" target="_blank" download="tc001_screenshot.bmp" style="font-size:0.75rem; color:var(--accent); text-decoration:none; border:1px solid rgba(56,189,248,0.4); padding:0.2rem 0.5rem; border-radius:9999px;">&#x1F4F7; Capture BMP</a>
+    </div>
+    <div style="overflow-x:auto; padding:4px 0;">
+      <canvas id="virtualMatrix" width="320" height="80" style="background:#05070c; border-radius:6px; box-shadow:inset 0 0 10px #000; max-width:100%; height:auto; display:inline-block; vertical-align:middle;"></canvas>
+    </div>
+    <div style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:0.6rem;">
+      <button type="button" class="scan-btn" style="padding:0.25rem 0.6rem; margin:0;" onclick="switchScreen(-1)">&larr; Prev</button>
+      <span id="screenNameBadge" style="font-size:0.75rem; font-weight:600; color:var(--text); min-width:140px; text-align:center;">{{APP_NAME}}</span>
+      <button type="button" class="scan-btn" style="padding:0.25rem 0.6rem; margin:0;" onclick="switchScreen(1)">Next &rarr;</button>
+    </div>
+    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.4rem;">Real-time 32&times;8 NeoPixel mirror &bull; Auto-refresh 1.5s</div>
+  </div>
+
+  <form id="settingsForm" action="/save" method="POST">
     
     <div class="section-title">&#x1F4F6; Wi-Fi Network</div>
     <div class="field">
@@ -252,9 +362,126 @@ static String buildPortalHtml() {
       </div>
     </div>
 
+    <div class="section-title">&#x1F3A0; Screen Carousel & Navigation</div>
+    <label class="chk-label">
+      <input type="checkbox" id="auto_rotate" name="auto_rotate" value="1" {{AUTO_ROTATE_CHK}} onchange="document.getElementById('rotate_delay_field').style.display = this.checked ? 'block' : 'none'">
+      Auto-Rotate Screens (Carousel)
+    </label>
+
+    <div style="font-size:0.8rem; font-weight:600; color:var(--text-muted); margin:0.75rem 0 0.35rem 0;">Screens in Carousel (Check to Enable &bull; Use &#x25B2;&#x25BC; to Reorder):</div>
+    <input type="hidden" id="car_ord" name="car_ord" value="{{CAR_ORD}}">
+    <div class="reorder-list" id="carouselScreens">
+      {{REORDER_ITEMS}}
+    </div>
+
     <div class="field">
-      <label for="rotate">Carousel Rotate Delay (seconds, 3 - 120)</label>
+      <label for="active_app">Default / Active Screen</label>
+      <select id="active_app" name="active_app">
+        <option value="0" {{APP_0_SEL}}>Clock (Heart / Time)</option>
+        <option value="1" {{APP_1_SEL}}>Indoor Environment (SHT30 Temp)</option>
+        <option value="2" {{APP_2_SEL}}>Outdoor Weather (Open-Meteo)</option>
+        <option value="3" {{APP_3_SEL}}>Crypto & Financial Markets</option>
+        <option value="4" {{APP_4_SEL}}>YouTube Subscriber Count</option>
+        <option value="5" {{APP_5_SEL}}>Live Airspace Radar (ADS-B)</option>
+        <option value="6" {{APP_6_SEL}}>Battery & Energy Telemetry</option>
+      </select>
+    </div>
+
+    <div class="field" id="rotate_delay_field" style="{{ROTATE_DELAY_DISPLAY}}">
+      <label for="rotate">Carousel Cycle Interval (seconds, 3 - 120)</label>
       <input type="number" id="rotate" name="rotate" min="3" max="120" value="{{ROTATE}}" required>
+    </div>
+
+    <div class="section-title">&#x26A1; Battery & Energy Telemetry</div>
+    <div class="field">
+      <label for="bat_mode">Battery Display Format</label>
+      <select id="bat_mode" name="bat_mode">
+        <option value="2" {{BAT_MODE_2_SEL}}>Alternating (Percentage &bull; Voltage every 3s)</option>
+        <option value="0" {{BAT_MODE_0_SEL}}>Percentage Only (e.g. 94%)</option>
+        <option value="1" {{BAT_MODE_1_SEL}}>Voltage Only (e.g. 4.12V)</option>
+      </select>
+    </div>
+
+    <div class="section-title">&#x23F0; Clock & Date Layout (Awtrix Style)</div>
+    
+    <div class="field">
+      <label for="clk_mode">Clock Display Mode</label>
+      <select id="clk_mode" name="clk_mode">
+        <option value="0" {{CLK_MODE_0_SEL}}>Time Only</option>
+        <option value="1" {{CLK_MODE_1_SEL}}>Combined Time & Date (Alternating)</option>
+        <option value="2" {{CLK_MODE_2_SEL}}>Date Only</option>
+      </select>
+    </div>
+
+    <label class="chk-label">
+      <input type="checkbox" name="show_sec" value="1" {{SHOW_SEC_CHK}}>
+      Show Seconds in Time Display
+    </label>
+
+    <label class="chk-label">
+      <input type="checkbox" name="wd_bar" value="1" {{WD_BAR_CHK}}>
+      Show 7 Weekday Bars Under Time
+    </label>
+
+    <div class="row">
+      <div class="field">
+        <label for="wd_mon">Week Starts On</label>
+        <select id="wd_mon" name="wd_mon">
+          <option value="1" {{WD_MON_1_SEL}}>Monday (ISO 8601)</option>
+          <option value="0" {{WD_MON_0_SEL}}>Sunday (US Standard)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="wd_acol">Active Day Color</label>
+        <select id="wd_acol" name="wd_acol">
+          <option value="0" {{WD_ACOL_0_SEL}}>Cyan (#00F0FF)</option>
+          <option value="1" {{WD_ACOL_1_SEL}}>Orange (#FF8800)</option>
+          <option value="2" {{WD_ACOL_2_SEL}}>Green (#00FF00)</option>
+          <option value="3" {{WD_ACOL_3_SEL}}>Yellow (#FFFF00)</option>
+          <option value="4" {{WD_ACOL_4_SEL}}>Red (#FF2200)</option>
+          <option value="5" {{WD_ACOL_5_SEL}}>White (#FFFFFF)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="wd_icol">Inactive Day Color</label>
+        <select id="wd_icol" name="wd_icol">
+          <option value="0" {{WD_ICOL_0_SEL}}>Dim Slate (#202830)</option>
+          <option value="1" {{WD_ICOL_1_SEL}}>Dark Gray (#181818)</option>
+          <option value="2" {{WD_ICOL_2_SEL}}>Dim Amber (#302000)</option>
+          <option value="3" {{WD_ICOL_3_SEL}}>Off (Black)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="date_fmt">Date Format</label>
+        <select id="date_fmt" name="date_fmt">
+          <option value="0" {{DATE_FMT_0_SEL}}>DD.MM. (e.g. 14.10.)</option>
+          <option value="1" {{DATE_FMT_1_SEL}}>DD MMM (e.g. 14 OCT)</option>
+          <option value="2" {{DATE_FMT_2_SEL}}>MM/DD (e.g. 10/14)</option>
+          <option value="3" {{DATE_FMT_3_SEL}}>DAY DD (e.g. WED 14)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="clk_icon">Clock Icon Style</label>
+        <select id="clk_icon" name="clk_icon">
+          <option value="0" {{CLK_ICON_0_SEL}}>Dynamic Calendar (Date 1-31)</option>
+          <option value="1" {{CLK_ICON_1_SEL}}>Heart (Classic)</option>
+          <option value="2" {{CLK_ICON_2_SEL}}>Clock Face</option>
+          <option value="3" {{CLK_ICON_3_SEL}}>None (Full Width)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="txt_align">Text Alignment</label>
+        <select id="txt_align" name="txt_align">
+          <option value="0" {{TXT_ALIGN_0_SEL}}>Left-Aligned with Icon (Awtrix)</option>
+          <option value="1" {{TXT_ALIGN_1_SEL}}>Centered in Window</option>
+        </select>
+      </div>
     </div>
 
     <div class="section-title">&#x26C5; Real Outdoor Weather (Open-Meteo)</div>
@@ -318,15 +545,32 @@ static String buildPortalHtml() {
       </div>
     </div>
 
-    <div class="section-title">&#x1F4B0; Crypto Ticker (Binance Live)</div>
+    <div class="section-title">&#x1F4B0; Financial Markets & Crypto (Live Tickers)</div>
     <div class="field">
-      <label for="c_sym">Cryptocurrency Pair</label>
-      <select id="c_sym" name="c_sym">
-        <option value="BTC" {{C_BTC_SEL}}>Bitcoin (BTC / USDT)</option>
-        <option value="ETH" {{C_ETH_SEL}}>Ethereum (ETH / USDT)</option>
-        <option value="SOL" {{C_SOL_SEL}}>Solana (SOL / USDT)</option>
-        <option value="BNB" {{C_BNB_SEL}}>Binance Coin (BNB / USDT)</option>
+      <label for="c_sym">Popular Asset / Index Preset</label>
+      <select id="c_sym" name="c_sym" onchange="document.getElementById('c_sym_custom').value = ''">
+        <optgroup label="Cryptocurrencies">
+          <option value="BTC" {{C_BTC_SEL}}>Bitcoin (BTC / USDT)</option>
+          <option value="ETH" {{C_ETH_SEL}}>Ethereum (ETH / USDT)</option>
+          <option value="SOL" {{C_SOL_SEL}}>Solana (SOL / USDT)</option>
+          <option value="BNB" {{C_BNB_SEL}}>Binance Coin (BNB / USDT)</option>
+        </optgroup>
+        <optgroup label="Stocks & Indices">
+          <option value="AAPL" {{C_AAPL_SEL}}>Apple Inc. (AAPL - Nasdaq)</option>
+          <option value="TSLA" {{C_TSLA_SEL}}>Tesla Inc. (TSLA - Nasdaq)</option>
+          <option value="NVDA" {{C_NVDA_SEL}}>Nvidia Corp. (NVDA - Nasdaq)</option>
+          <option value="SPX" {{C_SPX_SEL}}>S&P 500 Index (^GSPC)</option>
+        </optgroup>
+        <optgroup label="Commodities & Forex">
+          <option value="GOLD" {{C_GOLD_SEL}}>Gold Bullion (GC=F / USD)</option>
+          <option value="EUR" {{C_EUR_SEL}}>EUR / USD (Euro Forex)</option>
+          <option value="USD" {{C_USD_SEL}}>USD / EUR (US Dollar Forex)</option>
+        </optgroup>
       </select>
+    </div>
+    <div class="field">
+      <label for="c_sym_custom">Or Custom Ticker / Symbol</label>
+      <input type="text" id="c_sym_custom" name="c_sym_custom" value="{{C_SYM_CUSTOM}}" placeholder="e.g. AAPL, GOLD, EUR, MSFT, BTC">
     </div>
 
     <div class="section-title">&#x25B6; YouTube Channel Analytics</div>
@@ -466,6 +710,100 @@ function installCloudOta(url) {
       setTimeout(() => location.reload(), 10000);
     });
 }
+let currentAppIndex = {{ACTIVE_APP}};
+const appNames = ["Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery"];
+function switchScreen(dir) {
+  currentAppIndex = (currentAppIndex + dir + 7) % 7;
+  fetch('/api/screen?set=' + currentAppIndex)
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('screenNameBadge').innerText = d.app_name || appNames[currentAppIndex];
+      updateVirtualMatrix();
+    });
+}
+function updateVirtualMatrix() {
+  fetch('/api/display')
+    .then(r => r.json())
+    .then(data => {
+      const cvs = document.getElementById('virtualMatrix');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      ctx.fillStyle = '#0a0d14';
+      ctx.fillRect(0, 0, 320, 80);
+      const rows = data.pixels;
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 32; x++) {
+          ctx.fillStyle = rows[y][x];
+          ctx.beginPath();
+          ctx.arc(x * 10 + 5, y * 10 + 5, 3.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    })
+    .catch(() => {});
+}
+setInterval(updateVirtualMatrix, 1500);
+updateVirtualMatrix();
+
+function moveScreen(btn, dir) {
+  const item = btn.closest('.reorder-item');
+  if (dir === -1 && item.previousElementSibling) {
+    item.parentNode.insertBefore(item, item.previousElementSibling);
+  } else if (dir === 1 && item.nextElementSibling) {
+    item.parentNode.insertBefore(item.nextElementSibling, item);
+  }
+  updateOrderInput();
+}
+
+function updateOrderInput() {
+  const items = document.querySelectorAll('#carouselScreens .reorder-item');
+  const order = Array.from(items).map(el => el.getAttribute('data-app')).join(',');
+  document.getElementById('car_ord').value = order;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.style.display = 'block';
+  t.style.opacity = '1';
+  setTimeout(() => {
+    t.style.opacity = '0';
+    setTimeout(() => { t.style.display = 'none'; }, 300);
+  }, 2500);
+}
+
+document.getElementById('settingsForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  updateOrderInput();
+  const form = this;
+  const btn = form.querySelector('.btn-submit');
+  const origText = btn.innerText;
+  btn.innerText = 'Saving...';
+  btn.disabled = true;
+
+  const params = new URLSearchParams(new FormData(form));
+  params.append('ajax', '1');
+
+  fetch('/save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: params.toString()
+  })
+  .then(res => {
+    btn.innerText = origText;
+    btn.disabled = false;
+    showToast('✓ Settings Saved Automatically!');
+    updateVirtualMatrix();
+  })
+  .catch(err => {
+    btn.innerText = origText;
+    btn.disabled = false;
+    form.submit();
+  });
+});
 </script>
 </body>
 </html>
@@ -473,6 +811,78 @@ function installCloudOta(url) {
 
     html.replace("{{SSID}}", s_ssid);
     html.replace("{{ROTATE}}", String(s_rotateSec));
+    html.replace("{{AUTO_ROTATE_CHK}}", s_autoRotate ? "checked" : "");
+    html.replace("{{ROTATE_DELAY_DISPLAY}}", s_autoRotate ? "" : "display:none;");
+    html.replace("{{ACTIVE_APP}}", String(s_activeApp));
+    static const char* kAppNames[] = {
+        "Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery"
+    };
+    html.replace("{{APP_NAME}}", kAppNames[s_activeApp % 7]);
+    for (int i = 0; i < 7; i++) {
+        char tag[20];
+        snprintf(tag, sizeof(tag), "{{APP_%d_SEL}}", i);
+        html.replace(tag, (s_activeApp == i) ? "selected" : "");
+    }
+
+    String reorderHtml = "";
+    static const char* kAppIconsNames[] = {
+        "&#x23F0; Clock", "&#x1F321; Indoor Temp", "&#x26C5; Outdoor Weather", "&#x1F4B0; Crypto & Markets", "&#x25B6; YouTube", "&#x2708; Live Airspace", "&#x26A1; Battery & Energy"
+    };
+    for (int i = 0; i < 7; i++) {
+        uint8_t appIdx = s_carouselOrder[i];
+        if (appIdx >= 7) appIdx = i;
+        bool isChecked = (s_carouselMask & (1 << appIdx)) != 0;
+
+        reorderHtml += "<div class=\"reorder-item\" data-app=\"" + String(appIdx) + "\">";
+        reorderHtml += "<label class=\"chk-label\" style=\"margin:0;\">";
+        reorderHtml += "<input type=\"checkbox\" name=\"car_app_" + String(appIdx) + "\" value=\"1\" " + (isChecked ? "checked " : "") + "onchange=\"updateOrderInput()\">";
+        reorderHtml += kAppIconsNames[appIdx];
+        reorderHtml += "</label>";
+        reorderHtml += "<div style=\"display:flex; gap:0.25rem;\">";
+        reorderHtml += "<button type=\"button\" class=\"btn-sm\" onclick=\"moveScreen(this, -1)\">&#x25B2;</button>";
+        reorderHtml += "<button type=\"button\" class=\"btn-sm\" onclick=\"moveScreen(this, 1)\">&#x25BC;</button>";
+        reorderHtml += "</div></div>";
+    }
+    html.replace("{{REORDER_ITEMS}}", reorderHtml);
+    html.replace("{{CAR_ORD}}", Network_GetCarouselOrderString());
+
+    html.replace("{{BAT_MODE_0_SEL}}", (s_batteryMode == 0) ? "selected" : "");
+    html.replace("{{BAT_MODE_1_SEL}}", (s_batteryMode == 1) ? "selected" : "");
+    html.replace("{{BAT_MODE_2_SEL}}", (s_batteryMode == 2) ? "selected" : "");
+
+    // Clock & Layout replacements
+    for (int i = 0; i < 3; i++) {
+        char tag[20];
+        snprintf(tag, sizeof(tag), "{{CLK_MODE_%d_SEL}}", i);
+        html.replace(tag, (s_clockMode == i) ? "selected" : "");
+    }
+    html.replace("{{SHOW_SEC_CHK}}", s_showSeconds ? "checked" : "");
+    html.replace("{{WD_BAR_CHK}}", s_weekdayBar ? "checked" : "");
+    html.replace("{{WD_MON_1_SEL}}", s_weekdayStartMon ? "selected" : "");
+    html.replace("{{WD_MON_0_SEL}}", !s_weekdayStartMon ? "selected" : "");
+    for (int i = 0; i < 6; i++) {
+        char tag[20];
+        snprintf(tag, sizeof(tag), "{{WD_ACOL_%d_SEL}}", i);
+        html.replace(tag, (s_weekdayActiveColIdx == i) ? "selected" : "");
+    }
+    for (int i = 0; i < 4; i++) {
+        char tag[20];
+        snprintf(tag, sizeof(tag), "{{WD_ICOL_%d_SEL}}", i);
+        html.replace(tag, (s_weekdayInactColIdx == i) ? "selected" : "");
+    }
+    for (int i = 0; i < 4; i++) {
+        char tag[20];
+        snprintf(tag, sizeof(tag), "{{DATE_FMT_%d_SEL}}", i);
+        html.replace(tag, (s_dateFormat == i) ? "selected" : "");
+    }
+    for (int i = 0; i < 4; i++) {
+        char tag[20];
+        snprintf(tag, sizeof(tag), "{{CLK_ICON_%d_SEL}}", i);
+        html.replace(tag, (s_clockIcon == i) ? "selected" : "");
+    }
+    html.replace("{{TXT_ALIGN_0_SEL}}", (s_textAlign == 0) ? "selected" : "");
+    html.replace("{{TXT_ALIGN_1_SEL}}", (s_textAlign == 1) ? "selected" : "");
+
     html.replace("{{AUTO_BRI_CHK}}", s_autoBri ? "checked" : "");
     html.replace("{{NIGHT_MODE_CHK}}", s_nightMode ? "checked" : "");
     html.replace("{{NIGHT_START}}", String(s_nightStart));
@@ -488,6 +898,14 @@ function installCloudOta(url) {
     html.replace("{{C_ETH_SEL}}", s_cryptoSym == "ETH" ? "selected" : "");
     html.replace("{{C_SOL_SEL}}", s_cryptoSym == "SOL" ? "selected" : "");
     html.replace("{{C_BNB_SEL}}", s_cryptoSym == "BNB" ? "selected" : "");
+    html.replace("{{C_AAPL_SEL}}", s_cryptoSym == "AAPL" ? "selected" : "");
+    html.replace("{{C_GOLD_SEL}}", (s_cryptoSym == "GOLD" || s_cryptoSym == "GC=F") ? "selected" : "");
+    html.replace("{{C_EUR_SEL}}", (s_cryptoSym == "EUR" || s_cryptoSym == "EURUSD" || s_cryptoSym == "EURUSD=X") ? "selected" : "");
+    html.replace("{{C_USD_SEL}}", (s_cryptoSym == "USD" || s_cryptoSym == "USDEUR" || s_cryptoSym == "USDEUR=X") ? "selected" : "");
+    html.replace("{{C_SPX_SEL}}", (s_cryptoSym == "SPX" || s_cryptoSym == "^GSPC") ? "selected" : "");
+    html.replace("{{C_TSLA_SEL}}", s_cryptoSym == "TSLA" ? "selected" : "");
+    html.replace("{{C_NVDA_SEL}}", s_cryptoSym == "NVDA" ? "selected" : "");
+    html.replace("{{C_SYM_CUSTOM}}", s_cryptoSym);
 
     html.replace("{{YT_CHANNEL}}", s_ytChannel);
     html.replace("{{YT_KEY}}", s_ytApiKey.length() > 0 ? "********" : "");
@@ -500,6 +918,7 @@ static const char PAGE_SAVED[] PROGMEM = R"rawliteral(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="refresh" content="1;url=/">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Settings Saved &bull; Ulanzi TC001 Evolved</title>
 <style>
@@ -531,8 +950,9 @@ static const char PAGE_SAVED[] PROGMEM = R"rawliteral(
 <div class="card">
   <div class="icon">&#x2714;</div>
   <h2>Settings Saved!</h2>
-  <p>Your configuration has been updated and stored in NVS.<br><br>The clock display will update automatically.</p>
+  <p>Your configuration has been updated and stored in NVS.<br><br>Returning to settings in a moment...</p>
 </div>
+<script>setTimeout(() => { window.location.href = '/'; }, 1000);</script>
 </body>
 </html>
 )rawliteral";
@@ -589,7 +1009,32 @@ static void handleSave() {
         }
     }
 
-    // 2. Process Carousel Rotate Delay
+    // 2. Process Carousel & Screen Navigation
+    Network_SetAutoRotate(s_server.hasArg("auto_rotate"));
+    if (s_server.hasArg("car_ord")) {
+        Network_SetCarouselOrderString(s_server.arg("car_ord"));
+    }
+    uint8_t carMask = 0;
+    for (int i = 0; i < 7; i++) {
+        char argName[16];
+        snprintf(argName, sizeof(argName), "car_app_%d", i);
+        if (s_server.hasArg(argName)) {
+            carMask |= (1 << i);
+        }
+    }
+    if (carMask == 0) carMask = 0x01; // Ensure at least clock is selected
+    Network_SetCarouselMask(carMask);
+
+    if (s_server.hasArg("bat_mode")) {
+        Network_SetBatteryMode((uint8_t)s_server.arg("bat_mode").toInt());
+    }
+
+    if (s_server.hasArg("active_app")) {
+        int app = s_server.arg("active_app").toInt();
+        if (app >= 0 && app < 7) {
+            Network_SetActiveApp((uint8_t)app);
+        }
+    }
     if (s_server.hasArg("rotate")) {
         int r = s_server.arg("rotate").toInt();
         if (r >= MIN_ROTATE_SEC && r <= MAX_ROTATE_SEC) {
@@ -597,7 +1042,32 @@ static void handleSave() {
         }
     }
 
-    // 3. Process Ambient, Day/Night Brightness & Night Mode
+    // 3. Process Clock & Date Layout (Awtrix Style)
+    if (s_server.hasArg("clk_mode")) {
+        Network_SetClockMode((uint8_t)s_server.arg("clk_mode").toInt());
+    }
+    Network_SetShowSeconds(s_server.hasArg("show_sec"));
+    Network_SetWeekdayBar(s_server.hasArg("wd_bar"));
+    if (s_server.hasArg("wd_mon")) {
+        Network_SetWeekdayStartMonday(s_server.arg("wd_mon").toInt() == 1);
+    }
+    if (s_server.hasArg("wd_acol")) {
+        Network_SetWeekdayActiveColorIndex((uint8_t)s_server.arg("wd_acol").toInt());
+    }
+    if (s_server.hasArg("wd_icol")) {
+        Network_SetWeekdayInactiveColorIndex((uint8_t)s_server.arg("wd_icol").toInt());
+    }
+    if (s_server.hasArg("date_fmt")) {
+        Network_SetDateFormat((uint8_t)s_server.arg("date_fmt").toInt());
+    }
+    if (s_server.hasArg("clk_icon")) {
+        Network_SetClockIcon((uint8_t)s_server.arg("clk_icon").toInt());
+    }
+    if (s_server.hasArg("txt_align")) {
+        Network_SetTextAlign((uint8_t)s_server.arg("txt_align").toInt());
+    }
+
+    // 4. Process Ambient, Day/Night Brightness & Night Mode
     Network_SetAutoBrightness(s_server.hasArg("auto_bri"));
     Network_SetNightMode(s_server.hasArg("night_mode"));
     if (s_server.hasArg("night_start") && s_server.hasArg("night_end")) {
@@ -622,8 +1092,10 @@ static void handleSave() {
         Network_SetWeatherLocation(lat, lon, city);
     }
 
-    // 5. Process Crypto Symbol
-    if (s_server.hasArg("c_sym")) {
+    // 5. Process Markets / Crypto Symbol
+    if (s_server.hasArg("c_sym_custom") && s_server.arg("c_sym_custom").length() > 0) {
+        Network_SetCryptoSymbol(s_server.arg("c_sym_custom"));
+    } else if (s_server.hasArg("c_sym")) {
         Network_SetCryptoSymbol(s_server.arg("c_sym"));
     }
 
@@ -639,7 +1111,12 @@ static void handleSave() {
         Network_SaveYouTubeConfig(ch, key);
     }
 
-    s_server.send_P(200, "text/html", PAGE_SAVED);
+    s_server.sendHeader("Access-Control-Allow-Origin", "*");
+    if (s_server.hasArg("ajax") || s_server.header("X-Requested-With") == "XMLHttpRequest") {
+        s_server.send(200, "application/json", "{\"status\":\"success\"}");
+    } else {
+        s_server.send_P(200, "text/html", PAGE_SAVED);
+    }
 
     if (wifiChanged || s_netState == NET_STATE_AP_PORTAL) {
         s_pendingReconnect = true;
@@ -656,6 +1133,9 @@ static void handleStatus() {
     doc["ssid"] = Network_GetSSID();
     doc["rssi"] = Network_GetRSSI();
     doc["rotate_sec"] = s_rotateSec;
+    doc["auto_rotate"] = s_autoRotate;
+    doc["carousel_mask"] = s_carouselMask;
+    doc["active_app"] = s_activeApp;
     doc["firmware_version"] = FW_VERSION;
 
     // Ambient & Sensor telemetry
@@ -694,10 +1174,36 @@ void Network_Init() {
     s_prefs.begin(PREF_NAMESPACE, false);
     s_ssid = s_prefs.getString(PREF_KEY_SSID, "");
     s_pass = s_prefs.getString(PREF_KEY_PASS, "");
+    s_autoRotate = s_prefs.getBool(PREF_KEY_AUTO_ROTATE, true);
+    s_activeApp = (uint8_t)s_prefs.getUChar(PREF_KEY_ACTIVE_APP, 0);
+    if (s_activeApp >= 7) s_activeApp = 0;
     s_rotateSec = (uint16_t)s_prefs.getUInt(PREF_KEY_ROTATE_SEC, DEFAULT_ROTATE_SEC);
     if (s_rotateSec < MIN_ROTATE_SEC || s_rotateSec > MAX_ROTATE_SEC) {
         s_rotateSec = DEFAULT_ROTATE_SEC;
     }
+    s_carouselMask = (uint8_t)s_prefs.getUChar(PREF_KEY_CAROUSEL_MASK, 0x7F);
+    if (s_carouselMask == 0) s_carouselMask = 0x7F;
+
+    String savedOrder = s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6");
+    Network_SetCarouselOrderString(savedOrder);
+    s_batteryMode = (uint8_t)s_prefs.getUChar(PREF_KEY_BATTERY_MODE, 2);
+    if (s_batteryMode > 2) s_batteryMode = 2;
+
+    s_clockMode = (uint8_t)s_prefs.getUChar(PREF_KEY_CLOCK_MODE, 1);
+    if (s_clockMode > 2) s_clockMode = 0;
+    s_showSeconds = s_prefs.getBool(PREF_KEY_SHOW_SECONDS, false);
+    s_weekdayBar = s_prefs.getBool(PREF_KEY_WEEKDAY_BAR, true);
+    s_weekdayStartMon = s_prefs.getBool(PREF_KEY_WD_START_MON, true);
+    s_weekdayActiveColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_ACTIVE_COL, 0);
+    if (s_weekdayActiveColIdx > 5) s_weekdayActiveColIdx = 0;
+    s_weekdayInactColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_INACT_COL, 0);
+    if (s_weekdayInactColIdx > 3) s_weekdayInactColIdx = 0;
+    s_dateFormat = (uint8_t)s_prefs.getUChar(PREF_KEY_DATE_FORMAT, 0);
+    if (s_dateFormat > 3) s_dateFormat = 0;
+    s_clockIcon = (uint8_t)s_prefs.getUChar(PREF_KEY_CLOCK_ICON, 0);
+    if (s_clockIcon > 3) s_clockIcon = 0;
+    s_textAlign = (uint8_t)s_prefs.getUChar(PREF_KEY_TEXT_ALIGN, 0);
+    if (s_textAlign > 1) s_textAlign = 0;
 
     s_autoBri = s_prefs.getBool(PREF_KEY_AUTO_BRI, true);
     s_nightMode = s_prefs.getBool(PREF_KEY_NIGHT_MODE, true);
@@ -727,6 +1233,51 @@ void Network_Init() {
     s_server.on("/save", HTTP_POST, handleSave);
     s_server.on("/scan", HTTP_GET, handleScan);
     s_server.on("/status", HTTP_GET, handleStatus);
+
+    s_server.on("/api/display", HTTP_GET, []() {
+        String json;
+        DisplayMatrix_GetJson(json);
+        s_server.send(200, "application/json", json);
+    });
+
+    s_server.on("/api/display/screenshot", HTTP_GET, []() {
+        s_server.sendHeader("Content-Disposition", "inline; filename=\"tc001_screenshot.bmp\"");
+        s_server.setContentLength(76854);
+        s_server.send(200, "image/bmp", "");
+        WiFiClient client = s_server.client();
+        DisplayMatrix_StreamBMP(client, 10);
+    });
+
+    s_server.on("/api/display/text", HTTP_GET, []() {
+        String ascii = DisplayMatrix_GetAsciiArt();
+        s_server.send(200, "text/plain", ascii);
+    });
+
+    s_server.on("/api/screen", HTTP_GET, []() {
+        if (s_server.hasArg("auto")) {
+            Network_SetAutoRotate(s_server.arg("auto").toInt() != 0);
+        }
+        if (s_server.hasArg("set")) {
+            int app = s_server.arg("set").toInt();
+            if (app >= 0 && app < 7) {
+                Network_SetActiveApp((uint8_t)app);
+                if (!s_server.hasArg("auto")) {
+                    Network_SetAutoRotate(false);
+                }
+            }
+        }
+        JsonDocument doc;
+        doc["active_app"] = Network_GetActiveApp();
+        doc["auto_rotate"] = Network_GetAutoRotate();
+        static const char* kNames[] = {
+            "Clock", "Indoor Environment", "Outdoor Weather",
+            "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power"
+        };
+        doc["app_name"] = kNames[Network_GetActiveApp() % 7];
+        String out;
+        serializeJson(doc, out);
+        s_server.send(200, "application/json", out);
+    });
 
     // Initialize Over-The-Air Update System
     OTA_Init(s_server);
@@ -759,7 +1310,9 @@ void Network_ConnectStation() {
     s_netState = NET_STATE_CONNECTING;
     s_connectStartMs = millis();
 
-    WiFi.disconnect(true);
+    if (WiFi.getMode() == WIFI_STA) {
+        WiFi.disconnect(true);
+    }
     WiFi.mode(WIFI_STA);
     WiFi.begin(s_ssid.c_str(), s_pass.c_str());
     s_server.begin();
@@ -767,7 +1320,9 @@ void Network_ConnectStation() {
 
 void Network_StartAP() {
     Serial.printf("[WiFi] Starting AP: %s (IP: %s)\n", s_apSSID.c_str(), s_apIP.toString().c_str());
-    WiFi.disconnect(true);
+    if (WiFi.getMode() == WIFI_STA) {
+        WiFi.disconnect(true);
+    }
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(s_apIP, s_apIP, s_apNetmask);
     WiFi.softAP(s_apSSID.c_str());
@@ -881,6 +1436,30 @@ uint16_t Network_GetRotateDelaySec() {
     return s_rotateSec;
 }
 
+bool Network_GetAutoRotate() {
+    return s_autoRotate;
+}
+
+void Network_SetAutoRotate(bool en) {
+    if (s_autoRotate != en) {
+        s_autoRotate = en;
+        s_prefs.putBool(PREF_KEY_AUTO_ROTATE, s_autoRotate);
+        Serial.printf("[Settings] Carousel auto-rotate set to %s\n", s_autoRotate ? "ENABLED" : "DISABLED");
+    }
+}
+
+uint8_t Network_GetActiveApp() {
+    return s_activeApp;
+}
+
+void Network_SetActiveApp(uint8_t app) {
+    if (app < 7) {
+        s_activeApp = app;
+        s_prefs.putUChar(PREF_KEY_ACTIVE_APP, s_activeApp);
+        Serial.printf("[Settings] Active screen set to %u\n", s_activeApp);
+    }
+}
+
 void Network_SetRotateDelaySec(uint16_t sec) {
     s_rotateSec = constrain(sec, (uint16_t)MIN_ROTATE_SEC, (uint16_t)MAX_ROTATE_SEC);
     s_prefs.putUInt(PREF_KEY_ROTATE_SEC, s_rotateSec);
@@ -984,4 +1563,127 @@ void Network_SetCryptoSymbol(const String& sym) {
     s_cryptoSym = sym;
     s_prefs.putString(PREF_KEY_CRYPTO_SYM, s_cryptoSym);
     Crypto_SetSymbol(s_cryptoSym);
+}
+
+uint8_t Network_GetClockMode() { return s_clockMode; }
+void Network_SetClockMode(uint8_t mode) {
+    s_clockMode = (mode <= 2) ? mode : 0;
+    s_prefs.putUChar(PREF_KEY_CLOCK_MODE, s_clockMode);
+}
+
+bool Network_GetWeekdayBar() { return s_weekdayBar; }
+void Network_SetWeekdayBar(bool en) {
+    s_weekdayBar = en;
+    s_prefs.putBool(PREF_KEY_WEEKDAY_BAR, s_weekdayBar);
+}
+
+bool Network_GetWeekdayStartMonday() { return s_weekdayStartMon; }
+void Network_SetWeekdayStartMonday(bool startMonday) {
+    s_weekdayStartMon = startMonday;
+    s_prefs.putBool(PREF_KEY_WD_START_MON, s_weekdayStartMon);
+}
+
+uint8_t Network_GetWeekdayActiveColorIndex() { return s_weekdayActiveColIdx; }
+void Network_SetWeekdayActiveColorIndex(uint8_t idx) {
+    s_weekdayActiveColIdx = (idx <= 5) ? idx : 0;
+    s_prefs.putUChar(PREF_KEY_WD_ACTIVE_COL, s_weekdayActiveColIdx);
+}
+uint16_t Network_GetWeekdayActiveColor() {
+    return s_wdActiveColors[(s_weekdayActiveColIdx <= 5) ? s_weekdayActiveColIdx : 0];
+}
+
+uint8_t Network_GetWeekdayInactiveColorIndex() { return s_weekdayInactColIdx; }
+void Network_SetWeekdayInactiveColorIndex(uint8_t idx) {
+    s_weekdayInactColIdx = (idx <= 3) ? idx : 0;
+    s_prefs.putUChar(PREF_KEY_WD_INACT_COL, s_weekdayInactColIdx);
+}
+uint16_t Network_GetWeekdayInactiveColor() {
+    return s_wdInactiveColors[(s_weekdayInactColIdx <= 3) ? s_weekdayInactColIdx : 0];
+}
+
+uint8_t Network_GetDateFormat() { return s_dateFormat; }
+void Network_SetDateFormat(uint8_t fmt) {
+    s_dateFormat = (fmt <= 3) ? fmt : 0;
+    s_prefs.putUChar(PREF_KEY_DATE_FORMAT, s_dateFormat);
+}
+
+uint8_t Network_GetClockIcon() { return s_clockIcon; }
+void Network_SetClockIcon(uint8_t icon) {
+    s_clockIcon = (icon <= 3) ? icon : 0;
+    s_prefs.putUChar(PREF_KEY_CLOCK_ICON, s_clockIcon);
+}
+
+uint8_t Network_GetTextAlign() { return s_textAlign; }
+void Network_SetTextAlign(uint8_t align) {
+    s_textAlign = (align <= 1) ? align : 0;
+    s_prefs.putUChar(PREF_KEY_TEXT_ALIGN, s_textAlign);
+}
+
+uint8_t Network_GetCarouselMask() { return s_carouselMask; }
+void Network_SetCarouselMask(uint8_t mask) {
+    s_carouselMask = (mask == 0) ? 0x01 : (mask & 0x7F);
+    s_prefs.putUChar(PREF_KEY_CAROUSEL_MASK, s_carouselMask);
+}
+
+bool Network_IsAppInCarousel(uint8_t appIndex) {
+    if (appIndex >= 7) return false;
+    return (s_carouselMask & (1 << appIndex)) != 0;
+}
+
+bool Network_GetShowSeconds() { return s_showSeconds; }
+void Network_SetShowSeconds(bool en) {
+    s_showSeconds = en;
+    s_prefs.putBool(PREF_KEY_SHOW_SECONDS, s_showSeconds);
+}
+
+const uint8_t* Network_GetCarouselOrder() {
+    return s_carouselOrder;
+}
+
+String Network_GetCarouselOrderString() {
+    String res = "";
+    for (int i = 0; i < 7; i++) {
+        if (i > 0) res += ",";
+        res += String(s_carouselOrder[i]);
+    }
+    return res;
+}
+
+void Network_SetCarouselOrderString(const String& str) {
+    int idx = 0;
+    int start = 0;
+    bool seen[7] = {false};
+    uint8_t newOrder[7];
+    
+    while (idx < 7 && start < (int)str.length()) {
+        int comma = str.indexOf(',', start);
+        String token = (comma == -1) ? str.substring(start) : str.substring(start, comma);
+        token.trim();
+        int val = token.toInt();
+        if (val >= 0 && val < 7 && !seen[val]) {
+            newOrder[idx++] = (uint8_t)val;
+            seen[val] = true;
+        }
+        if (comma == -1) break;
+        start = comma + 1;
+    }
+    for (int i = 0; i < 7; i++) {
+        if (!seen[i] && idx < 7) {
+            newOrder[idx++] = (uint8_t)i;
+            seen[i] = true;
+        }
+    }
+    for (int i = 0; i < 7; i++) {
+        s_carouselOrder[i] = newOrder[i];
+    }
+    s_prefs.putString(PREF_KEY_CAROUSEL_ORDER, Network_GetCarouselOrderString());
+}
+
+uint8_t Network_GetBatteryMode() {
+    return s_batteryMode;
+}
+
+void Network_SetBatteryMode(uint8_t mode) {
+    s_batteryMode = (mode <= 2) ? mode : 2;
+    s_prefs.putUChar(PREF_KEY_BATTERY_MODE, s_batteryMode);
 }

@@ -17,3 +17,19 @@ int16_t DisplayMatrix_GetTextWidth(const char* text);
 bool DisplayMatrix_ScrollTicker(const char* text, uint16_t color, const uint16_t* pinnedIcon = nullptr, int speedMs = 45);
 void DisplayMatrix_ResetTicker();
 Adafruit_NeoMatrix& DisplayMatrix_GetMatrix();
+uint32_t DisplayMatrix_GetPixel(int16_t x, int16_t y);
+void DisplayMatrix_StreamBMP(Client& client, uint8_t scale = 10);
+String DisplayMatrix_GetAsciiArt();
+void DisplayMatrix_GetJson(String& out);
+int16_t DisplayMatrix_DrawSmallChar(int16_t x, int16_t y, char c, uint16_t color);
+int16_t DisplayMatrix_DrawSmallText(int16_t x, int16_t y, const char* text, uint16_t color);
+int16_t DisplayMatrix_GetSmallTextWidth(const char* text);
+void DisplayMatrix_DrawCalendarIcon(int16_t x, int16_t y, int dayOfMonth);
+void DisplayMatrix_DrawWeekdayBar(int activeDayIndex, uint16_t activeColor, uint16_t inactiveColor, int startX = 10, int y = 7);
+
+// 3x5 Compact Digit & Time Rendering (eliminates vertical collision with weekday bars)
+int16_t DisplayMatrix_DrawDigit3x5(int16_t x, int16_t y, uint8_t digit, uint16_t color);
+void DisplayMatrix_DrawTime3x5(int16_t x, int16_t y, int h, int m, bool blinkColon, uint16_t colTime = 0xFFFF, uint16_t colColon = 0xFFFF);
+void DisplayMatrix_DrawTimeWithSeconds(int16_t startX, int16_t y, int h, int m, int s, bool blinkColon, uint16_t colTime = 0xFFFF, uint16_t colColon = 0xFFFF, uint16_t colSec = 0x07FF);
+void DisplayMatrix_DrawFullTime3x5(int16_t startX, int16_t y, int h, int m, int s, bool blinkColon, uint16_t colTime = 0xFFFF, uint16_t colColon = 0xFFFF, uint16_t colSec = 0x07FF);
+

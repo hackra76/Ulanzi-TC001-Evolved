@@ -88,16 +88,28 @@ static const uint16_t ICON_HUMID[64] = {
     0, 0, 0, 0, 0, 0, 0, 0
 };
 
-// 8x8 Battery Icon
+// 8x8 Energy Charge / Lightning Bolt Icon
+static const uint16_t ICON_LIGHTNING[64] = {
+    0, 0, 0, 0,        C_YELLOW, C_WHITE,  0,        0,
+    0, 0, 0, C_YELLOW, C_WHITE,  0,        0,        0,
+    0, 0, C_YELLOW,    C_WHITE,  0,        0,        0, 0,
+    0, C_YELLOW, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_YELLOW, 0,
+    0, 0, 0, 0,        C_YELLOW, C_WHITE,  0,        0,
+    0, 0, 0, C_YELLOW, C_WHITE,  0,        0,        0,
+    0, 0, C_YELLOW,    C_WHITE,  0,        0,        0, 0,
+    0, 0, C_YELLOW,    0,        0,        0,        0, 0
+};
+
+// 8x8 Battery Outline Icon
 static const uint16_t ICON_BATTERY[64] = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, C_GRAY, C_GRAY, C_GRAY, C_GRAY, C_GRAY, 0, 0,
-    0, C_GRAY, C_GREEN, C_GREEN, C_GREEN, C_GRAY, C_GRAY, 0,
-    0, C_GRAY, C_GREEN, C_GREEN, C_GREEN, C_GRAY, C_GRAY, 0,
-    0, C_GRAY, C_GREEN, C_GREEN, C_GREEN, C_GRAY, C_GRAY, 0,
-    0, C_GRAY, C_GREEN, C_GREEN, C_GREEN, C_GRAY, 0, 0,
-    0, C_GRAY, C_GRAY, C_GRAY, C_GRAY, C_GRAY, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
+    0, 0, 0, 0,        C_YELLOW, C_WHITE,  0,        0,
+    0, 0, 0, C_YELLOW, C_WHITE,  0,        0,        0,
+    0, 0, C_YELLOW,    C_WHITE,  0,        0,        0, 0,
+    0, C_YELLOW, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_YELLOW, 0,
+    0, 0, 0, 0,        C_YELLOW, C_WHITE,  0,        0,
+    0, 0, 0, C_YELLOW, C_WHITE,  0,        0,        0,
+    0, 0, C_YELLOW,    C_WHITE,  0,        0,        0, 0,
+    0, 0, C_YELLOW,    0,        0,        0,        0, 0
 };
 
 // 8x8 Wi-Fi Station Icon
@@ -124,16 +136,16 @@ static const uint16_t ICON_AP[64] = {
     C_ORANGE, 0, 0, 0, 0, 0, 0, C_ORANGE
 };
 
-// 8x8 YouTube Play Button Icon
+// 8x8 Bold YouTube Play Button Icon (prominent centered play triangle)
 static const uint16_t ICON_YOUTUBE[64] = {
-    0,     C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, 0,
-    C_RED, C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, C_RED,
-    C_RED, C_RED, C_WHITE, C_RED,   C_RED, C_RED, C_RED, C_RED,
-    C_RED, C_RED, C_WHITE, C_WHITE, C_RED, C_RED, C_RED, C_RED,
-    C_RED, C_RED, C_WHITE, C_WHITE, C_RED, C_RED, C_RED, C_RED,
-    C_RED, C_RED, C_WHITE, C_RED,   C_RED, C_RED, C_RED, C_RED,
-    C_RED, C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, C_RED,
-    0,     C_RED, C_RED,   C_RED,   C_RED, C_RED, C_RED, 0
+    0,       C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   0,
+    C_RED,   C_RED,   C_WHITE, C_RED,   C_RED,   C_RED,   C_RED,   C_RED,
+    C_RED,   C_RED,   C_WHITE, C_WHITE, C_WHITE, C_RED,   C_RED,   C_RED,
+    C_RED,   C_RED,   C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_RED,   C_RED,
+    C_RED,   C_RED,   C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_RED,   C_RED,
+    C_RED,   C_RED,   C_WHITE, C_WHITE, C_WHITE, C_RED,   C_RED,   C_RED,
+    C_RED,   C_RED,   C_WHITE, C_RED,   C_RED,   C_RED,   C_RED,   C_RED,
+    0,       C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   0
 };
 
 // 8x8 Cloud Icon
@@ -196,6 +208,66 @@ static const uint16_t ICON_ETH[64] = {
     0, 0, 0, 0, 0, 0, 0, 0
 };
 
+// 8x8 Apple Inc. Logo
+static const uint16_t ICON_APPLE[64] = {
+    0,       0,       0,       0,       C_GREEN, 0,       0,       0,
+    0,       0,       0,       C_GREEN, 0,       0,       0,       0,
+    0,       C_WHITE, C_WHITE, 0,       C_WHITE, C_WHITE, 0,       0,
+    C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0,
+    C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0,       0,
+    C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0,
+    C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0,
+    0,       C_WHITE, C_WHITE, 0,       C_WHITE, C_WHITE, 0,       0
+};
+
+// 8x8 Gold Bullion / Ingot
+static const uint16_t ICON_GOLD[64] = {
+    0,        0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,
+    0,        C_YELLOW, C_WHITE,  C_YELLOW, C_YELLOW, C_WHITE,  C_YELLOW, 0,
+    C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE,
+    C_ORANGE, C_YELLOW, C_WHITE,  C_YELLOW, C_YELLOW, C_WHITE,  C_YELLOW, C_ORANGE,
+    C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE,
+    0,        C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE, 0,
+    0,        C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, 0,
+    0,        0,        0,        0,        0,        0,        0,        0
+};
+
+// 8x8 USD Coin ($)
+static const uint16_t ICON_USD[64] = {
+    0,       C_GREEN, C_GREEN, C_GREEN, C_GREEN, C_GREEN, C_GREEN, 0,
+    C_GREEN, 0,       0,       C_WHITE, 0,       0,       0,       C_GREEN,
+    C_GREEN, 0,       C_WHITE, C_WHITE, C_WHITE, 0,       0,       C_GREEN,
+    C_GREEN, 0,       C_WHITE, C_WHITE, 0,       0,       0,       C_GREEN,
+    C_GREEN, 0,       0,       C_WHITE, C_WHITE, 0,       0,       C_GREEN,
+    C_GREEN, 0,       C_WHITE, C_WHITE, C_WHITE, 0,       0,       C_GREEN,
+    C_GREEN, 0,       0,       C_WHITE, 0,       0,       0,       C_GREEN,
+    0,       C_GREEN, C_GREEN, C_GREEN, C_GREEN, C_GREEN, C_GREEN, 0
+};
+
+// 8x8 EUR Coin (€)
+static const uint16_t ICON_EUR[64] = {
+    0,       C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  0,
+    C_BLUE,  0,       0,       C_YELLOW,C_YELLOW,C_YELLOW,0,       C_BLUE,
+    C_BLUE,  0,       C_YELLOW,0,       0,       0,       0,       C_BLUE,
+    C_BLUE,  C_YELLOW,C_YELLOW,C_YELLOW,C_YELLOW,0,       0,       C_BLUE,
+    C_BLUE,  C_YELLOW,C_YELLOW,C_YELLOW,C_YELLOW,0,       0,       C_BLUE,
+    C_BLUE,  0,       C_YELLOW,0,       0,       0,       0,       C_BLUE,
+    C_BLUE,  0,       0,       C_YELLOW,C_YELLOW,C_YELLOW,0,       C_BLUE,
+    0,       C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  0
+};
+
+// 8x8 Stock Market Trend / Chart
+static const uint16_t ICON_CHART[64] = {
+    0,       0,       0,       0,       0,       C_GREEN, C_GREEN, C_GREEN,
+    0,       0,       0,       0,       0,       0,       C_GREEN, C_GREEN,
+    0,       0,       0,       0,       C_GREEN, C_GREEN, 0,       C_GREEN,
+    0,       0,       0,       C_GREEN, C_GREEN, 0,       0,       0,
+    0,       C_GREEN, C_GREEN, C_GREEN, 0,       0,       0,       0,
+    C_GREEN, C_GREEN, 0,       0,       0,       0,       0,       0,
+    C_GRAY,  C_GRAY,  C_GRAY,  C_GRAY,  C_GRAY,  C_GRAY,  C_GRAY,  C_GRAY,
+    0,       0,       0,       0,       0,       0,       0,       0
+};
+
 // 8x8 Crescent Moon Icon (Night Mode)
 static const uint16_t ICON_MOON[64] = {
     0, 0, 0, C_YELLOW, C_YELLOW, 0, 0, 0,
@@ -206,6 +278,30 @@ static const uint16_t ICON_MOON[64] = {
     0, C_YELLOW, C_YELLOW, 0, 0, 0, 0, 0,
     0, 0, C_YELLOW, C_YELLOW, 0, 0, 0, 0,
     0, 0, 0, C_YELLOW, C_YELLOW, 0, 0, 0
+};
+
+// 8x8 Analog Clock Face Icon
+static const uint16_t ICON_CLOCK[64] = {
+    0,       0,       C_CYAN,  C_CYAN,  C_CYAN,  C_CYAN,  0,       0,
+    0,       C_CYAN,  0,       0,       0,       0,       C_CYAN,  0,
+    C_CYAN,  0,       0,       C_WHITE, 0,       0,       0,       C_CYAN,
+    C_CYAN,  0,       0,       C_WHITE, C_WHITE, C_WHITE, 0,       C_CYAN,
+    C_CYAN,  0,       0,       C_WHITE, 0,       0,       0,       C_CYAN,
+    C_CYAN,  0,       0,       0,       0,       0,       0,       C_CYAN,
+    0,       C_CYAN,  0,       0,       0,       0,       C_CYAN,  0,
+    0,       0,       C_CYAN,  C_CYAN,  C_CYAN,  C_CYAN,  0,       0
+};
+
+// 8x8 Calendar Icon Base
+static const uint16_t ICON_CALENDAR[64] = {
+    0,       C_RED,   C_WHITE, C_RED,   C_RED,   C_WHITE, C_RED,   0,
+    C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,
+    C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+    C_WHITE, C_WHITE, C_RED,   C_RED,   C_RED,   C_WHITE, C_WHITE, C_WHITE,
+    C_WHITE, C_WHITE, C_WHITE, C_RED,   C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+    C_WHITE, C_WHITE, C_WHITE, C_RED,   C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+    C_WHITE, C_WHITE, C_RED,   C_RED,   C_RED,   C_WHITE, C_WHITE, C_WHITE,
+    0,       C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0
 };
 
 

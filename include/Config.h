@@ -46,10 +46,28 @@
 #define PREF_KEY_PASS           "wifi_pass"
 
 // --- Carousel & YouTube Analytics ---
+#define PREF_KEY_AUTO_ROTATE    "auto_rot"
+#define PREF_KEY_ACTIVE_APP     "act_app"
 #define PREF_KEY_ROTATE_SEC     "rot_sec"
+#define PREF_KEY_CAROUSEL_MASK  "car_mask"   // Bitmask of enabled carousel screens (0x7F = all 7)
+#define PREF_KEY_CAROUSEL_ORDER "car_ord"    // Comma-separated order string, e.g. "0,1,2,3,4,5,6"
 #define DEFAULT_ROTATE_SEC      8
 #define MIN_ROTATE_SEC          3
 #define MAX_ROTATE_SEC          120
+
+// --- Battery Telemetry Customization ---
+#define PREF_KEY_BATTERY_MODE   "bat_mode"   // 0: Percentage, 1: Voltage, 2: Alternating (Pct/Volt)
+
+// --- Clock, Calendar & Weekday Bar Customization (Awtrix Style) ---
+#define PREF_KEY_CLOCK_MODE     "clk_mode"   // 0: Time Only, 1: Combined (Time+Date), 2: Date Only
+#define PREF_KEY_SHOW_SECONDS   "show_sec"   // 1: Show seconds, 0: Hide seconds
+#define PREF_KEY_WEEKDAY_BAR    "wd_bar"     // 1: Show 7 weekday bars, 0: Hide
+#define PREF_KEY_WD_START_MON   "wd_mon"     // 1: Start Monday, 0: Start Sunday
+#define PREF_KEY_WD_ACTIVE_COL  "wd_acol"    // 0: Cyan, 1: Orange, 2: Green, 3: Yellow, 4: Red, 5: White
+#define PREF_KEY_WD_INACT_COL   "wd_icol"    // 0: Dim Slate, 1: Dark Gray, 2: Dim Amber, 3: Off
+#define PREF_KEY_DATE_FORMAT    "date_fmt"   // 0: DD.MM., 1: DD MMM, 2: MM/DD, 3: DAY DD
+#define PREF_KEY_CLOCK_ICON     "clk_icon"   // 0: Dynamic Calendar, 1: Heart, 2: Clock Face, 3: None
+#define PREF_KEY_TEXT_ALIGN     "txt_align"  // 0: Left-aligned with icon (Awtrix), 1: Centered
 
 #define PREF_KEY_YT_CHANNEL     "yt_chan"
 #define PREF_KEY_YT_APIKEY      "yt_key"
@@ -85,7 +103,7 @@
 
 // --- Firmware Metadata & OTA ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
-#define FW_VERSION          "1.2.0"
+#define FW_VERSION          "1.3.0"
 #define GITHUB_REPO         "hackra76/Ulanzi-TC001-Evolved"
 
 

@@ -21,6 +21,7 @@ void Buzzer_Beep(uint16_t freqHz, uint16_t durationMs) {
     ledcWriteTone(BUZZER_LEDC_CH, 0);
     ledcDetachPin(PIN_BUZZER);
 #endif
+    pinMode(PIN_BUZZER, OUTPUT);
     digitalWrite(PIN_BUZZER, LOW);
 }
 

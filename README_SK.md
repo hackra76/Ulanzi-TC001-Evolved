@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
 
-Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodiny **Ulanzi TC001 Smart Pixel Desktop Clock** bežiaci na mikrokontroléri ESP32 s **8×32 WS2812B RGB LED maticou**, senzorom Sensirion SHT30, adaptívnym jasom (LDR), živým krypto trackerom, predpoveďou počasia, YouTube štatistikami a duálnym OTA systémom aktualizácií.
+Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodiny **Ulanzi TC001 Smart Pixel Desktop Clock** bežiaci na mikrokontroléri ESP32 s **8×32 WS2812B RGB LED maticou**, senzorom Sensirion SHT30, adaptívnym jasom (LDR), sledovaním finančných trhov, akcií a kryptomien, živým leteckým radarom (ADS-B), predpoveďou počasia, YouTube štatistikami, prispôsobiteľným Awtrix rozložením hodín a duálnym OTA systémom aktualizácií.
 
 🌐 **Jazyky:** [English (Predvolený)](README.md) • [English Zrkadlo](README_EN.md) • [Slovenčina](README_SK.md)
 
@@ -14,32 +14,56 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
 ## ✨ Kľúčové funkcie
 
 - **📱 Wi-Fi Captive Portal & Sprievodca pripojením:**
-  - Automatický prechod do SoftAP režimu (`TC001-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
+  - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
   - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI).
   - Spoľahlivé ukladanie prístupových údajov do pamäte NVS (`Preferences`) s automatickým opätovným pripájaním.
-- **💡 Adaptívny jas & Nočný režim:**
-  - Plynulý automatický jas riadený fotorezistorom (LDR) s filtrom exponenciálneho kĺzavého priemeru (EMA) a nelineárnou gama krivkou.
-  - **Denný strop jasu:** Nastaviteľný posuvník (5% – 100%) vo webovom rozhraní.
-  - **Harmonogram nočného režimu:** Konfigurovateľné tiché hodiny (napr. 23:00 až 07:00) s tlmenými červenými hodinami a polmesiacom.
-  - **Nočný posuvník jasu:** Nastaviteľný posuvník (1% – 25%).
-  - **Rýchle prebudenie:** Stlačenie ľubovoľného tlačidla v noci dočasne rozsvieti displej na 12 sekúnd na denný jas.
+- **📺 Živý stream displeja & Virtuálna matica:**
+  - Zrkadlenie 32×8 NeoPixel displeja v reálnom čase priamo vo webovom portáli s automatickou obnovou každých 1,5s.
+  - Export snímky displeja do BMP na jeden klik (`/api/display/screenshot`).
+  - Textová ASCII art reprezentácia displeja (`/api/display/text`).
+  - Tlačidlá na manuálne prepínanie obrazoviek priamo z prehliadača.
+- **⏰ Awtrix-Style Hodiny & Dátum:**
+  - 3 režimy zobrazenia: Iba čas, Kombinovaný čas a dátum (striedanie 5s/3s) alebo Iba dátum.
+  - 7 stĺpcov dní v týždni pod časom s voliteľnými farbami pre aktívny a neaktívny deň, začiatok týždňa v pondelok (ISO 8601) alebo v nedeľu.
+  - Formáty dátumu: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
+  - Štýly ikon hodín: Dynamický kalendár (číslo dňa 1–31), Srdiečko, Ciferník alebo Plná šírka bez ikony.
+  - Zobrazenie sekúnd: Plná šírka s vycentrovaným časom `HH:MM:SS` a dvojbodkami; pri zapnutých sekundách sa ikona automaticky skryje pre dokonalú čitateľnosť.
+  - 3×5 proporcionálne písmo na riadku 1 a pásiky dní na riadku 7 (žiadny vertikálny dotyk s písmom).
+- **✈️ Živý letecký radar (ADS-B):**
+  - Sledovanie prelietavajúcich lietadiel v reálnom čase cez OpenSky Network v okruhu ~50 km okolo nastavených GPS súradníc počasia.
+  - Automatické striedanie volacích znakov (Callsign) lietadiel každé 4 sekundy s tyrkysovou ikonou lietadla.
+  - Zobrazenie zeleného nápisu `"CLEAR"`, ak je vzdušný priestor voľný.
+- **⚡ Telemetria batérie a energie:**
+  - Výrazná neónovo žltá a biela ikona blesku (`ICON_LIGHTNING`).
+  - Voliteľný formát zobrazenia: Iba percentá (`93%`), Iba napätie (`4.12V`) alebo automatické striedanie každé 3 sekundy.
+- **📈 Finančné trhy, akcie, komodity a krypto:**
+  - Verejné trhové kanály bez nutnosti registrácie API kľúčov.
+  - Kryptomeny: `BTC`, `ETH`, `SOL`, `BNB`.
+  - Akcie a indexy: Apple (`AAPL`), Tesla (`TSLA`), Nvidia (`NVDA`), S&P 500 (`SPX`).
+  - Forex a komodity: Zlato (`GOLD`), `EUR/USD`, `USD/EUR`.
+  - Možnosť zadania vlastného burzového tickera s dynamickým farebným akcentom.
+- **▶️ YouTube kanál & Odberatelia:**
+  - Živý počet odberateľov z Google Data API v3.
+  - Prepracovaná výrazná biela ikona prehrávania (play button) v červenej pilulke.
 - **🌤️ Skutočné vonkajšie počasie:**
   - Živé meteorologické údaje z bezplatného Open-Meteo API (nevyžaduje žiadny API kľúč).
   - Mapovanie WMO kódov počasia na animované 8×8 ikony (Slnko, Oblaky, Dážď, Sneh, Búrka).
   - **Zoznam prednastavených miest:** Viac ako 25 prednastavených miest (Slovensko, Česko, Európa, Svet) s automatickým vyplnením GPS súradníc.
-- **📈 Živý krypto ticker:**
-  - Priame spojenie s verejným trhovým API burzy Binance.
-  - Podpora pre `BTC`, `ETH`, `SOL` a `BNB` s kompaktným formátovaním cien (`68.5K`, `2.6K`).
-- **▶️ YouTube kanál & Odberatelia:**
-  - Živý počet odberateľov z Google Data API v3 s prehľadným zobrazením jednotiek (`1.4M`, `250K`).
+- **💡 Adaptívny jas & Nočný režim:**
+  - Plynulý automatický jas riadený fotorezistorom (LDR) s filtrom EMA a nelineárnou gama krivkou.
+  - Denný strop jasu (5% – 100%) a Nočný jas (1% – 25%).
+  - Konfigurovateľné tiché hodiny s tlmenými červenými hodinami a polmesiacom.
+  - Rýchle prebudenie: Stlačenie ľubovoľného tlačidla v noci dočasne rozsvieti displej na 12 sekúnd na denný jas.
+- **🎛️ Zoradenie obrazoviek kolotoča:**
+  - Tlačidlá `▲` / `▼` vo webovom portáli na zmenu poradia obrazoviek podľa vlastného výberu.
+  - Samostatné zaškrtávacie políčka na aktiváciu alebo deaktiváciu ktorejkoľvek obrazovky.
+  - Vlastné poradie sa ukladá do NVS (`car_ord`) a riadi automatickú rotáciu aj tlačidlá.
+  - Nastaviteľný interval rotácie (3 až 120 sekúnd).
+  - Okamžité ukladanie cez AJAX s plávajúcou notifikáciou bez opustenia portálu.
 - **🔄 Duálny Over-The-Air (OTA) aktualizačný systém:**
   - Priame nahrávanie `.bin` súboru priamo z webového prehliadača cez `/update` s ukazovateľom priebehu v percentách.
   - 1-Klik aktualizácia priamo z GitHub Releases (`/api/ota/check`, `/api/ota/install`).
   - Živé zobrazenie priebehu inštalácie v percentách priamo na 8×32 LED displeji (`OTA: XX%`).
-- **⏱️ Dynamický kolotoč obrazoviek:**
-  - Plynulý horizontálny rolovací engine s fixovanou 8×8 stavovou ikonou.
-  - Nastaviteľné oneskorenie prepínania obrazoviek (3 až 120 sekúnd).
-  - Možnosť manuálneho prepínania a pozastavenia rotácie pomocou fyzických tlačidiel.
 
 ---
 
@@ -47,73 +71,77 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
 
 | Tlačidlo | Akcia | Funkcia |
 |---|---|---|
-| **Vľavo** (GPIO 26) | Krátke stlačenie | Prepnutie na predchádzajúcu obrazovku (pozastaví rotáciu) |
-| **Vpravo** (GPIO 14) | Krátke stlačenie | Prepnutie na nasledujúcu obrazovku (pozastaví rotáciu) |
-| **OK / Stred** (GPIO 27) | Krátke stlačenie | Cyklovanie manuálneho jasu (Nízky / Stredný / Vysoký) |
-| **OK / Stred** (GPIO 27) | Dlhé stlačenie (>800ms) | Zapnutie / vypnutie automatického striedania obrazoviek |
+| **Vľavo** (GPIO 26) | Krátke stlačenie | Prepnutie na predchádzajúcu obrazovku podľa vlastného poradia (pozastaví rotáciu) |
+| **Vpravo** (GPIO 14) | Krátke stlačenie | Prepnutie na nasledujúcu obrazovku podľa vlastného poradia (pozastaví rotáciu) |
+| **OK / Stred** (GPIO 27) | Krátke stlačenie | Cyklická zmena manuálneho jasu (Nízky / Stredný / Vysoký) |
+| **OK / Stred** (GPIO 27) | Dlhé stlačenie (>700ms) | Zapnutie / vypnutie automatického kolotoča obrazoviek |
 | **Ľubovoľné tlačidlo** | Stlačenie v nočnom režime | Dočasné prebudenie displeja na 12 sekúnd na denný jas |
 
 ---
 
-## 🌐 Webový konfiguračný portál
+## 🌐 Webové konfiguračné rozhranie
 
-Po pripojení k Wi-Fi sieti otvorte vo webovom prehliadači adresu `http://<ip-adresa-zariadenia>/` (alebo `http://192.168.4.1/` v AP režime):
+Portál je dostupný na adrese `http://<ip-adresa-zariadenia>/` (alebo `http://192.168.4.1/` v režime nastavenia):
 
-1. **Wi-Fi Sieť:** Skenovanie okolitých sietí a uloženie hesla.
-2. **Obrazovka & Senzory:** Aktivácia adaptívneho jasu, nastavenie denného a nočného stropu jasu, konfigurácia nočných hodín a intervalu striedania obrazoviek.
-3. **Predpoveď počasia:** Výber mesta zo zoznamu alebo zadanie vlastnej zemepisnej šírky a dĺžky.
-4. **Finančný ticker:** Výber kryptomenového páru (`BTC`, `ETH`, `SOL`, `BNB`).
-5. **YouTube kanál:** Zadanie ID kanála (alebo @handle) a Google API kľúča.
-6. **Aktualizácia firmvéru (OTA):** Nahrávanie lokálneho `.bin` súboru alebo inštalácia z GitHubu na jedno kliknutie.
+1. **Živý náhľad displeja:** Reálny 32×8 canvas stream a tlačidlo na stiahnutie BMP snímky.
+2. **Wi-Fi Sieť:** Skenovanie okolitých sietí a ukladanie prístupových údajov.
+3. **Svetelný senzor & Obrazovka:** Automatický jas, denný a nočný strop, tiché nočné hodiny.
+4. **Kolotoč obrazoviek & Zoradenie:** Zmena poradia pomocou tlačidiel `▲`/`▼` a výber aktívnych obrazoviek.
+5. **Formát batérie:** Percentá, Napätie alebo Striedanie každé 3 sekundy.
+6. **Rozloženie hodín a dátumu:** Režim hodín, zobrazenie sekúnd, stĺpce dní, farby, formát dátumu a ikona.
+7. **Predpoveď počasia:** Výber mesta zo zoznamu alebo vlastné GPS súradnice.
+8. **Finančné trhy a krypto:** Výber akcie, indexu, komodity alebo kryptomeny, prípadne vlastný ticker.
+9. **YouTube Štatistiky:** ID kanála alebo @handle a Google Cloud API kľúč.
+10. **Aktualizácia firmvéru (OTA):** Flash lokálneho `.bin` súboru alebo kontrola nových verzií na GitHube.
 
 ---
 
-## 🔌 Hardvérová architektúra a pinout
+## 🔌 Hardvérová architektúra a zapojenie pinov
 
-| Komponent | Typ periférie | GPIO Pin | Popis |
+| Komponent | Súčiastka | GPIO Pin | Popis |
 |---|---|---|---|
-| **Displej** | WS2812B NeoPixel | **GPIO 32** | 8×32 matica (256 LED diód, cik-cak stĺpce) |
-| **Senzor (I2C)** | Sensirion SHT30 | **GPIO 21 (SDA), GPIO 22 (SCL)** | Meranie teploty a vlhkosti, I2C adresa `0x44` |
-| **Senzor svetla** | Fotorezistor (LDR) | **GPIO 33** | ADC1 CH5 s EMA filtrom |
-| **Monitor batérie** | Meranie napätia | **GPIO 34** | ADC1 CH6 s deličom napätia 1:1 |
-| **Bzučiak** | Piezo menič | **GPIO 15** | Neinvazívna zvuková odozva a kliky |
-| **Ľavé tlačidlo** | Mikrospínač | **GPIO 26** | Aktívne v stave LOW, interný pull-up |
-| **Stredné tlačidlo** | Mikrospínač | **GPIO 27** | Aktívne v stave LOW, interný pull-up |
-| **Pravé tlačidlo** | Mikrospínač | **GPIO 14** | Aktívne v stave LOW, interný pull-up |
-| **Napájanie** | Li-ion akumulátor | — | Kapacita 4400 mAh, nabíjanie cez USB-C |
+| **Displej** | WS2812B NeoPixel | **GPIO 32** | Matica 8×32 (256 LED, cik-cak zapojenie stĺpcov) |
+| **Senzor (I2C)** | Sensirion SHT30 | **GPIO 21 (SDA), GPIO 22 (SCL)** | Teplota a vlhkosť, I2C adresa `0x44` |
+| **Svetelný senzor** | LDR fotorezistor | **GPIO 33** | ADC1 CH5 s EMA filtrom |
+| **Snímanie batérie** | Li-ion telemetria | **GPIO 34** | ADC1 CH6 s odporovým deličom 1:1 |
+| **Bzučiak** | Piezo menič | **GPIO 15** | Tónová signalizácia bez blokovania slučky |
+| **Ľavé tlačidlo** | Taktilný spínač | **GPIO 26** | Aktívne v nule (LOW), interný pull-up |
+| **Stredné tlačidlo** | Taktilný spínač | **GPIO 27** | Aktívne v nule (LOW), interný pull-up |
+| **Pravé tlačidlo** | Taktilný spínač | **GPIO 14** | Aktívne v nule (LOW), interný pull-up |
+| **Napájanie** | Li-ion akumulátor | — | Kapacita 4400 mAh s nabíjaním cez USB-C |
 
 ---
 
-## 🛠️ Zostavenie a nahrávanie firmvéru
+## 🛠️ Zostavenie a nahratie firmvéru
 
 ### Požiadavky
-- [PlatformIO Core](https://platformio.org/) alebo rozšírenie pre VS Code
+- [PlatformIO Core](https://platformio.org/) alebo PlatformIO IDE (rozšírenie pre VS Code)
 
-### Kompilácia projektu
+### Kompilácia firmvéru
 ```powershell
 pio run -e ulanzi-tc001
 ```
 
-### Nahrávanie cez USB (Windows PowerShell)
-Vždy nastavte kódovanie konzoly na UTF-8 na zamedzenie pádov knižnice Python na Windows:
+### Nahratie cez USB kábel (Windows PowerShell)
+Vždy nastavte kódovanie konzoly na UTF-8 na ochranu pred pádmi Pythonu:
 ```powershell
 $env:PYTHONIOENCODING="utf8"; pio run -e ulanzi-tc001 -t upload
 ```
 
-### Sériový monitor
+### Sledovanie sériového portu (Monitor)
 ```powershell
 pio device monitor -b 115200
 ```
 
 ---
 
-## 📦 Zostavené balíčky (Releases)
+## 📦 Zostavené vydania (Releases)
 
-Predkompilované binárne súbory pre každé vydanie sú dostupné v sekcii [Releases](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases):
-- `firmware.bin`: OTA aktualizačný súbor pre webový portál a automatické online aktualizácie.
-- `firmware.factory.bin`: Kompletný továrenský obraz pre prvotné nahrávanie cez USB kábel od adresy `0x0000`.
+Predkompilované binárne súbory sú k dispozícii v sekcii [Releases](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases):
+- `firmware.bin`: Súbor pre OTA aktualizáciu cez webové rozhranie alebo GitHub 1-klik aktualizáciu.
+- `firmware.factory.bin`: Kompletný obraz pamäte pre prvotné nahratie cez USB od adresy `0x0000`.
 
 ---
 
 ## 📄 Licencia
-Tento projekt je zverejnený ako open-source pod licenciou MIT.
+Tento projekt je otvorený softvér pod licenciou MIT.

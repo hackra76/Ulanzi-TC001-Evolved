@@ -33,8 +33,26 @@ void Network_SaveCredentials(const String& ssid, const String& pass);
 void Network_ForgetCredentials();
 
 // Settings & Preferences
+bool Network_GetAutoRotate();
+void Network_SetAutoRotate(bool en);
+uint8_t Network_GetActiveApp();
+void Network_SetActiveApp(uint8_t app);
 uint16_t Network_GetRotateDelaySec();
 void Network_SetRotateDelaySec(uint16_t sec);
+uint8_t Network_GetCarouselMask();
+void Network_SetCarouselMask(uint8_t mask);
+bool Network_IsAppInCarousel(uint8_t appIndex);
+
+bool Network_GetShowSeconds();
+void Network_SetShowSeconds(bool en);
+
+const uint8_t* Network_GetCarouselOrder();
+String Network_GetCarouselOrderString();
+void Network_SetCarouselOrderString(const String& str);
+
+uint8_t Network_GetBatteryMode();
+void Network_SetBatteryMode(uint8_t mode);
+
 
 String Network_GetYouTubeChannel();
 String Network_GetYouTubeApiKey();
@@ -64,3 +82,30 @@ void Network_SetWeatherLocation(float lat, float lon, const String& city);
 // Crypto Ticker
 String Network_GetCryptoSymbol();
 void Network_SetCryptoSymbol(const String& sym);
+
+// Clock, Date & Layout Customization (Awtrix Style)
+uint8_t Network_GetClockMode();
+void Network_SetClockMode(uint8_t mode);
+
+bool Network_GetWeekdayBar();
+void Network_SetWeekdayBar(bool en);
+
+bool Network_GetWeekdayStartMonday();
+void Network_SetWeekdayStartMonday(bool startMonday);
+
+uint8_t Network_GetWeekdayActiveColorIndex();
+void Network_SetWeekdayActiveColorIndex(uint8_t idx);
+uint16_t Network_GetWeekdayActiveColor();
+
+uint8_t Network_GetWeekdayInactiveColorIndex();
+void Network_SetWeekdayInactiveColorIndex(uint8_t idx);
+uint16_t Network_GetWeekdayInactiveColor();
+
+uint8_t Network_GetDateFormat();
+void Network_SetDateFormat(uint8_t fmt);
+
+uint8_t Network_GetClockIcon();
+void Network_SetClockIcon(uint8_t icon);
+
+uint8_t Network_GetTextAlign();
+void Network_SetTextAlign(uint8_t align);

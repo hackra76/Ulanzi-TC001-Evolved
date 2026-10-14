@@ -1,6 +1,6 @@
 # Welcome to Ulanzi TC001 Evolved Wiki
 
-**Ulanzi TC001 Evolved** is a modular, high-performance firmware for the Ulanzi TC001 Smart Pixel Desktop Clock. It replaces legacy firmwares with a resilient, modern ESP32 architecture.
+**Ulanzi TC001 Evolved** is a modular, high-performance firmware for the Ulanzi TC001 Smart Pixel Desktop Clock. It transforms the clock with a modern, resilient ESP32 architecture featuring live display streaming, Awtrix-style layout customization, live overhead airspace radar, stock/crypto markets, and custom carousel reordering.
 
 ---
 
@@ -16,9 +16,11 @@
 
 ## ⚡ Core Highlights
 
-1. **Zero-Configuration SoftAP Captive Portal**: Built-in DNS server automatically redirects mobile and desktop clients to the dark-mode configuration portal.
-2. **Ambient Intelligence**: LDR sensor readings are smoothed via exponential moving average (EMA) and passed through a gamma curve for flicker-free auto-brightness.
-3. **Custom Day/Night Sliders**: Set your preferred daytime maximum brightness and sleep-safe night brightness.
-4. **Worldwide City Presets**: Pre-populated coordinates for 25+ cities across Slovakia, Czechia, Europe, and globally.
-5. **Real-time Financial & Creator Tickers**: Live crypto prices from Binance and live subscriber counts from YouTube Data API v3.
-6. **Dual OTA Engine**: Browser drag-and-drop `.bin` upload plus automated 1-click cloud updates from GitHub Releases.
+1. **Zero-Configuration SoftAP Captive Portal**: Built-in DNS server automatically redirects mobile and desktop clients to the dark-mode configuration portal on `192.168.4.1`.
+2. **Real-Time Virtual Matrix Stream**: Live 32×8 canvas mirror in the Web Portal, one-click BMP screenshot capture, and terminal ASCII art output.
+3. **Awtrix-Style Clock & Layout**: Time/Combined/Date modes, 7 weekday bars with ISO/US start and custom colors, multiple date formats, dynamic calendar icon, and seconds display with auto-hidden icon for clean spacing.
+4. **Live Airspace Radar (ADS-B)**: Real-time overhead flight tracking via OpenSky Network cycling active aircraft callsigns within ~50km of local coordinates.
+5. **Energy & Battery Telemetry**: Glowing neon lightning bolt icon with selectable Percentage, Voltage, or Alternating display modes.
+6. **Financial Markets, Stocks & Crypto**: Live feeds for Bitcoin, Ethereum, Solana, BNB, Apple, Tesla, Nvidia, S&P 500, Gold, EUR/USD, and custom tickers.
+7. **Custom Screen Reordering**: Move screens up/down in the web portal to define your exact carousel sequence, with instant AJAX saving and toast notifications.
+8. **Dual OTA Engine**: Web browser binary upload plus automated 1-click cloud updates from GitHub Releases with live percentage display on matrix.

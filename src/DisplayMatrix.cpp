@@ -1,10 +1,10 @@
 #include "DisplayMatrix.h"
 
 // TC001 matrix topology: 32 columns wide, 8 rows high
-// Column 0 top->down, Column 1 bottom->up (zigzag columns)
+// Row 0 left->right, Row 1 right->left (serpentine zigzag rows)
 static Adafruit_NeoMatrix s_matrix = Adafruit_NeoMatrix(
     MATRIX_WIDTH, MATRIX_HEIGHT, PIN_MATRIX,
-    NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
+    NEO_MATRIX_TOP + NEO_MATRIX_LEFT + NEO_MATRIX_ROWS + NEO_MATRIX_ZIGZAG,
     NEO_GRB + NEO_KHZ800
 );
 
@@ -105,3 +105,402 @@ bool DisplayMatrix_ScrollTicker(const char* text, uint16_t color, const uint16_t
 Adafruit_NeoMatrix& DisplayMatrix_GetMatrix() {
     return s_matrix;
 }
+
+uint32_t DisplayMatrix_GetPixel(int16_t x, int16_t y) {
+    if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) return 0;
+    uint16_t idx = (y & 1) ? ((y + 1) * MATRIX_WIDTH - 1 - x) : (y * MATRIX_WIDTH + x);
+    return s_matrix.getPixelColor(idx);
+}
+
+void DisplayMatrix_StreamBMP(Client& client, uint8_t scale) {
+    if (scale < 1) scale = 1;
+    if (scale > 16) scale = 16;
+    uint32_t width = MATRIX_WIDTH * scale;
+    uint32_t height = MATRIX_HEIGHT * scale;
+    uint32_t rowSize = ((width * 3 + 3) / 4) * 4;
+    uint32_t imageSize = rowSize * height;
+    uint32_t fileSize = 54 + imageSize;
+
+    uint8_t header[54] = {
+        'B', 'M',
+        (uint8_t)(fileSize & 0xFF), (uint8_t)((fileSize >> 8) & 0xFF), (uint8_t)((fileSize >> 16) & 0xFF), (uint8_t)((fileSize >> 24) & 0xFF),
+        0, 0, 0, 0,
+        54, 0, 0, 0,
+        40, 0, 0, 0,
+        (uint8_t)(width & 0xFF), (uint8_t)((width >> 8) & 0xFF), (uint8_t)((width >> 16) & 0xFF), (uint8_t)((width >> 24) & 0xFF),
+        (uint8_t)(height & 0xFF), (uint8_t)((height >> 8) & 0xFF), (uint8_t)((height >> 16) & 0xFF), (uint8_t)((height >> 24) & 0xFF),
+        1, 0,
+        24, 0,
+        0, 0, 0, 0,
+        (uint8_t)(imageSize & 0xFF), (uint8_t)((imageSize >> 8) & 0xFF), (uint8_t)((imageSize >> 16) & 0xFF), (uint8_t)((imageSize >> 24) & 0xFF),
+        0x13, 0x0B, 0, 0,
+        0x13, 0x0B, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0
+    };
+
+    client.write(header, 54);
+
+    uint8_t rowBuf[960]; // scale=10 -> width=320 -> 960 bytes
+    for (int32_t y = (int32_t)height - 1; y >= 0; y--) {
+        uint16_t my = y / scale;
+        bool gapY = (scale > 2) && ((y % scale) == (scale - 1));
+        for (uint32_t x = 0; x < width; x++) {
+            uint16_t mx = x / scale;
+            bool gapX = (scale > 2) && ((x % scale) == (scale - 1));
+            uint32_t pos = x * 3;
+            if (gapX || gapY) {
+                rowBuf[pos]     = 10; // B
+                rowBuf[pos + 1] = 13; // G
+                rowBuf[pos + 2] = 18; // R
+            } else {
+                uint32_t c = DisplayMatrix_GetPixel(mx, my);
+                rowBuf[pos]     = (uint8_t)(c & 0xFF);         // B
+                rowBuf[pos + 1] = (uint8_t)((c >> 8) & 0xFF);  // G
+                rowBuf[pos + 2] = (uint8_t)((c >> 16) & 0xFF); // R
+            }
+        }
+        client.write(rowBuf, rowSize);
+    }
+}
+
+String DisplayMatrix_GetAsciiArt() {
+    String out = "";
+    out.reserve(MATRIX_WIDTH * MATRIX_HEIGHT * 2 + MATRIX_HEIGHT);
+    for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+        for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+            uint32_t c = DisplayMatrix_GetPixel(x, y);
+            uint8_t r = (c >> 16) & 0xFF;
+            uint8_t g = (c >> 8) & 0xFF;
+            uint8_t b = c & 0xFF;
+            if (r < 15 && g < 15 && b < 15) {
+                out += "..";
+            } else {
+                out += "##";
+            }
+        }
+        out += "\n";
+    }
+    return out;
+}
+
+void DisplayMatrix_GetJson(String& out) {
+    out = "{\"width\":32,\"height\":8,\"pixels\":[";
+    for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+        if (y > 0) out += ",";
+        out += "[";
+        for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+            if (x > 0) out += ",";
+            uint32_t c = DisplayMatrix_GetPixel(x, y);
+            char hexBuf[10];
+            snprintf(hexBuf, sizeof(hexBuf), "\"#%06X\"", (unsigned int)(c & 0xFFFFFF));
+            out += hexBuf;
+        }
+        out += "]";
+    }
+    out += "]}";
+}
+
+// 3x7 Compact Bitmap Font (bits 2..0 = columns 0..2)
+static const uint8_t s_font3x7[][7] PROGMEM = {
+    { 0x07, 0x05, 0x05, 0x05, 0x05, 0x05, 0x07 }, // '0'
+    { 0x02, 0x06, 0x02, 0x02, 0x02, 0x02, 0x07 }, // '1'
+    { 0x07, 0x01, 0x01, 0x07, 0x04, 0x04, 0x07 }, // '2'
+    { 0x07, 0x01, 0x01, 0x07, 0x01, 0x01, 0x07 }, // '3'
+    { 0x05, 0x05, 0x05, 0x07, 0x01, 0x01, 0x01 }, // '4'
+    { 0x07, 0x04, 0x04, 0x07, 0x01, 0x01, 0x07 }, // '5'
+    { 0x07, 0x04, 0x04, 0x07, 0x05, 0x05, 0x07 }, // '6'
+    { 0x07, 0x01, 0x01, 0x02, 0x02, 0x04, 0x04 }, // '7'
+    { 0x07, 0x05, 0x05, 0x07, 0x05, 0x05, 0x07 }, // '8'
+    { 0x07, 0x05, 0x05, 0x07, 0x01, 0x01, 0x07 }, // '9'
+};
+
+// Uppercase Letters A..Z (ASCII 65..90)
+static const uint8_t s_fontAlpha3x7[][7] PROGMEM = {
+    { 0x02, 0x05, 0x05, 0x07, 0x05, 0x05, 0x05 }, // 'A'
+    { 0x06, 0x05, 0x05, 0x06, 0x05, 0x05, 0x06 }, // 'B'
+    { 0x07, 0x04, 0x04, 0x04, 0x04, 0x04, 0x07 }, // 'C'
+    { 0x06, 0x05, 0x05, 0x05, 0x05, 0x05, 0x06 }, // 'D'
+    { 0x07, 0x04, 0x04, 0x06, 0x04, 0x04, 0x07 }, // 'E'
+    { 0x07, 0x04, 0x04, 0x06, 0x04, 0x04, 0x04 }, // 'F'
+    { 0x07, 0x04, 0x04, 0x05, 0x05, 0x05, 0x07 }, // 'G'
+    { 0x05, 0x05, 0x05, 0x07, 0x05, 0x05, 0x05 }, // 'H'
+    { 0x07, 0x02, 0x02, 0x02, 0x02, 0x02, 0x07 }, // 'I'
+    { 0x01, 0x01, 0x01, 0x01, 0x01, 0x05, 0x02 }, // 'J'
+    { 0x05, 0x05, 0x06, 0x04, 0x06, 0x05, 0x05 }, // 'K'
+    { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x07 }, // 'L'
+    { 0x05, 0x07, 0x07, 0x05, 0x05, 0x05, 0x05 }, // 'M'
+    { 0x05, 0x07, 0x07, 0x07, 0x05, 0x05, 0x05 }, // 'N'
+    { 0x07, 0x05, 0x05, 0x05, 0x05, 0x05, 0x07 }, // 'O'
+    { 0x07, 0x05, 0x05, 0x07, 0x04, 0x04, 0x04 }, // 'P'
+    { 0x07, 0x05, 0x05, 0x05, 0x05, 0x07, 0x01 }, // 'Q'
+    { 0x06, 0x05, 0x05, 0x06, 0x05, 0x05, 0x05 }, // 'R'
+    { 0x03, 0x04, 0x04, 0x02, 0x01, 0x01, 0x06 }, // 'S'
+    { 0x07, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }, // 'T'
+    { 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x07 }, // 'U'
+    { 0x05, 0x05, 0x05, 0x05, 0x05, 0x02, 0x02 }, // 'V'
+    { 0x05, 0x05, 0x05, 0x05, 0x07, 0x07, 0x05 }, // 'W'
+    { 0x05, 0x05, 0x02, 0x02, 0x02, 0x05, 0x05 }, // 'X'
+    { 0x05, 0x05, 0x05, 0x02, 0x02, 0x02, 0x02 }, // 'Y'
+    { 0x07, 0x01, 0x02, 0x02, 0x04, 0x04, 0x07 }, // 'Z'
+};
+
+int16_t DisplayMatrix_DrawSmallChar(int16_t x, int16_t y, char c, uint16_t color) {
+    if (c == ' ') return 2;
+    if (c == ':') {
+        s_matrix.drawPixel(x, y + 1, color);
+        s_matrix.drawPixel(x, y + 2, color);
+        s_matrix.drawPixel(x, y + 4, color);
+        s_matrix.drawPixel(x, y + 5, color);
+        return 2;
+    }
+    if (c == '.') {
+        s_matrix.drawPixel(x, y + 5, color);
+        s_matrix.drawPixel(x, y + 6, color);
+        return 2;
+    }
+    if (c == '\'' || c == '^' || (uint8_t)c == 0xB0) {
+        s_matrix.drawPixel(x,     y,     color);
+        s_matrix.drawPixel(x + 1, y,     color);
+        s_matrix.drawPixel(x,     y + 1, color);
+        s_matrix.drawPixel(x + 1, y + 1, color);
+        return 3;
+    }
+    if (c == '-') {
+        s_matrix.drawPixel(x,     y + 3, color);
+        s_matrix.drawPixel(x + 1, y + 3, color);
+        s_matrix.drawPixel(x + 2, y + 3, color);
+        return 4;
+    }
+    if (c == '/') {
+        s_matrix.drawPixel(x + 2, y,     color);
+        s_matrix.drawPixel(x + 2, y + 1, color);
+        s_matrix.drawPixel(x + 1, y + 2, color);
+        s_matrix.drawPixel(x + 1, y + 3, color);
+        s_matrix.drawPixel(x + 1, y + 4, color);
+        s_matrix.drawPixel(x,     y + 5, color);
+        s_matrix.drawPixel(x,     y + 6, color);
+        return 4;
+    }
+    if (c == '%') {
+        static const uint8_t pct[7] = { 0x05, 0x01, 0x02, 0x02, 0x04, 0x05, 0x00 };
+        for (int r = 0; r < 7; r++) {
+            uint8_t b = pct[r];
+            if (b & 4) s_matrix.drawPixel(x,     y + r, color);
+            if (b & 2) s_matrix.drawPixel(x + 1, y + r, color);
+            if (b & 1) s_matrix.drawPixel(x + 2, y + r, color);
+        }
+        return 4;
+    }
+
+    const uint8_t* rowData = nullptr;
+    if (c >= '0' && c <= '9') {
+        rowData = s_font3x7[c - '0'];
+    } else if (c >= 'A' && c <= 'Z') {
+        rowData = s_fontAlpha3x7[c - 'A'];
+    } else if (c >= 'a' && c <= 'z') {
+        rowData = s_fontAlpha3x7[c - 'a'];
+    }
+
+    if (!rowData) return 3;
+
+    for (int r = 0; r < 7; r++) {
+        uint8_t b = pgm_read_byte(&rowData[r]);
+        if (b & 4) s_matrix.drawPixel(x,     y + r, color);
+        if (b & 2) s_matrix.drawPixel(x + 1, y + r, color);
+        if (b & 1) s_matrix.drawPixel(x + 2, y + r, color);
+    }
+    return 4;
+}
+
+int16_t DisplayMatrix_GetSmallTextWidth(const char* text) {
+    if (!text) return 0;
+    int16_t w = 0;
+    while (*text) {
+        if ((uint8_t)*text == 0xC2 && (uint8_t)*(text + 1) == 0xB0) {
+            w += 3;
+            text += 2;
+            continue;
+        }
+        char c = *text;
+        if (c == ' ') w += 2;
+        else if (c == ':' || c == '.') w += 2;
+        else if (c == '\'' || c == '^' || (uint8_t)c == 0xB0) w += 3;
+        else if (c == '/') w += 4;
+        else w += 4;
+        text++;
+    }
+    return (w > 0) ? (w - 1) : 0;
+}
+
+int16_t DisplayMatrix_DrawSmallText(int16_t x, int16_t y, const char* text, uint16_t color) {
+    if (!text) return 0;
+    int16_t curX = x;
+    while (*text) {
+        if ((uint8_t)*text == 0xC2 && (uint8_t)*(text + 1) == 0xB0) {
+            s_matrix.drawPixel(curX,     y,     color);
+            s_matrix.drawPixel(curX + 1, y,     color);
+            s_matrix.drawPixel(curX,     y + 1, color);
+            s_matrix.drawPixel(curX + 1, y + 1, color);
+            curX += 3;
+            text += 2;
+            continue;
+        }
+        curX += DisplayMatrix_DrawSmallChar(curX, y, *text, color);
+        text++;
+    }
+    return curX - x;
+}
+
+static const uint8_t s_font3x5[10][5] PROGMEM = {
+    { 0x07, 0x05, 0x05, 0x05, 0x07 }, // 0
+    { 0x02, 0x06, 0x02, 0x02, 0x07 }, // 1
+    { 0x07, 0x01, 0x07, 0x04, 0x07 }, // 2
+    { 0x07, 0x01, 0x07, 0x01, 0x07 }, // 3
+    { 0x05, 0x05, 0x07, 0x01, 0x01 }, // 4
+    { 0x07, 0x04, 0x07, 0x01, 0x07 }, // 5
+    { 0x07, 0x04, 0x07, 0x05, 0x07 }, // 6
+    { 0x07, 0x01, 0x02, 0x02, 0x02 }, // 7
+    { 0x07, 0x05, 0x07, 0x05, 0x07 }, // 8
+    { 0x07, 0x05, 0x07, 0x01, 0x07 }, // 9
+};
+
+void DisplayMatrix_DrawCalendarIcon(int16_t x, int16_t y, int dayOfMonth) {
+    if (dayOfMonth < 1) dayOfMonth = 1;
+    if (dayOfMonth > 31) dayOfMonth = 31;
+
+    static const uint16_t CAL_BASE[64] = {
+        0,       C_RED,   C_WHITE, C_RED,   C_RED,   C_WHITE, C_RED,   0,
+        C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        0,       C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0
+    };
+    DisplayMatrix_DrawIcon(x, y, CAL_BASE);
+
+    if (dayOfMonth < 10) {
+        for (int r = 0; r < 5; r++) {
+            uint8_t row = pgm_read_byte(&s_font3x5[dayOfMonth][r]);
+            if (row & 4) s_matrix.drawPixel(x + 2, y + 2 + r, C_BLACK);
+            if (row & 2) s_matrix.drawPixel(x + 3, y + 2 + r, C_BLACK);
+            if (row & 1) s_matrix.drawPixel(x + 4, y + 2 + r, C_BLACK);
+        }
+    } else {
+        int tens = dayOfMonth / 10;
+        int units = dayOfMonth % 10;
+        for (int r = 0; r < 5; r++) {
+            uint8_t rowT = pgm_read_byte(&s_font3x5[tens][r]);
+            if (rowT & 4) s_matrix.drawPixel(x + 1, y + 2 + r, C_BLACK);
+            if (rowT & 2) s_matrix.drawPixel(x + 2, y + 2 + r, C_BLACK);
+            if (rowT & 1) s_matrix.drawPixel(x + 3, y + 2 + r, C_BLACK);
+
+            uint8_t rowU = pgm_read_byte(&s_font3x5[units][r]);
+            if (rowU & 4) s_matrix.drawPixel(x + 4, y + 2 + r, C_BLACK);
+            if (rowU & 2) s_matrix.drawPixel(x + 5, y + 2 + r, C_BLACK);
+            if (rowU & 1) s_matrix.drawPixel(x + 6, y + 2 + r, C_BLACK);
+        }
+    }
+}
+
+void DisplayMatrix_DrawWeekdayBar(int activeDayIndex, uint16_t activeColor, uint16_t inactiveColor, int startX, int y) {
+    for (int i = 0; i < 7; i++) {
+        uint16_t col = (i == activeDayIndex) ? activeColor : inactiveColor;
+        int bx = startX + i * 3;
+        s_matrix.drawPixel(bx,     y, col);
+        s_matrix.drawPixel(bx + 1, y, col);
+    }
+}
+
+int16_t DisplayMatrix_DrawDigit3x5(int16_t x, int16_t y, uint8_t digit, uint16_t color) {
+    if (digit > 9) return 3;
+    for (int r = 0; r < 5; r++) {
+        uint8_t row = pgm_read_byte(&s_font3x5[digit][r]);
+        if (row & 4) s_matrix.drawPixel(x,     y + r, color);
+        if (row & 2) s_matrix.drawPixel(x + 1, y + r, color);
+        if (row & 1) s_matrix.drawPixel(x + 2, y + r, color);
+    }
+    return 3;
+}
+
+void DisplayMatrix_DrawTime3x5(int16_t x, int16_t y, int h, int m, bool blinkColon, uint16_t colTime, uint16_t colColon) {
+    uint8_t h1 = (h / 10) % 10;
+    uint8_t h2 = h % 10;
+    uint8_t m1 = (m / 10) % 10;
+    uint8_t m2 = m % 10;
+
+    int16_t curX = x;
+    DisplayMatrix_DrawDigit3x5(curX, y, h1, colTime); curX += 4;
+    DisplayMatrix_DrawDigit3x5(curX, y, h2, colTime); curX += 4;
+    if (blinkColon) {
+        s_matrix.drawPixel(curX, y + 1, colColon);
+        s_matrix.drawPixel(curX, y + 3, colColon);
+    }
+    curX += 2;
+    DisplayMatrix_DrawDigit3x5(curX, y, m1, colTime); curX += 4;
+    DisplayMatrix_DrawDigit3x5(curX, y, m2, colTime);
+}
+
+void DisplayMatrix_DrawTimeWithSeconds(int16_t startX, int16_t y, int h, int m, int s, bool blinkColon, uint16_t colTime, uint16_t colColon, uint16_t colSec) {
+    uint8_t h1 = (h / 10) % 10;
+    uint8_t h2 = h % 10;
+    uint8_t m1 = (m / 10) % 10;
+    uint8_t m2 = m % 10;
+    uint8_t s1 = (s / 10) % 10;
+    uint8_t s2 = s % 10;
+
+    // Fixed column positions when icon is at x=0..7:
+    // H1: startX..startX+2 (e.g. 9..11)
+    DisplayMatrix_DrawDigit3x5(startX, y, h1, colTime);
+    // H2: startX+4..startX+6 (e.g. 13..15)
+    DisplayMatrix_DrawDigit3x5(startX + 4, y, h2, colTime);
+    // Colon at startX+7 (e.g. 16)
+    if (blinkColon) {
+        s_matrix.drawPixel(startX + 7, y + 1, colColon);
+        s_matrix.drawPixel(startX + 7, y + 3, colColon);
+    }
+    // M1: startX+8..startX+10 (e.g. 17..19)
+    DisplayMatrix_DrawDigit3x5(startX + 8, y, m1, colTime);
+    // M2: startX+12..startX+14 (e.g. 21..23)
+    DisplayMatrix_DrawDigit3x5(startX + 12, y, m2, colTime);
+    // S1: startX+16..startX+18 (e.g. 25..27)
+    DisplayMatrix_DrawDigit3x5(startX + 16, y, s1, colSec);
+    // S2: startX+20..startX+22 (e.g. 29..31)
+    DisplayMatrix_DrawDigit3x5(startX + 20, y, s2, colSec);
+}
+
+void DisplayMatrix_DrawFullTime3x5(int16_t startX, int16_t y, int h, int m, int s, bool blinkColon, uint16_t colTime, uint16_t colColon, uint16_t colSec) {
+    uint8_t h1 = (h / 10) % 10;
+    uint8_t h2 = h % 10;
+    uint8_t m1 = (m / 10) % 10;
+    uint8_t m2 = m % 10;
+    uint8_t s1 = (s / 10) % 10;
+    uint8_t s2 = s % 10;
+
+    // Full width layout without icon (width 27, centered at startX = 2):
+    // x=2..4: H1
+    DisplayMatrix_DrawDigit3x5(startX, y, h1, colTime);
+    // x=6..8: H2
+    DisplayMatrix_DrawDigit3x5(startX + 4, y, h2, colTime);
+    // x=10: Colon 1
+    if (blinkColon) {
+        s_matrix.drawPixel(startX + 8, y + 1, colColon);
+        s_matrix.drawPixel(startX + 8, y + 3, colColon);
+    }
+    // x=12..14: M1
+    DisplayMatrix_DrawDigit3x5(startX + 10, y, m1, colTime);
+    // x=16..18: M2
+    DisplayMatrix_DrawDigit3x5(startX + 14, y, m2, colTime);
+    // x=20: Colon 2
+    if (blinkColon) {
+        s_matrix.drawPixel(startX + 18, y + 1, colColon);
+        s_matrix.drawPixel(startX + 18, y + 3, colColon);
+    }
+    // x=22..24: S1
+    DisplayMatrix_DrawDigit3x5(startX + 20, y, s1, colSec);
+    // x=26..28: S2
+    DisplayMatrix_DrawDigit3x5(startX + 24, y, s2, colSec);
+}
+

@@ -113,7 +113,7 @@ void Weather_Update() {
                 s_weatherCode = current["weather_code"] | s_weatherCode;
                 s_hasData = true;
 
-                snprintf(s_formattedTemp, sizeof(s_formattedTemp), "%dC", (int)roundf(s_temperature));
+                snprintf(s_formattedTemp, sizeof(s_formattedTemp), "%d\xC2\xB0" "C", (int)roundf(s_temperature));
                 Serial.printf("[Weather] Success! %s: %s, %d%% RH, WMO code %d\n",
                               s_city.c_str(), s_formattedTemp, s_humidity, s_weatherCode);
             } else {
