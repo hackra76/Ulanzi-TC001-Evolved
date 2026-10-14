@@ -60,6 +60,18 @@ Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** runn
   - Sequence order persists in NVS (`car_ord`) and governs auto-rotation and hardware button cycling.
   - Configurable rotation interval (3 to 120 seconds).
   - Web portal AJAX instant save with toast notifications and automatic return.
+- **🏠 Home Assistant MQTT Auto-Discovery:**
+  - Native zero-configuration integration: automatically creates 12 synchronized entities in Home Assistant when connected to your broker.
+  - Sensors: SHT30 Temperature (`°C`), Humidity (`%`), Battery (`%`), Battery Voltage (`V`), Ambient Light, Active Screen.
+  - Controls: Display Matrix Light (Power & Brightness slider 0–255), Auto-Brightness Switch, Carousel Auto-Rotate Switch, Screen Select Dropdown, Buzzer Chime Button, Restart Button.
+  - Live connection status and broker credentials configurable directly in the Web Portal.
+- **🎵 Custom App Push API & Spotify Integration:**
+  - **Dynamic Screens**: Push custom apps via MQTT (`<prefix>/custom/<name>`) or HTTP REST (`POST /api/custom?name=<name>`).
+  - Pushed screens (e.g. Spotify currently playing track, 3D printer status, washer progress) dynamically join the carousel rotation.
+  - **Payload Features**: Text, 8×8 icons (built-in `spotify`, `bell`, `lightning`, `youtube`, etc., or 64 RGB565 array), colors, 1-pixel bottom progress bar (0–100%), custom duration, and lifetime auto-eviction.
+  - **Clean Typography & Layout**: Text rendered at rows 0–6 when progress bar is active at row 7, eliminating vertical collisions.
+  - **Pinned Icons**: Left icon is pinned with columns 0–8 masked so marquee text scrolls cleanly behind the icon without pixel bleeding.
+  - **🚨 High-Priority Notifications**: Push instant alerts via `POST /api/notify` or `<prefix>/notify` that interrupt the active screen with buzzer chime and auto-dismiss back to the carousel.
 - **🔄 Dual Over-The-Air (OTA) Updates:**
   - Direct web browser `.bin` binary upload (`/update`) with real-time percentage progress bar.
   - 1-Click cloud updates from GitHub Releases (`/api/ota/check`, `/api/ota/install`).
@@ -92,7 +104,8 @@ Access the web portal at `http://<device-ip>/` (or `http://192.168.4.1/` in setu
 7. **Weather Settings:** Choose city preset or input custom coordinates.
 8. **Financial Markets:** Select popular stock, index, commodity, or crypto preset, or enter custom symbol.
 9. **YouTube Analytics:** Set channel ID or @handle and Google API key.
-10. **Firmware Update (OTA):** Upload local `.bin` or install new releases from GitHub.
+10. **Home Assistant & MQTT:** Configure broker IP, port, credentials, and topic prefix with live connection indicator.
+11. **Firmware Update (OTA):** Upload local `.bin` or install new releases from GitHub.
 
 ---
 

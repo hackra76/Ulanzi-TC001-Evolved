@@ -6,6 +6,8 @@
 #include "Sensors.h"
 #include "OtaManager.h"
 #include "DisplayMatrix.h"
+#include "MqttService.h"
+#include "CustomAppService.h"
 
 static Preferences s_prefs;
 static WebServer s_server(80);
@@ -26,6 +28,14 @@ static uint8_t s_carouselOrder[7] = {0, 1, 2, 3, 4, 5, 6}; // Screen display seq
 static uint8_t s_batteryMode = 2; // 0: Percentage, 1: Voltage, 2: Alternating
 static String s_ytChannel = "";
 static String s_ytApiKey = "";
+
+// Home Assistant & MQTT
+static bool s_mqttEn = false;
+static String s_mqttServer = "";
+static uint16_t s_mqttPort = DEFAULT_MQTT_PORT;
+static String s_mqttUser = "";
+static String s_mqttPass = "";
+static String s_mqttPrefix = DEFAULT_MQTT_PREFIX;
 
 // Ambient & Screen
 static bool s_autoBri = true;
@@ -583,6 +593,46 @@ static String buildPortalHtml() {
       <input type="password" id="yt_key" name="yt_key" value="{{YT_KEY}}" placeholder="Google Cloud API key">
     </div>
 
+    <div class="section-title">&#x1F3E0; Home Assistant &amp; MQTT (Auto-Discovery &amp; Push API)</div>
+    <div class="field">
+      <label class="chk-label">
+        <input type="checkbox" name="mqtt_en" id="mqtt_en" {{MQTT_EN_CHK}} onchange="document.getElementById('mqtt_settings').style.display = this.checked ? 'block' : 'none';">
+        Enable MQTT Client &amp; Home Assistant Auto-Discovery
+      </label>
+    </div>
+    <div id="mqtt_settings" style="{{MQTT_DISPLAY}}">
+      <div class="row">
+        <div class="field" style="flex:2;">
+          <label for="mqtt_srv">Broker IP or Hostname</label>
+          <input type="text" id="mqtt_srv" name="mqtt_srv" value="{{MQTT_SRV}}" placeholder="e.g. 192.168.0.100 or homeassistant.local">
+        </div>
+        <div class="field" style="flex:1;">
+          <label for="mqtt_port">Port</label>
+          <input type="number" id="mqtt_port" name="mqtt_port" value="{{MQTT_PORT}}" placeholder="1883">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="mqtt_user">Username (Optional)</label>
+          <input type="text" id="mqtt_user" name="mqtt_user" value="{{MQTT_USER}}" placeholder="Home Assistant MQTT user">
+        </div>
+        <div class="field">
+          <label for="mqtt_pass">Password (Optional)</label>
+          <input type="password" id="mqtt_pass" name="mqtt_pass" value="{{MQTT_PASS}}" placeholder="Password">
+        </div>
+      </div>
+      <div class="field">
+        <label for="mqtt_pre">Topic Prefix</label>
+        <input type="text" id="mqtt_pre" name="mqtt_pre" value="{{MQTT_PRE}}" placeholder="ulanzi-tc001">
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-top:0.25rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:0.5rem; border:1px solid rgba(255,255,255,0.05);">
+        &#x1F4A1; <strong>Push Spotify &amp; Custom Screens:</strong><br>
+        MQTT: Publish JSON to <code>{{MQTT_PRE}}/custom/spotify</code> or <code>{{MQTT_PRE}}/notify</code><br>
+        HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>
+        Payload: <code>{"text":"Song - Artist","icon":"spotify","progress":45,"duration":8}</code>
+      </div>
+    </div>
+
     <button type="submit" class="btn-submit">Save & Apply Settings</button>
   </form>
 
@@ -909,6 +959,15 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
 
     html.replace("{{YT_CHANNEL}}", s_ytChannel);
     html.replace("{{YT_KEY}}", s_ytApiKey.length() > 0 ? "********" : "");
+
+    html.replace("{{MQTT_EN_CHK}}", s_mqttEn ? "checked" : "");
+    html.replace("{{MQTT_DISPLAY}}", s_mqttEn ? "" : "display:none;");
+    html.replace("{{MQTT_SRV}}", s_mqttServer);
+    html.replace("{{MQTT_PORT}}", String(s_mqttPort));
+    html.replace("{{MQTT_USER}}", s_mqttUser);
+    html.replace("{{MQTT_PASS}}", s_mqttPass.length() > 0 ? "********" : "");
+    html.replace("{{MQTT_PRE}}", s_mqttPrefix);
+
     html.replace("{{FW_VERSION}}", FW_VERSION);
     return html;
 }
@@ -1111,6 +1170,29 @@ static void handleSave() {
         Network_SaveYouTubeConfig(ch, key);
     }
 
+    // 7. Process Home Assistant & MQTT
+    Network_SetMqttEnabled(s_server.hasArg("mqtt_en"));
+    if (s_server.hasArg("mqtt_srv")) {
+        Network_SetMqttServer(s_server.arg("mqtt_srv"));
+    }
+    if (s_server.hasArg("mqtt_port")) {
+        Network_SetMqttPort((uint16_t)s_server.arg("mqtt_port").toInt());
+    }
+    if (s_server.hasArg("mqtt_user")) {
+        Network_SetMqttUser(s_server.arg("mqtt_user"));
+    }
+    if (s_server.hasArg("mqtt_pass")) {
+        String p = s_server.arg("mqtt_pass");
+        if (p != "********") {
+            Network_SetMqttPass(p);
+        }
+    }
+    if (s_server.hasArg("mqtt_pre")) {
+        String pre = s_server.arg("mqtt_pre");
+        pre.trim();
+        if (pre.length() > 0) Network_SetMqttPrefix(pre);
+    }
+
     s_server.sendHeader("Access-Control-Allow-Origin", "*");
     if (s_server.hasArg("ajax") || s_server.header("X-Requested-With") == "XMLHttpRequest") {
         s_server.send(200, "application/json", "{\"status\":\"success\"}");
@@ -1156,6 +1238,7 @@ static void handleStatus() {
     doc["crypto_symbol"] = Crypto_GetSymbol();
     doc["crypto_price"] = Crypto_GetFormattedPrice();
     doc["yt_subscribers"] = YouTube_GetFormattedSubs();
+    doc["mqtt_connected"] = MqttService_IsConnected();
 
     String out;
     serializeJson(doc, out);
@@ -1224,6 +1307,13 @@ void Network_Init() {
     s_ytApiKey = s_prefs.getString(PREF_KEY_YT_APIKEY, "");
     YouTube_SetCredentials(s_ytChannel, s_ytApiKey);
 
+    s_mqttEn = s_prefs.getBool(PREF_KEY_MQTT_ENABLED, false);
+    s_mqttServer = s_prefs.getString(PREF_KEY_MQTT_SERVER, "");
+    s_mqttPort = s_prefs.getUShort(PREF_KEY_MQTT_PORT, DEFAULT_MQTT_PORT);
+    s_mqttUser = s_prefs.getString(PREF_KEY_MQTT_USER, "");
+    s_mqttPass = s_prefs.getString(PREF_KEY_MQTT_PASS, "");
+    s_mqttPrefix = s_prefs.getString(PREF_KEY_MQTT_PREFIX, DEFAULT_MQTT_PREFIX);
+
     WiFi.persistent(false);
     WiFi.mode(WIFI_OFF);
 
@@ -1277,6 +1367,78 @@ void Network_Init() {
         String out;
         serializeJson(doc, out);
         s_server.send(200, "application/json", out);
+    });
+
+    // Custom App & Notification REST Push API
+    s_server.on("/api/custom", HTTP_GET, []() {
+        String json;
+        CustomApp_GetJsonList(json);
+        s_server.send(200, "application/json", json);
+    });
+
+    s_server.on("/api/custom", HTTP_POST, []() {
+        String appName = s_server.hasArg("name") ? s_server.arg("name") : "custom";
+        if (s_server.hasArg("delete") && s_server.arg("delete").toInt() != 0) {
+            CustomApp_Delete(appName);
+            s_server.send(200, "application/json", "{\"status\":\"deleted\"}");
+            return;
+        }
+
+        String body = s_server.arg("plain");
+        JsonDocument doc;
+        DeserializationError err = deserializeJson(doc, body);
+        if (err) {
+            if (s_server.hasArg("text")) {
+                doc["text"] = s_server.arg("text");
+                if (s_server.hasArg("icon")) doc["icon"] = s_server.arg("icon");
+                if (s_server.hasArg("progress")) doc["progress"] = s_server.arg("progress").toInt();
+                if (s_server.hasArg("duration")) doc["duration"] = s_server.arg("duration").toInt();
+                if (s_server.hasArg("lifetime")) doc["lifetime"] = s_server.arg("lifetime").toInt();
+            } else {
+                s_server.send(400, "application/json", "{\"error\":\"Invalid JSON or missing text\"}");
+                return;
+            }
+        }
+        if (doc["name"].is<const char*>()) {
+            appName = doc["name"].as<const char*>();
+        }
+
+        bool ok = CustomApp_Push(appName, doc.as<JsonVariantConst>());
+        if (ok) {
+            s_server.send(200, "application/json", "{\"status\":\"ok\",\"app\":\"" + appName + "\"}");
+        } else {
+            s_server.send(500, "application/json", "{\"error\":\"Failed to store app\"}");
+        }
+    });
+
+    s_server.on("/api/custom", HTTP_DELETE, []() {
+        String appName = s_server.hasArg("name") ? s_server.arg("name") : "";
+        if (appName.length() > 0) {
+            CustomApp_Delete(appName);
+            s_server.send(200, "application/json", "{\"status\":\"deleted\"}");
+        } else {
+            CustomApp_Clear();
+            s_server.send(200, "application/json", "{\"status\":\"all_cleared\"}");
+        }
+    });
+
+    s_server.on("/api/notify", HTTP_POST, []() {
+        String body = s_server.arg("plain");
+        JsonDocument doc;
+        DeserializationError err = deserializeJson(doc, body);
+        if (err) {
+            if (s_server.hasArg("text")) {
+                doc["text"] = s_server.arg("text");
+                if (s_server.hasArg("icon")) doc["icon"] = s_server.arg("icon");
+                if (s_server.hasArg("sound")) doc["sound"] = s_server.arg("sound").toInt();
+                if (s_server.hasArg("duration")) doc["duration"] = s_server.arg("duration").toInt();
+            } else {
+                s_server.send(400, "application/json", "{\"error\":\"Invalid JSON or missing text\"}");
+                return;
+            }
+        }
+        CustomApp_PushNotification(doc.as<JsonVariantConst>());
+        s_server.send(200, "application/json", "{\"status\":\"notified\"}");
     });
 
     // Initialize Over-The-Air Update System
@@ -1686,4 +1848,47 @@ uint8_t Network_GetBatteryMode() {
 void Network_SetBatteryMode(uint8_t mode) {
     s_batteryMode = (mode <= 2) ? mode : 2;
     s_prefs.putUChar(PREF_KEY_BATTERY_MODE, s_batteryMode);
+}
+
+// Home Assistant & MQTT Getters & Setters
+bool Network_GetMqttEnabled() { return s_mqttEn; }
+void Network_SetMqttEnabled(bool en) {
+    s_mqttEn = en;
+    s_prefs.putBool(PREF_KEY_MQTT_ENABLED, s_mqttEn);
+    MqttService_SetEnabled(en);
+}
+
+String Network_GetMqttServer() { return s_mqttServer; }
+void Network_SetMqttServer(const String& srv) {
+    s_mqttServer = srv;
+    s_prefs.putString(PREF_KEY_MQTT_SERVER, s_mqttServer);
+    MqttService_SetServer(srv);
+}
+
+uint16_t Network_GetMqttPort() { return s_mqttPort; }
+void Network_SetMqttPort(uint16_t port) {
+    s_mqttPort = port;
+    s_prefs.putUShort(PREF_KEY_MQTT_PORT, s_mqttPort);
+    MqttService_SetPort(port);
+}
+
+String Network_GetMqttUser() { return s_mqttUser; }
+void Network_SetMqttUser(const String& user) {
+    s_mqttUser = user;
+    s_prefs.putString(PREF_KEY_MQTT_USER, s_mqttUser);
+    MqttService_SetUser(user);
+}
+
+String Network_GetMqttPass() { return s_mqttPass; }
+void Network_SetMqttPass(const String& pass) {
+    s_mqttPass = pass;
+    s_prefs.putString(PREF_KEY_MQTT_PASS, s_mqttPass);
+    MqttService_SetPass(pass);
+}
+
+String Network_GetMqttPrefix() { return s_mqttPrefix; }
+void Network_SetMqttPrefix(const String& prefix) {
+    s_mqttPrefix = prefix;
+    s_prefs.putString(PREF_KEY_MQTT_PREFIX, s_mqttPrefix);
+    MqttService_SetPrefix(prefix);
 }

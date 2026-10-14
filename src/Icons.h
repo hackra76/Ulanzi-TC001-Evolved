@@ -304,5 +304,87 @@ static const uint16_t ICON_CALENDAR[64] = {
     0,       C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0
 };
 
+#define C_SPOTIFY 0x1EAC // #1DB954 Spotify Brand Green
+
+// 8x8 Spotify Green Circular Wave Icon
+static const uint16_t ICON_SPOTIFY[64] = {
+    0,         0,         C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, 0,         0,
+    0,         C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, 0,
+    C_SPOTIFY, 0,         0,         0,         0,         0,         C_SPOTIFY, C_SPOTIFY,
+    C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY,
+    C_SPOTIFY, C_SPOTIFY, 0,         0,         0,         0,         C_SPOTIFY, C_SPOTIFY,
+    C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY,
+    0,         C_SPOTIFY, C_SPOTIFY, 0,         0,         C_SPOTIFY, C_SPOTIFY, 0,
+    0,         0,         C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, 0,         0
+};
+
+// 8x8 Bell / Alert Notification Icon
+static const uint16_t ICON_BELL[64] = {
+    0,        0,        0,        C_YELLOW, C_YELLOW, 0,        0,        0,
+    0,        0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,
+    0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,
+    0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,
+    0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,
+    C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW,
+    0,        0,        0,        C_ORANGE, C_ORANGE, 0,        0,        0,
+    0,        0,        0,        0,        0,        0,        0,        0
+};
+
+// 8x8 Checkmark Icon
+static const uint16_t ICON_CHECK[64] = {
+    0,       0,       0,       0,       0,       0,       0,       C_GREEN,
+    0,       0,       0,       0,       0,       0,       C_GREEN, C_GREEN,
+    0,       0,       0,       0,       0,       C_GREEN, C_GREEN, 0,
+    0,       0,       0,       0,       C_GREEN, C_GREEN, 0,       0,
+    C_GREEN, 0,       0,       C_GREEN, C_GREEN, 0,       0,       0,
+    C_GREEN, C_GREEN, C_GREEN, C_GREEN, 0,       0,       0,       0,
+    0,       C_GREEN, C_GREEN, 0,       0,       0,       0,       0,
+    0,       0,       0,       0,       0,       0,       0,       0
+};
+
+// 8x8 Cross / Cancel Icon
+static const uint16_t ICON_CROSS[64] = {
+    C_RED,   C_RED,   0,       0,       0,       0,       C_RED,   C_RED,
+    C_RED,   C_RED,   C_RED,   0,       0,       C_RED,   C_RED,   C_RED,
+    0,       C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   0,
+    0,       0,       C_RED,   C_RED,   C_RED,   C_RED,   0,       0,
+    0,       0,       C_RED,   C_RED,   C_RED,   C_RED,   0,       0,
+    0,       C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   0,
+    C_RED,   C_RED,   C_RED,   0,       0,       C_RED,   C_RED,   C_RED,
+    C_RED,   C_RED,   0,       0,       0,       0,       C_RED,   C_RED
+};
+
+inline const uint16_t* Icons_GetByName(const String& name) {
+    String lower = name;
+    lower.toLowerCase();
+    lower.trim();
+
+    if (lower == "spotify") return ICON_SPOTIFY;
+    if (lower == "sun") return ICON_SUN;
+    if (lower == "heart") return ICON_HEART;
+    if (lower == "rain" || lower == "cloud") return ICON_RAIN;
+    if (lower == "plane" || lower == "radar" || lower == "flight") return ICON_PLANE;
+    if (lower == "temp" || lower == "temperature") return ICON_TEMP;
+    if (lower == "humid" || lower == "humidity") return ICON_HUMID;
+    if (lower == "lightning" || lower == "power" || lower == "charge") return ICON_LIGHTNING;
+    if (lower == "battery") return ICON_BATTERY;
+    if (lower == "wifi") return ICON_WIFI;
+    if (lower == "ap" || lower == "hotspot") return ICON_AP;
+    if (lower == "youtube" || lower == "yt") return ICON_YOUTUBE;
+    if (lower == "btc" || lower == "crypto" || lower == "bitcoin") return ICON_BTC;
+    if (lower == "usd" || lower == "dollar") return ICON_USD;
+    if (lower == "gold") return ICON_GOLD;
+    if (lower == "eur" || lower == "euro") return ICON_EUR;
+    if (lower == "chart" || lower == "stock" || lower == "apple") return ICON_CHART;
+    if (lower == "moon" || lower == "night") return ICON_MOON;
+    if (lower == "clock" || lower == "time") return ICON_CLOCK;
+    if (lower == "calendar" || lower == "date") return ICON_CALENDAR;
+    if (lower == "bell" || lower == "alert" || lower == "notify") return ICON_BELL;
+    if (lower == "check" || lower == "ok") return ICON_CHECK;
+    if (lower == "cross" || lower == "cancel" || lower == "error") return ICON_CROSS;
+
+    return nullptr;
+}
+
 
 

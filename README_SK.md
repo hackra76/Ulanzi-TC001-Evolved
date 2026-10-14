@@ -60,6 +60,18 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
   - Vlastné poradie sa ukladá do NVS (`car_ord`) a riadi automatickú rotáciu aj tlačidlá.
   - Nastaviteľný interval rotácie (3 až 120 sekúnd).
   - Okamžité ukladanie cez AJAX s plávajúcou notifikáciou bez opustenia portálu.
+- **🏠 Home Assistant MQTT Auto-Discovery:**
+  - Natívna integrácia bez manuálnej konfigurácie: automaticky vytvorí 12 synchronizovaných entít v Home Assistante po pripojení k MQTT brokeru.
+  - Senzory: SHT30 Teplota (`°C`), Vlhkosť (`%`), Batéria (`%`), Napätie batérie (`V`), Osvetlenie, Aktívna obrazovka.
+  - Ovládacie prvky: Svetlo matice (Zapnutie/Vypnutie a posuvník jasu 0–255), Prepínač automatického jasu, Prepínač automatického kolotoča, Výber obrazovky, Tlačidlo pípania bzučiaka, Tlačidlo reštartu.
+  - Živý stav pripojenia a konfiguračné polia brokera priamo vo webovom portáli.
+- **🎵 Custom App Push API & Spotify Integrácia:**
+  - **Dynamické obrazovky**: Odosielanie vlastných obrazoviek cez MQTT (`<prefix>/custom/<nazov>`) alebo HTTP REST (`POST /api/custom?name=<nazov>`).
+  - Prijaté obrazovky (napr. aktuálne prehrávaná skladba Spotify, stav 3D tlačiarne, časovač) sa dynamicky zaradia do rotácie kolotoča.
+  - **Funkcie správ**: Text, 8×8 ikony (vstavané `spotify`, `bell`, `lightning`, `youtube` atď., alebo 64 farebných hodnôt RGB565), farby, 1-pixelový spodný progress bar (0–100%), vlastná dĺžka zobrazenia a automatické vypršanie (lifetime).
+  - **Čistá typografia bez kolízií**: Text sa posúva na riadkoch 0–6 pri aktívnom progress bare na riadku 7 bez prekrývania.
+  - **Pripnuté ikony**: Ľavá ikona zostáva fixne na vrchu s vyčistenými stĺpcami 0–8, takže rolujúci text plynule mizne za ňou.
+  - **🚨 Prioritné notifikácie**: Okamžité výstrahy cez `POST /api/notify` alebo `<prefix>/notify`, ktoré prerušia aktívnu obrazovku so zvukovým signálom a po skončení vrátia pôvodný obsah.
 - **🔄 Duálny Over-The-Air (OTA) aktualizačný systém:**
   - Priame nahrávanie `.bin` súboru priamo z webového prehliadača cez `/update` s ukazovateľom priebehu v percentách.
   - 1-Klik aktualizácia priamo z GitHub Releases (`/api/ota/check`, `/api/ota/install`).
@@ -92,7 +104,8 @@ Portál je dostupný na adrese `http://<ip-adresa-zariadenia>/` (alebo `http://1
 7. **Predpoveď počasia:** Výber mesta zo zoznamu alebo vlastné GPS súradnice.
 8. **Finančné trhy a krypto:** Výber akcie, indexu, komodity alebo kryptomeny, prípadne vlastný ticker.
 9. **YouTube Štatistiky:** ID kanála alebo @handle a Google Cloud API kľúč.
-10. **Aktualizácia firmvéru (OTA):** Flash lokálneho `.bin` súboru alebo kontrola nových verzií na GitHube.
+10. **Home Assistant & MQTT:** Nastavenie IP brokera, portu, prístupových údajov a predpony témy so živým indikátorom pripojenia.
+11. **Aktualizácia firmvéru (OTA):** Flash lokálneho `.bin` súboru alebo kontrola nových verzií na GitHube.
 
 ---
 

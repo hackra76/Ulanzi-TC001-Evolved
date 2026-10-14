@@ -60,12 +60,20 @@ The web configuration portal is hosted on port 80 of the device's IP address (`h
 - **API Key**: Google Cloud Data API v3 key.
 - **Icon**: Redesigned bold, centered white triangle play button.
 
-### 10. Instant AJAX Save & Apply
+### 10. Home Assistant & MQTT Integration
+- **Enable MQTT Client**: Connects to your local MQTT broker (e.g. Home Assistant Mosquitto).
+- **Broker Host & Port**: IP address or hostname and port (default `1883`).
+- **Credentials**: Optional username and password.
+- **Topic Prefix**: Root topic prefix (default `ulanzi-tc001`).
+- **Auto-Discovery**: Automatically exposes 12 entities to Home Assistant.
+- **Custom Apps & Notifications**: Push custom payloads via MQTT `<prefix>/custom/<name>` or `<prefix>/notify`.
+
+### 11. Instant AJAX Save & Apply
 - Clicking **Save & Apply Settings** executes an AJAX `fetch('/save')` in the background.
 - A floating toast notification (`✓ Settings Saved Automatically!`) displays confirmation without leaving or reloading the page.
 - The virtual matrix stream updates instantly with the applied settings.
 - Includes automatic fallback to standard POST with 1-second meta-refresh.
 
-### 11. Firmware Update (OTA)
+### 12. Firmware Update (OTA)
 - **Local Flash**: File input for `.bin` files with live percentage progress bar.
 - **GitHub Cloud Update**: One-click check and update from GitHub Releases.

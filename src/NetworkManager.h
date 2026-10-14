@@ -109,3 +109,17 @@ void Network_SetClockIcon(uint8_t icon);
 
 uint8_t Network_GetTextAlign();
 void Network_SetTextAlign(uint8_t align);
+
+// Home Assistant & MQTT Integration
+bool Network_GetMqttEnabled();
+void Network_SetMqttEnabled(bool en);
+String Network_GetMqttServer();
+void Network_SetMqttServer(const String& srv);
+uint16_t Network_GetMqttPort();
+void Network_SetMqttPort(uint16_t port);
+String Network_GetMqttUser();
+void Network_SetMqttUser(const String& user);
+String Network_GetMqttPass();
+void Network_SetMqttPass(const String& pass);
+String Network_GetMqttPrefix();
+void Network_SetMqttPrefix(const String& prefix);

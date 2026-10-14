@@ -101,9 +101,19 @@
 #define DEFAULT_CRYPTO_SYM      "BTC"
 #define CRYPTO_FETCH_INTERVAL_MS 60000 // 1 minute
 
+// --- Home Assistant & MQTT Integration ---
+#define PREF_KEY_MQTT_ENABLED    "mqtt_en"
+#define PREF_KEY_MQTT_SERVER     "mqtt_srv"
+#define PREF_KEY_MQTT_PORT       "mqtt_port"
+#define PREF_KEY_MQTT_USER       "mqtt_user"
+#define PREF_KEY_MQTT_PASS       "mqtt_pass"
+#define PREF_KEY_MQTT_PREFIX     "mqtt_pre"
+#define DEFAULT_MQTT_PORT        1883
+#define DEFAULT_MQTT_PREFIX      "ulanzi-tc001"
+
 // --- Firmware Metadata & OTA ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
-#define FW_VERSION          "1.3.0"
+#define FW_VERSION          "1.4.0"
 #define GITHUB_REPO         "hackra76/Ulanzi-TC001-Evolved"
 
 

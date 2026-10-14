@@ -33,3 +33,7 @@ void DisplayMatrix_DrawTime3x5(int16_t x, int16_t y, int h, int m, bool blinkCol
 void DisplayMatrix_DrawTimeWithSeconds(int16_t startX, int16_t y, int h, int m, int s, bool blinkColon, uint16_t colTime = 0xFFFF, uint16_t colColon = 0xFFFF, uint16_t colSec = 0x07FF);
 void DisplayMatrix_DrawFullTime3x5(int16_t startX, int16_t y, int h, int m, int s, bool blinkColon, uint16_t colTime = 0xFFFF, uint16_t colColon = 0xFFFF, uint16_t colSec = 0x07FF);
 
+inline uint16_t DisplayMatrix_Color(uint8_t r, uint8_t g, uint8_t b) {
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+}
+

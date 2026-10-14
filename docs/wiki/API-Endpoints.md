@@ -84,7 +84,49 @@ The onboard web server exposes several REST endpoints for status monitoring, con
   - `w_lat`, `w_lon`, `w_city`: Open-Meteo GPS location
   - `c_sym`, `c_sym_custom`: Market / stock / crypto ticker symbol
   - `yt_channel`, `yt_key`: YouTube channel ID / handle and Data API v3 key
+  - `mqtt_en`, `mqtt_srv`, `mqtt_port`, `mqtt_user`, `mqtt_pass`, `mqtt_pre`: Home Assistant & MQTT broker configuration
   - `ajax`: Set to `1` or pass `X-Requested-With: XMLHttpRequest` to receive JSON `{"status":"success"}`
+
+## Custom App Push API
+- **URL**: `POST /api/custom?name=<app_name>`
+- **Content-Type**: `application/json`
+- **Request Body**:
+```json
+{
+  "text": "Starboy - The Weeknd",
+  "icon": "spotify",
+  "color": [30, 215, 96],
+  "progress": 50,
+  "duration": 8,
+  "lifetime": 60,
+  "scroll": true
+}
+```
+- **Response**: `{"status": "ok", "app": "spotify"}`
+- **List Active Custom Apps**: `GET /api/custom`
+- **Delete Custom App**: `DELETE /api/custom?name=<app_name>`
+
+## Push Notification API
+- **URL**: `POST /api/notify`
+- **Content-Type**: `application/json`
+- **Request Body**:
+```json
+{
+  "text": "Doorbell Rang!",
+  "icon": "bell",
+  "sound": 2,
+  "duration": 6
+}
+```
+- **Response**: `{"status": "notified"}`
+
+## MQTT Topics & Integration
+- **Prefix**: `<prefix>/` (default: `ulanzi-tc001`)
+- **Discovery**: `homeassistant/<component>/<node_id>/<object_id>/config`
+- **Telemetry**: `<prefix>/sensor/temperature`, `<prefix>/sensor/humidity`, `<prefix>/sensor/battery_percent`, `<prefix>/sensor/battery_voltage`, `<prefix>/sensor/illuminance`, `<prefix>/sensor/active_screen`
+- **Controls**: `<prefix>/light/set`, `<prefix>/light/brightness/set`, `<prefix>/switch/auto_brightness/set`, `<prefix>/switch/auto_rotate/set`, `<prefix>/select/screen/set`, `<prefix>/button/buzzer/set`, `<prefix>/button/reboot/set`
+- **Custom Apps**: Subscribe to `<prefix>/custom/+` (payloads match `/api/custom`)
+- **Notifications**: Subscribe to `<prefix>/notify` (payloads match `/api/notify`)
 
 ## OTA Endpoints
 - `POST /update`: Multipart binary file upload (`firmware.bin`)

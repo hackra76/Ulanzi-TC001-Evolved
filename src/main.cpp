@@ -13,6 +13,8 @@
 #include "CryptoService.h"
 #include "AirspaceService.h"
 #include "OtaManager.h"
+#include "MqttService.h"
+#include "CustomAppService.h"
 
 // --- Application Modes ---
 enum AppMode {
@@ -29,6 +31,10 @@ enum AppMode {
 static AppMode s_currentApp = APP_CLOCK;
 static uint32_t s_lastAppSwitch = 0;
 static bool s_autoRotate = true;
+
+// Custom Apps State (pushed via Home Assistant MQTT / REST API)
+static bool s_showingCustomApp = false;
+static uint8_t s_customAppIdx = 0;
 
 // Clock seconds counter (synced with NTP or fallback increment)
 static uint32_t s_seconds = 12 * 3600 + 34 * 60; // 12:34:00 default
@@ -247,6 +253,17 @@ static void renderBatteryApp() {
 }
 
 static void renderCurrentApp() {
+    if (s_showingCustomApp) {
+        CustomApp* app = CustomApp_GetActive(s_customAppIdx);
+        if (app) {
+            CustomApp_Render(app);
+            return;
+        } else {
+            s_showingCustomApp = false;
+            s_customAppIdx = 0;
+        }
+    }
+
     switch (s_currentApp) {
         case APP_CLOCK:    renderClockApp();    break;
         case APP_INDOOR:   renderIndoorApp();   break;
@@ -283,8 +300,9 @@ void setup() {
     DisplayMatrix_Show();
     delay(1200);
 
-    // Initialize Network & Captive Portal
+    // Initialize Network, Captive Portal & MQTT
     Network_Init();
+    MqttService_Init();
     DisplayMatrix_SetBrightness(Network_GetDayBrightness());
 
     s_autoRotate = Network_GetAutoRotate();
@@ -311,11 +329,12 @@ void loop() {
     // 1. Service Network state machine & Captive Portal WebServer
     Network_Poll();
 
-    // 2. Background HTTP Services polling
+    // 2. Background HTTP & MQTT Services polling
     YouTube_Update();
     Weather_Update();
     Crypto_Update();
     Airspace_Update();
+    MqttService_Update();
 
     // 3. Clock second counter tick
     if (now - s_lastSecTick >= 1000) {
@@ -381,6 +400,13 @@ void loop() {
         return;
     }
 
+    // High Priority: Push Notifications override any current screen
+    if (CustomApp_IsNotificationActive()) {
+        CustomApp_RenderNotification();
+        delay(25);
+        return;
+    }
+
     // 8. Night Mode enforcement
     bool nightActive = isNightTime() && (now >= s_nightWakeUntilMs);
     if (nightActive) {
@@ -400,63 +426,96 @@ void loop() {
     }
 
     // Sync active screen changes requested via Web Portal / API
-    if (!Network_GetAutoRotate() && Network_GetActiveApp() != (uint8_t)s_currentApp) {
+    if (!Network_GetAutoRotate() && !s_showingCustomApp && Network_GetActiveApp() != (uint8_t)s_currentApp) {
         s_currentApp = (AppMode)Network_GetActiveApp();
     }
 
     // 9. Standard App Navigation & Button Events
+    uint8_t customCount = CustomApp_GetActiveCount();
+
     if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
-        uint8_t mask = Network_GetCarouselMask();
-        if (mask == 0) mask = 0x7F;
-        const uint8_t* order = Network_GetCarouselOrder();
-        int curPos = 0;
-        for (int i = 0; i < APP_COUNT; i++) {
-            if (order[i] == (uint8_t)s_currentApp) {
-                curPos = i;
-                break;
+        if (s_showingCustomApp) {
+            s_customAppIdx++;
+            if (s_customAppIdx >= customCount) {
+                s_showingCustomApp = false;
+                s_customAppIdx = 0;
+            }
+        } else {
+            uint8_t mask = Network_GetCarouselMask();
+            if (mask == 0) mask = 0x7F;
+            const uint8_t* order = Network_GetCarouselOrder();
+            int curPos = 0;
+            for (int i = 0; i < APP_COUNT; i++) {
+                if (order[i] == (uint8_t)s_currentApp) {
+                    curPos = i;
+                    break;
+                }
+            }
+            uint8_t nextApp = (uint8_t)s_currentApp;
+            int foundPos = -1;
+            for (int step = 1; step <= APP_COUNT; step++) {
+                int pos = (curPos + step) % APP_COUNT;
+                uint8_t cand = order[pos];
+                if (mask & (1 << cand)) {
+                    nextApp = cand;
+                    foundPos = pos;
+                    break;
+                }
+            }
+            if (foundPos <= curPos && customCount > 0) {
+                s_showingCustomApp = true;
+                s_customAppIdx = 0;
+            } else {
+                s_currentApp = (AppMode)nextApp;
+                Network_SetActiveApp((uint8_t)s_currentApp);
             }
         }
-        uint8_t nextApp = (uint8_t)s_currentApp;
-        for (int step = 1; step <= APP_COUNT; step++) {
-            int pos = (curPos + step) % APP_COUNT;
-            uint8_t cand = order[pos];
-            if (mask & (1 << cand)) {
-                nextApp = cand;
-                break;
-            }
-        }
-        s_currentApp = (AppMode)nextApp;
         s_lastAppSwitch = now;
         s_autoRotate = false;
         Network_SetAutoRotate(false);
-        Network_SetActiveApp((uint8_t)s_currentApp);
     } else if (Buttons_GetEvent(BTN_ID_LEFT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
-        uint8_t mask = Network_GetCarouselMask();
-        if (mask == 0) mask = 0x7F;
-        const uint8_t* order = Network_GetCarouselOrder();
-        int curPos = 0;
-        for (int i = 0; i < APP_COUNT; i++) {
-            if (order[i] == (uint8_t)s_currentApp) {
-                curPos = i;
-                break;
+        if (s_showingCustomApp) {
+            if (s_customAppIdx > 0) {
+                s_customAppIdx--;
+            } else {
+                s_showingCustomApp = false;
+                s_customAppIdx = 0;
+            }
+        } else {
+            uint8_t mask = Network_GetCarouselMask();
+            if (mask == 0) mask = 0x7F;
+            const uint8_t* order = Network_GetCarouselOrder();
+            int curPos = 0;
+            for (int i = 0; i < APP_COUNT; i++) {
+                if (order[i] == (uint8_t)s_currentApp) {
+                    curPos = i;
+                    break;
+                }
+            }
+            uint8_t prevApp = (uint8_t)s_currentApp;
+            int foundPos = -1;
+            for (int step = 1; step <= APP_COUNT; step++) {
+                int pos = (curPos - step + APP_COUNT) % APP_COUNT;
+                uint8_t cand = order[pos];
+                if (mask & (1 << cand)) {
+                    prevApp = cand;
+                    foundPos = pos;
+                    break;
+                }
+            }
+            if (foundPos >= curPos && customCount > 0) {
+                s_showingCustomApp = true;
+                s_customAppIdx = customCount - 1;
+            } else {
+                s_currentApp = (AppMode)prevApp;
+                Network_SetActiveApp((uint8_t)s_currentApp);
             }
         }
-        uint8_t prevApp = (uint8_t)s_currentApp;
-        for (int step = 1; step <= APP_COUNT; step++) {
-            int pos = (curPos - step + APP_COUNT) % APP_COUNT;
-            uint8_t cand = order[pos];
-            if (mask & (1 << cand)) {
-                prevApp = cand;
-                break;
-            }
-        }
-        s_currentApp = (AppMode)prevApp;
         s_lastAppSwitch = now;
         s_autoRotate = false;
         Network_SetAutoRotate(false);
-        Network_SetActiveApp((uint8_t)s_currentApp);
     } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
         Buzzer_Click();
         // Cycle manual brightness (pauses auto-brightness until re-enabled in web portal)
@@ -473,29 +532,52 @@ void loop() {
 
     // 10. Auto rotation carousel tick with dynamic rotate delay from Settings
     uint32_t rotateMs = (uint32_t)Network_GetRotateDelaySec() * 1000UL;
+    if (s_showingCustomApp) {
+        CustomApp* curCustom = CustomApp_GetActive(s_customAppIdx);
+        if (curCustom && curCustom->durationSec > 0) {
+            rotateMs = (uint32_t)curCustom->durationSec * 1000UL;
+        }
+    }
+
     if (Network_GetAutoRotate() && (now - s_lastAppSwitch >= rotateMs)) {
         s_lastAppSwitch = now;
-        uint8_t mask = Network_GetCarouselMask();
-        if (mask == 0) mask = 0x01; // Default to at least Clock
-        const uint8_t* order = Network_GetCarouselOrder();
-        int curPos = 0;
-        for (int i = 0; i < APP_COUNT; i++) {
-            if (order[i] == (uint8_t)s_currentApp) {
-                curPos = i;
-                break;
+
+        if (s_showingCustomApp) {
+            s_customAppIdx++;
+            if (s_customAppIdx >= customCount) {
+                s_showingCustomApp = false;
+                s_customAppIdx = 0;
+            }
+        } else {
+            uint8_t mask = Network_GetCarouselMask();
+            if (mask == 0) mask = 0x01; // Default to at least Clock
+            const uint8_t* order = Network_GetCarouselOrder();
+            int curPos = 0;
+            for (int i = 0; i < APP_COUNT; i++) {
+                if (order[i] == (uint8_t)s_currentApp) {
+                    curPos = i;
+                    break;
+                }
+            }
+            uint8_t nextApp = (uint8_t)s_currentApp;
+            int foundPos = -1;
+            for (int step = 1; step <= APP_COUNT; step++) {
+                int pos = (curPos + step) % APP_COUNT;
+                uint8_t cand = order[pos];
+                if (mask & (1 << cand)) {
+                    nextApp = cand;
+                    foundPos = pos;
+                    break;
+                }
+            }
+            if (foundPos <= curPos && customCount > 0) {
+                s_showingCustomApp = true;
+                s_customAppIdx = 0;
+            } else {
+                s_currentApp = (AppMode)nextApp;
+                Network_SetActiveApp((uint8_t)s_currentApp);
             }
         }
-        uint8_t nextApp = (uint8_t)s_currentApp;
-        for (int step = 1; step <= APP_COUNT; step++) {
-            int pos = (curPos + step) % APP_COUNT;
-            uint8_t cand = order[pos];
-            if (mask & (1 << cand)) {
-                nextApp = cand;
-                break;
-            }
-        }
-        s_currentApp = (AppMode)nextApp;
-        Network_SetActiveApp((uint8_t)s_currentApp);
     }
 
     // 11. Sensor background update (every 2 seconds)
