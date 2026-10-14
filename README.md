@@ -60,6 +60,17 @@ Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** runn
   - Sequence order persists in NVS (`car_ord`) and governs auto-rotation and hardware button cycling.
   - Configurable rotation interval (3 to 120 seconds).
   - Web portal AJAX instant save with toast notifications and automatic return.
+- **🎬 Screen Transition Effects:**
+  - 8 selectable animations for smooth screen switching in Web Portal:
+    - **None (Instant Cut)**: Instant screen switch.
+    - **Slide Left**: Smooth leftwards scroll (2px stride, 16 steps).
+    - **Slide Right**: Smooth rightwards scroll.
+    - **Slide Up**: Vertical push from bottom to top (8 steps).
+    - **Slide Down**: Vertical push from top to bottom.
+    - **Crossfade / Dissolve**: 10-step linear alpha blending with native 24-bit GRB double-buffering.
+    - **Curtain (Center Split Wipe)**: Theatrical opening wipe from the center outward.
+    - **Random**: Automatically selects a dynamic effect on each screen transition.
+  - Direct hardware buffer manipulation eliminates flicker and preserves full LED brightness without double-attenuation.
 - **🏠 Home Assistant MQTT Auto-Discovery:**
   - Native zero-configuration integration: automatically creates 12 synchronized entities in Home Assistant when connected to your broker.
   - Sensors: SHT30 Temperature (`°C`), Humidity (`%`), Battery (`%`), Battery Voltage (`V`), Ambient Light, Active Screen.
@@ -98,7 +109,7 @@ Access the web portal at `http://<device-ip>/` (or `http://192.168.4.1/` in setu
 1. **Live Display Stream:** Real-time 32×8 canvas mirror and BMP screenshot capture button.
 2. **Wi-Fi Network:** Scan nearby networks and save credentials.
 3. **Ambient & Screen:** Toggle auto-brightness, Day/Night brightness ceilings, and quiet hours.
-4. **Screen Carousel & Reordering:** Reorder screens using `▲`/`▼` buttons and toggle individual screens.
+4. **Screen Carousel & Transitions:** Reorder screens using `▲`/`▼` buttons, toggle individual screens, and select transition effect (Slide, Fade, Curtain, Random).
 5. **Battery Display:** Select Percentage, Voltage, or Alternating every 3s.
 6. **Clock & Date Layout:** Select display mode, seconds display, weekday bar, colors, date format, and icon style.
 7. **Weather Settings:** Choose city preset or input custom coordinates.

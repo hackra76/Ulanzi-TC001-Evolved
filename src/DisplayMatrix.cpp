@@ -29,12 +29,19 @@ uint8_t DisplayMatrix_GetBrightness() {
     return s_brightness;
 }
 
+static bool s_suppressShow = false;
+
 void DisplayMatrix_Clear() {
     s_matrix.clear();
 }
 
 void DisplayMatrix_Show() {
+    if (s_suppressShow) return;
     s_matrix.show();
+}
+
+void DisplayMatrix_SuppressShow(bool suppress) {
+    s_suppressShow = suppress;
 }
 
 void DisplayMatrix_DrawIcon(int16_t x, int16_t y, const uint16_t* bitmap8x8) {
@@ -503,4 +510,180 @@ void DisplayMatrix_DrawFullTime3x5(int16_t startX, int16_t y, int h, int m, int 
     // x=26..28: S2
     DisplayMatrix_DrawDigit3x5(startX + 24, y, s2, colSec);
 }
+
+// =============================================================================
+//  Screen Transition Engine
+// =============================================================================
+
+struct MatrixPixelGRB {
+    uint8_t g;
+    uint8_t r;
+    uint8_t b;
+};
+
+static MatrixPixelGRB s_prevFrame[MATRIX_NUM_LEDS];
+static MatrixPixelGRB s_nextFrame[MATRIX_NUM_LEDS];
+
+static inline uint16_t getLedIndex(int16_t x, int16_t y) {
+    return (y & 1) ? ((y + 1) * MATRIX_WIDTH - 1 - x) : (y * MATRIX_WIDTH + x);
+}
+
+static inline void setMatrixRawPixel(int16_t x, int16_t y, const MatrixPixelGRB& px) {
+    if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) return;
+    uint8_t* raw = s_matrix.getPixels();
+    if (!raw) return;
+    uint16_t ledIdx = getLedIndex(x, y);
+    raw[ledIdx * 3 + 0] = px.g;
+    raw[ledIdx * 3 + 1] = px.r;
+    raw[ledIdx * 3 + 2] = px.b;
+}
+
+void DisplayMatrix_CaptureCurrentFrame() {
+    uint8_t* raw = s_matrix.getPixels();
+    if (!raw) return;
+    for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+        for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+            uint16_t ledIdx = getLedIndex(x, y);
+            s_prevFrame[y * MATRIX_WIDTH + x].g = raw[ledIdx * 3 + 0];
+            s_prevFrame[y * MATRIX_WIDTH + x].r = raw[ledIdx * 3 + 1];
+            s_prevFrame[y * MATRIX_WIDTH + x].b = raw[ledIdx * 3 + 2];
+        }
+    }
+}
+
+void DisplayMatrix_CaptureTargetFrame() {
+    uint8_t* raw = s_matrix.getPixels();
+    if (!raw) return;
+    for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+        for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+            uint16_t ledIdx = getLedIndex(x, y);
+            s_nextFrame[y * MATRIX_WIDTH + x].g = raw[ledIdx * 3 + 0];
+            s_nextFrame[y * MATRIX_WIDTH + x].r = raw[ledIdx * 3 + 1];
+            s_nextFrame[y * MATRIX_WIDTH + x].b = raw[ledIdx * 3 + 2];
+        }
+    }
+}
+
+void DisplayMatrix_RunTransition(uint8_t effectType) {
+    if (effectType == 7) { // Random
+        effectType = 1 + (esp_random() % 6);
+    }
+
+    switch (effectType) {
+        case 1: { // Slide Left (old moves left, new enters from right)
+            for (int step = 1; step <= 16; step++) {
+                int dx = step * 2;
+                for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                    for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+                        if (x + dx < MATRIX_WIDTH) {
+                            setMatrixRawPixel(x, y, s_prevFrame[y * MATRIX_WIDTH + (x + dx)]);
+                        } else {
+                            setMatrixRawPixel(x, y, s_nextFrame[y * MATRIX_WIDTH + (x + dx - MATRIX_WIDTH)]);
+                        }
+                    }
+                }
+                s_matrix.show();
+                delay(10);
+            }
+            break;
+        }
+        case 2: { // Slide Right (old moves right, new enters from left)
+            for (int step = 1; step <= 16; step++) {
+                int dx = step * 2;
+                for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                    for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+                        if (x >= dx) {
+                            setMatrixRawPixel(x, y, s_prevFrame[y * MATRIX_WIDTH + (x - dx)]);
+                        } else {
+                            setMatrixRawPixel(x, y, s_nextFrame[y * MATRIX_WIDTH + (x - dx + MATRIX_WIDTH)]);
+                        }
+                    }
+                }
+                s_matrix.show();
+                delay(10);
+            }
+            break;
+        }
+        case 3: { // Slide Up (old moves up, new enters from bottom)
+            for (int dy = 1; dy <= 8; dy++) {
+                for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                    for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+                        if (y + dy < MATRIX_HEIGHT) {
+                            setMatrixRawPixel(x, y, s_prevFrame[(y + dy) * MATRIX_WIDTH + x]);
+                        } else {
+                            setMatrixRawPixel(x, y, s_nextFrame[(y + dy - MATRIX_HEIGHT) * MATRIX_WIDTH + x]);
+                        }
+                    }
+                }
+                s_matrix.show();
+                delay(20);
+            }
+            break;
+        }
+        case 4: { // Slide Down (old moves down, new enters from top)
+            for (int dy = 1; dy <= 8; dy++) {
+                for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                    for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+                        if (y >= dy) {
+                            setMatrixRawPixel(x, y, s_prevFrame[(y - dy) * MATRIX_WIDTH + x]);
+                        } else {
+                            setMatrixRawPixel(x, y, s_nextFrame[(y - dy + MATRIX_HEIGHT) * MATRIX_WIDTH + x]);
+                        }
+                    }
+                }
+                s_matrix.show();
+                delay(20);
+            }
+            break;
+        }
+        case 5: { // Crossfade / Dissolve
+            static const uint8_t alphas[] = { 25, 51, 76, 102, 128, 153, 179, 204, 230, 255 };
+            for (uint8_t a : alphas) {
+                uint8_t inv = 255 - a;
+                for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                    for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+                        int idx = y * MATRIX_WIDTH + x;
+                        MatrixPixelGRB px;
+                        px.g = (uint8_t)(((uint16_t)s_prevFrame[idx].g * inv + (uint16_t)s_nextFrame[idx].g * a) / 255);
+                        px.r = (uint8_t)(((uint16_t)s_prevFrame[idx].r * inv + (uint16_t)s_nextFrame[idx].r * a) / 255);
+                        px.b = (uint8_t)(((uint16_t)s_prevFrame[idx].b * inv + (uint16_t)s_nextFrame[idx].b * a) / 255);
+                        setMatrixRawPixel(x, y, px);
+                    }
+                }
+                s_matrix.show();
+                delay(18);
+            }
+            break;
+        }
+        case 6: { // Curtain (Center Split Wipe)
+            for (int step = 1; step <= 16; step++) {
+                int leftBound = 16 - step;
+                int rightBound = 15 + step;
+                for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                    for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+                        if (x >= leftBound && x <= rightBound) {
+                            setMatrixRawPixel(x, y, s_nextFrame[y * MATRIX_WIDTH + x]);
+                        } else {
+                            setMatrixRawPixel(x, y, s_prevFrame[y * MATRIX_WIDTH + x]);
+                        }
+                    }
+                }
+                s_matrix.show();
+                delay(12);
+            }
+            break;
+        }
+        case 0: // Instant Cut / None
+        default: {
+            for (int16_t y = 0; y < MATRIX_HEIGHT; y++) {
+                for (int16_t x = 0; x < MATRIX_WIDTH; x++) {
+                    setMatrixRawPixel(x, y, s_nextFrame[y * MATRIX_WIDTH + x]);
+                }
+            }
+            s_matrix.show();
+            break;
+        }
+    }
+}
+
 

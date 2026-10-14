@@ -43,6 +43,9 @@ uint8_t Network_GetCarouselMask();
 void Network_SetCarouselMask(uint8_t mask);
 bool Network_IsAppInCarousel(uint8_t appIndex);
 
+uint8_t Network_GetTransitionFx();
+void Network_SetTransitionFx(uint8_t fx);
+
 bool Network_GetShowSeconds();
 void Network_SetShowSeconds(bool en);
 

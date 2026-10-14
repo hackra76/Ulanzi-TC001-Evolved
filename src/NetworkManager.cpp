@@ -25,6 +25,7 @@ static uint8_t s_activeApp = 0;
 static uint16_t s_rotateSec = DEFAULT_ROTATE_SEC;
 static uint8_t s_carouselMask = 0x7F; // Bitmask of enabled carousel screens (default: all 7 active)
 static uint8_t s_carouselOrder[7] = {0, 1, 2, 3, 4, 5, 6}; // Screen display sequence
+static uint8_t s_transitionFx = DEFAULT_TRANSITION_FX; // Screen transition animation effect
 static uint8_t s_batteryMode = 2; // 0: Percentage, 1: Voltage, 2: Alternating
 static String s_ytChannel = "";
 static String s_ytApiKey = "";
@@ -400,6 +401,20 @@ static String buildPortalHtml() {
     <div class="field" id="rotate_delay_field" style="{{ROTATE_DELAY_DISPLAY}}">
       <label for="rotate">Carousel Cycle Interval (seconds, 3 - 120)</label>
       <input type="number" id="rotate" name="rotate" min="3" max="120" value="{{ROTATE}}" required>
+    </div>
+
+    <div class="field">
+      <label for="trans_fx">Screen Transition Effect</label>
+      <select id="trans_fx" name="trans_fx">
+        <option value="0" {{TRANS_0_SEL}}>None (Instant Cut)</option>
+        <option value="1" {{TRANS_1_SEL}}>Slide Left</option>
+        <option value="2" {{TRANS_2_SEL}}>Slide Right</option>
+        <option value="3" {{TRANS_3_SEL}}>Slide Up</option>
+        <option value="4" {{TRANS_4_SEL}}>Slide Down</option>
+        <option value="5" {{TRANS_5_SEL}}>Crossfade / Dissolve</option>
+        <option value="6" {{TRANS_6_SEL}}>Curtain (Center Split Wipe)</option>
+        <option value="7" {{TRANS_7_SEL}}>Random (Shuffle Effects)</option>
+      </select>
     </div>
 
     <div class="section-title">&#x26A1; Battery & Energy Telemetry</div>
@@ -900,6 +915,13 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
     html.replace("{{BAT_MODE_1_SEL}}", (s_batteryMode == 1) ? "selected" : "");
     html.replace("{{BAT_MODE_2_SEL}}", (s_batteryMode == 2) ? "selected" : "");
 
+    // Screen transition effects
+    for (int i = 0; i <= 7; i++) {
+        char tag[20];
+        snprintf(tag, sizeof(tag), "{{TRANS_%d_SEL}}", i);
+        html.replace(tag, (s_transitionFx == i) ? "selected" : "");
+    }
+
     // Clock & Layout replacements
     for (int i = 0; i < 3; i++) {
         char tag[20];
@@ -1100,6 +1122,9 @@ static void handleSave() {
             Network_SetRotateDelaySec((uint16_t)r);
         }
     }
+    if (s_server.hasArg("trans_fx")) {
+        Network_SetTransitionFx((uint8_t)s_server.arg("trans_fx").toInt());
+    }
 
     // 3. Process Clock & Date Layout (Awtrix Style)
     if (s_server.hasArg("clk_mode")) {
@@ -1217,6 +1242,7 @@ static void handleStatus() {
     doc["rotate_sec"] = s_rotateSec;
     doc["auto_rotate"] = s_autoRotate;
     doc["carousel_mask"] = s_carouselMask;
+    doc["transition_fx"] = s_transitionFx;
     doc["active_app"] = s_activeApp;
     doc["firmware_version"] = FW_VERSION;
 
@@ -1269,6 +1295,8 @@ void Network_Init() {
 
     String savedOrder = s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6");
     Network_SetCarouselOrderString(savedOrder);
+    s_transitionFx = (uint8_t)s_prefs.getUChar(PREF_KEY_TRANSITION_FX, DEFAULT_TRANSITION_FX);
+    if (s_transitionFx > 7) s_transitionFx = DEFAULT_TRANSITION_FX;
     s_batteryMode = (uint8_t)s_prefs.getUChar(PREF_KEY_BATTERY_MODE, 2);
     if (s_batteryMode > 2) s_batteryMode = 2;
 
@@ -1790,6 +1818,16 @@ void Network_SetCarouselMask(uint8_t mask) {
 bool Network_IsAppInCarousel(uint8_t appIndex) {
     if (appIndex >= 7) return false;
     return (s_carouselMask & (1 << appIndex)) != 0;
+}
+
+uint8_t Network_GetTransitionFx() {
+    return s_transitionFx;
+}
+
+void Network_SetTransitionFx(uint8_t fx) {
+    s_transitionFx = (fx <= 7) ? fx : DEFAULT_TRANSITION_FX;
+    s_prefs.putUChar(PREF_KEY_TRANSITION_FX, s_transitionFx);
+    Serial.printf("[Settings] Transition effect set to %u\n", s_transitionFx);
 }
 
 bool Network_GetShowSeconds() { return s_showSeconds; }

@@ -276,6 +276,39 @@ static void renderCurrentApp() {
     }
 }
 
+static void switchToScreen(AppMode newApp, bool isCustom = false, uint8_t customIdx = 0) {
+    bool nightActive = isNightTime() && (millis() >= s_nightWakeUntilMs);
+    uint8_t effect = Network_GetTransitionFx();
+
+    if (nightActive || effect == 0 || !s_ipSplashDone) {
+        s_currentApp = newApp;
+        s_showingCustomApp = isCustom;
+        s_customAppIdx = customIdx;
+        if (!isCustom) Network_SetActiveApp((uint8_t)newApp);
+        renderCurrentApp();
+        return;
+    }
+
+    // 1. Capture current frame from matrix
+    DisplayMatrix_CaptureCurrentFrame();
+
+    // 2. Suppress output and render target app
+    DisplayMatrix_SuppressShow(true);
+    s_currentApp = newApp;
+    s_showingCustomApp = isCustom;
+    s_customAppIdx = customIdx;
+    if (!isCustom) Network_SetActiveApp((uint8_t)newApp);
+    renderCurrentApp();
+    DisplayMatrix_SuppressShow(false);
+
+    // 3. Capture target frame
+    DisplayMatrix_CaptureTargetFrame();
+
+    // 4. Run transition animation
+    DisplayMatrix_RunTransition(effect);
+}
+
+
 void setup() {
     Serial.begin(115200);
     Serial.printf("\n=========================================\n");
@@ -427,7 +460,7 @@ void loop() {
 
     // Sync active screen changes requested via Web Portal / API
     if (!Network_GetAutoRotate() && !s_showingCustomApp && Network_GetActiveApp() != (uint8_t)s_currentApp) {
-        s_currentApp = (AppMode)Network_GetActiveApp();
+        switchToScreen((AppMode)Network_GetActiveApp(), false, 0);
     }
 
     // 9. Standard App Navigation & Button Events
@@ -436,10 +469,11 @@ void loop() {
     if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
         if (s_showingCustomApp) {
-            s_customAppIdx++;
-            if (s_customAppIdx >= customCount) {
-                s_showingCustomApp = false;
-                s_customAppIdx = 0;
+            uint8_t nextIdx = s_customAppIdx + 1;
+            if (nextIdx >= customCount) {
+                switchToScreen(s_currentApp, false, 0);
+            } else {
+                switchToScreen(s_currentApp, true, nextIdx);
             }
         } else {
             uint8_t mask = Network_GetCarouselMask();
@@ -464,11 +498,9 @@ void loop() {
                 }
             }
             if (foundPos <= curPos && customCount > 0) {
-                s_showingCustomApp = true;
-                s_customAppIdx = 0;
+                switchToScreen(s_currentApp, true, 0);
             } else {
-                s_currentApp = (AppMode)nextApp;
-                Network_SetActiveApp((uint8_t)s_currentApp);
+                switchToScreen((AppMode)nextApp, false, 0);
             }
         }
         s_lastAppSwitch = now;
@@ -478,10 +510,9 @@ void loop() {
         Buzzer_Click();
         if (s_showingCustomApp) {
             if (s_customAppIdx > 0) {
-                s_customAppIdx--;
+                switchToScreen(s_currentApp, true, s_customAppIdx - 1);
             } else {
-                s_showingCustomApp = false;
-                s_customAppIdx = 0;
+                switchToScreen(s_currentApp, false, 0);
             }
         } else {
             uint8_t mask = Network_GetCarouselMask();
@@ -506,11 +537,9 @@ void loop() {
                 }
             }
             if (foundPos >= curPos && customCount > 0) {
-                s_showingCustomApp = true;
-                s_customAppIdx = customCount - 1;
+                switchToScreen(s_currentApp, true, customCount - 1);
             } else {
-                s_currentApp = (AppMode)prevApp;
-                Network_SetActiveApp((uint8_t)s_currentApp);
+                switchToScreen((AppMode)prevApp, false, 0);
             }
         }
         s_lastAppSwitch = now;
@@ -543,10 +572,11 @@ void loop() {
         s_lastAppSwitch = now;
 
         if (s_showingCustomApp) {
-            s_customAppIdx++;
-            if (s_customAppIdx >= customCount) {
-                s_showingCustomApp = false;
-                s_customAppIdx = 0;
+            uint8_t nextIdx = s_customAppIdx + 1;
+            if (nextIdx >= customCount) {
+                switchToScreen(s_currentApp, false, 0);
+            } else {
+                switchToScreen(s_currentApp, true, nextIdx);
             }
         } else {
             uint8_t mask = Network_GetCarouselMask();
@@ -571,11 +601,9 @@ void loop() {
                 }
             }
             if (foundPos <= curPos && customCount > 0) {
-                s_showingCustomApp = true;
-                s_customAppIdx = 0;
+                switchToScreen(s_currentApp, true, 0);
             } else {
-                s_currentApp = (AppMode)nextApp;
-                Network_SetActiveApp((uint8_t)s_currentApp);
+                switchToScreen((AppMode)nextApp, false, 0);
             }
         }
     }

@@ -60,6 +60,17 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
   - Vlastné poradie sa ukladá do NVS (`car_ord`) a riadi automatickú rotáciu aj tlačidlá.
   - Nastaviteľný interval rotácie (3 až 120 sekúnd).
   - Okamžité ukladanie cez AJAX s plávajúcou notifikáciou bez opustenia portálu.
+- **🎬 Efekty prechodu obrazoviek:**
+  - Výber z 8 plynulých animácií pri zmene obrazoviek vo webovom portáli:
+    - **Žiadny (Okamžitý prepis)**: Bez animácie.
+    - **Posun doľava (Slide Left)**: Plynulý horizontálny posun vľavo (krok 2 px, 16 fáz).
+    - **Posun doprava (Slide Right)**: Plynulý horizontálny posun vpravo.
+    - **Posun nahor (Slide Up)**: Vertikálny posun zdola nahor (8 fáz).
+    - **Posun nadol (Slide Down)**: Vertikálny posun zhora nadol.
+    - **Prelínanie (Crossfade / Dissolve)**: 10-krokové plynulé prelínanie farieb cez natívny 24-bitový GRB double-buffer.
+    - **Opona (Curtain Split Wipe)**: Rozdelenie a odhalenie novej obrazovky od stredu k okrajom.
+    - **Náhodný (Random)**: Automatický náhodný výber prechodového efektu pri každej zmene.
+  - Priamy zápis do vyrovnávacej pamäte eliminuje preblikávanie a zachováva plný jas bez straty intenzity.
 - **🏠 Home Assistant MQTT Auto-Discovery:**
   - Natívna integrácia bez manuálnej konfigurácie: automaticky vytvorí 12 synchronizovaných entít v Home Assistante po pripojení k MQTT brokeru.
   - Senzory: SHT30 Teplota (`°C`), Vlhkosť (`%`), Batéria (`%`), Napätie batérie (`V`), Osvetlenie, Aktívna obrazovka.
@@ -98,7 +109,7 @@ Portál je dostupný na adrese `http://<ip-adresa-zariadenia>/` (alebo `http://1
 1. **Živý náhľad displeja:** Reálny 32×8 canvas stream a tlačidlo na stiahnutie BMP snímky.
 2. **Wi-Fi Sieť:** Skenovanie okolitých sietí a ukladanie prístupových údajov.
 3. **Svetelný senzor & Obrazovka:** Automatický jas, denný a nočný strop, tiché nočné hodiny.
-4. **Kolotoč obrazoviek & Zoradenie:** Zmena poradia pomocou tlačidiel `▲`/`▼` a výber aktívnych obrazoviek.
+4. **Kolotoč obrazoviek & Prechody:** Zmena poradia pomocou tlačidiel `▲`/`▼`, výber aktívnych obrazoviek a výber z 8 prechodových efektov (Posun, Prelínanie, Opona, Náhodný).
 5. **Formát batérie:** Percentá, Napätie alebo Striedanie každé 3 sekundy.
 6. **Rozloženie hodín a dátumu:** Režim hodín, zobrazenie sekúnd, stĺpce dní, farby, formát dátumu a ikona.
 7. **Predpoveď počasia:** Výber mesta zo zoznamu alebo vlastné GPS súradnice.

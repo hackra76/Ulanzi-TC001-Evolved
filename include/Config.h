@@ -55,6 +55,10 @@
 #define MIN_ROTATE_SEC          3
 #define MAX_ROTATE_SEC          120
 
+// --- Screen Transition Effects ---
+#define PREF_KEY_TRANSITION_FX  "trans_fx"   // 0: None, 1: Slide Left, 2: Slide Right, 3: Slide Up, 4: Slide Down, 5: Crossfade, 6: Curtain, 7: Random
+#define DEFAULT_TRANSITION_FX   1            // 1: Slide Left by default
+
 // --- Battery Telemetry Customization ---
 #define PREF_KEY_BATTERY_MODE   "bat_mode"   // 0: Percentage, 1: Voltage, 2: Alternating (Pct/Volt)
 

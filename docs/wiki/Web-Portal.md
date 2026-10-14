@@ -23,6 +23,15 @@ The web configuration portal is hosted on port 80 of the device's IP address (`h
 ### 4. Screen Carousel & Reordering
 - **Auto-Rotate Screens**: Toggles automatic carousel rotation on or off.
 - **Carousel Cycle Interval**: Configurable rotation duration in seconds (3 to 120s).
+- **Screen Transition Effect**: Choose animation when switching screens:
+  - `None (Instant Cut)`: Direct instantaneous screen switch.
+  - `Slide Left`: Old screen moves left while new screen slides in from the right.
+  - `Slide Right`: Old screen moves right while new screen slides in from the left.
+  - `Slide Up`: Old screen moves up while new screen slides in from the bottom.
+  - `Slide Down`: Old screen moves down while new screen slides in from the top.
+  - `Crossfade / Dissolve`: Smooth alpha-blended color morphing across all pixels.
+  - `Curtain (Center Split Wipe)`: Splitting theatrical curtain opening from center outward.
+  - `Random (Shuffle Effects)`: Automatically selects a different transition on every screen switch.
 - **Screen Reorder List**: Move any screen up (`▲`) or down (`▼`) to customize the sequence. The order is stored in NVS (`car_ord`) and respected by both the carousel timer and the hardware left/right buttons.
 - **Screen Toggles**: Individual checkboxes to enable or disable any screen in the carousel.
 - **Default / Active Screen**: Dropdown to select the primary boot and active screen.

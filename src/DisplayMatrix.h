@@ -37,3 +37,9 @@ inline uint16_t DisplayMatrix_Color(uint8_t r, uint8_t g, uint8_t b) {
     return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }
 
+// Screen Transition Engine
+void DisplayMatrix_SuppressShow(bool suppress);
+void DisplayMatrix_CaptureCurrentFrame();
+void DisplayMatrix_CaptureTargetFrame();
+void DisplayMatrix_RunTransition(uint8_t effectType);
+
