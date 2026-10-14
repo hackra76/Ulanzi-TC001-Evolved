@@ -67,8 +67,10 @@
 #define PREF_KEY_SHOW_SECONDS   "show_sec"   // 1: Show seconds, 0: Hide seconds
 #define PREF_KEY_WEEKDAY_BAR    "wd_bar"     // 1: Show 7 weekday bars, 0: Hide
 #define PREF_KEY_WD_START_MON   "wd_mon"     // 1: Start Monday, 0: Start Sunday
-#define PREF_KEY_WD_ACTIVE_COL  "wd_acol"    // 0: Cyan, 1: Orange, 2: Green, 3: Yellow, 4: Red, 5: White
-#define PREF_KEY_WD_INACT_COL   "wd_icol"    // 0: Dim Slate, 1: Dark Gray, 2: Dim Amber, 3: Off
+#define PREF_KEY_WD_ACTIVE_COL  "wd_acol"    // Active day color
+#define PREF_KEY_WD_INACT_COL   "wd_icol"    // Inactive day color
+#define PREF_KEY_WD_WKND_COL    "wd_wcol"    // Weekend day color (0: Same as active, 1: Red, etc.)
+#define PREF_KEY_PORTAL_LANG    "ui_lang"    // Portal language ("en" or "sk")
 #define PREF_KEY_DATE_FORMAT    "date_fmt"   // 0: DD.MM., 1: DD MMM, 2: MM/DD, 3: DAY DD
 #define PREF_KEY_CLOCK_ICON     "clk_icon"   // 0: Dynamic Calendar, 1: Heart, 2: Clock Face, 3: None
 #define PREF_KEY_TEXT_ALIGN     "txt_align"  // 0: Left-aligned with icon (Awtrix), 1: Centered

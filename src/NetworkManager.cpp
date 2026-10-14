@@ -59,8 +59,10 @@ static uint8_t s_clockMode = 1;       // 0: Time Only, 1: Combined, 2: Date Only
 static bool s_showSeconds = false;    // Option to show seconds in time display
 static bool s_weekdayBar = true;      // 7 bars under time
 static bool s_weekdayStartMon = true; // Start Monday
-static uint8_t s_weekdayActiveColIdx = 0;   // 0: Cyan, 1: Orange, 2: Green, 3: Yellow, 4: Red, 5: White
-static uint8_t s_weekdayInactColIdx = 0;    // 0: Dim Slate, 1: Dark Gray, 2: Dim Amber, 3: Off
+static uint8_t s_weekdayActiveColIdx = 0;   // Active day color
+static uint8_t s_weekdayInactColIdx = 0;    // Inactive day color
+static uint8_t s_weekdayWeekendColIdx = 0;  // Weekend day color (0: Same as active)
+static String s_portalLang = "en";          // Portal language ("en" or "sk")
 static uint8_t s_dateFormat = 0;      // 0: DD.MM., 1: DD MMM, 2: MM/DD, 3: DAY DD
 static uint8_t s_clockIcon = 0;       // 0: Dynamic Calendar, 1: Heart, 2: Clock Face, 3: None
 static uint8_t s_textAlign = 0;       // 0: Left-Aligned with Icon (Awtrix), 1: Centered
@@ -71,15 +73,43 @@ static const uint16_t s_wdActiveColors[] = {
     0x07E0, // 2: Green (#00FF00)
     0xFFE0, // 3: Yellow (#FFFF00)
     0xF800, // 4: Red (#FF2200)
-    0xFFFF  // 5: White (#FFFFFF)
+    0xFFFF, // 5: White (#FFFFFF)
+    0xF81F, // 6: Magenta (#FF00FF)
+    0x04DF, // 7: Deep Sky Blue (#0099FF)
+    0xF9B3, // 8: Hot Coral (#FF3399)
+    0x37F3, // 9: Lime Mint (#33FF99)
+    0xFDB0  // 10: Gold Amber (#FFB700)
 };
+static const size_t s_numWdActiveColors = sizeof(s_wdActiveColors) / sizeof(s_wdActiveColors[0]);
 
 static const uint16_t s_wdInactiveColors[] = {
     0x0000, // 0: Auto (computed dynamically from active color at ~65% intensity)
     0x7432, // 1: Slate Gray (#708090)
     0x9342, // 2: Dim Amber (#906810)
-    0x0000  // 3: Off (Black)
+    0x3186, // 3: Dark Charcoal (#333333)
+    0x19F1, // 4: Dim Navy Blue (#1E3A8A)
+    0x02B2, // 5: Dim Teal (#005577)
+    0x7082, // 6: Dim Wine Red (#771111)
+    0x12A2, // 7: Dim Forest Green (#115511)
+    0x40AA, // 8: Dim Purple (#441155)
+    0x0000  // 9: Off (Black)
 };
+static const size_t s_numWdInactiveColors = sizeof(s_wdInactiveColors) / sizeof(s_wdInactiveColors[0]);
+
+static const uint16_t s_wdWeekendColors[] = {
+    0x0000, // 0: Same as Active Day Color
+    0xF800, // 1: Red (#FF2200 - Classic Weekend)
+    0xFD20, // 2: Orange (#FF8800)
+    0xFFE0, // 3: Yellow (#FFFF00)
+    0xF9B3, // 4: Hot Coral (#FF3399)
+    0xF81F, // 5: Magenta (#FF00FF)
+    0x04DF, // 6: Deep Sky Blue (#0099FF)
+    0x07FF, // 7: Cyan (#00F0FF)
+    0x37F3, // 8: Lime Mint (#33FF99)
+    0xFDB0, // 9: Gold Amber (#FFB700)
+    0xFFFF  // 10: White (#FFFFFF)
+};
+static const size_t s_numWdWeekendColors = sizeof(s_wdWeekendColors) / sizeof(s_wdWeekendColors[0]);
 
 static uint32_t s_connectStartMs = 0;
 static uint32_t s_lastWifiCheckMs = 0;
@@ -97,12 +127,13 @@ static String buildPortalHtml() {
 <style>
   :root {
     --bg: #090d16;
-    --card: rgba(22, 30, 49, 0.92);
+    --card: rgba(22, 30, 49, 0.94);
     --border: rgba(255, 255, 255, 0.1);
     --accent: #38bdf8;
     --accent-glow: rgba(56, 189, 248, 0.25);
     --text: #f1f5f9;
     --text-muted: #94a3b8;
+    --group-bg: rgba(15, 23, 42, 0.6);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -118,73 +149,142 @@ static String buildPortalHtml() {
   }
   .card {
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 1.25rem;
-    padding: 2rem;
+    padding: 1.75rem;
     backdrop-filter: blur(14px);
     box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 40px var(--accent-glow);
   }
-  .header { text-align: center; margin-bottom: 1.5rem; }
-  .badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
+  .header { margin-bottom: 1.25rem; text-align: center; }
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+  }
+  .v-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 9999px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .v-badge:hover {
+    background: rgba(56, 189, 248, 0.25);
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .v-dot {
+    width: 7px;
+    height: 7px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #22c55e;
+  }
+  .lang-switch {
+    display: inline-flex;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 2px;
+  }
+  .lang-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.22rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .lang-btn.active {
+    background: var(--accent);
+    color: #090d16;
+  }
+  h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.25rem; }
+  p.sub { font-size: 0.82rem; color: var(--text-muted); }
+
+  .live-card {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1.35rem;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+  }
+  .group-box {
+    background: var(--group-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.95rem;
+    padding: 1.15rem 1rem 0.6rem 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .group-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.4rem;
+  }
+  .sub-title {
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    border-radius: 9999px;
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 0.85rem 0 0.5rem 0;
   }
-  h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 0.25rem; }
-  p.sub { font-size: 0.85rem; color: var(--text-muted); }
-  .section-title {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    margin: 1.25rem 0 0.75rem 0;
-    padding-bottom: 0.35rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .field { margin-bottom: 1rem; }
+  .field { margin-bottom: 0.85rem; }
   .row { display: flex; gap: 0.75rem; }
   .row .field { flex: 1; }
   label {
     display: block;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.3rem;
     color: var(--text-muted);
   }
   .chk-label {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text);
     cursor: pointer;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.55rem;
   }
   .chk-label input[type="checkbox"] {
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 1.05rem;
+    height: 1.05rem;
     accent-color: var(--accent);
     cursor: pointer;
   }
   input[type="text"], input[type="password"], input[type="number"], select {
     width: 100%;
-    padding: 0.75rem 0.85rem;
-    background: rgba(15, 23, 42, 0.8);
+    padding: 0.65rem 0.8rem;
+    background: rgba(15, 23, 42, 0.85);
     border: 1px solid var(--border);
-    border-radius: 0.65rem;
+    border-radius: 0.6rem;
     color: var(--text);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     outline: none;
     transition: all 0.2s ease;
   }
@@ -196,7 +296,7 @@ static String buildPortalHtml() {
     outline: none;
     accent-color: var(--accent);
     cursor: pointer;
-    margin: 0.5rem 0;
+    margin: 0.4rem 0;
   }
   input:focus, select:focus {
     border-color: var(--accent);
@@ -209,19 +309,19 @@ static String buildPortalHtml() {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--accent);
-    padding: 0.4rem 0.85rem;
+    padding: 0.35rem 0.75rem;
     border-radius: 0.5rem;
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 0.4rem;
+    margin-top: 0.35rem;
     transition: background 0.2s;
   }
   .scan-btn:hover { background: rgba(56, 189, 248, 0.12); }
   .btn-submit {
     width: 100%;
     padding: 0.85rem;
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
     border: none;
     border-radius: 0.75rem;
@@ -253,7 +353,7 @@ static String buildPortalHtml() {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.75rem;
   }
   .reorder-item {
     display: flex;
@@ -262,35 +362,25 @@ static String buildPortalHtml() {
     background: rgba(15, 23, 42, 0.7);
     border: 1px solid var(--border);
     border-radius: 0.6rem;
-    padding: 0.45rem 0.75rem;
+    padding: 0.4rem 0.75rem;
     transition: background 0.2s;
   }
-  .reorder-item:hover {
-    background: rgba(30, 41, 59, 0.85);
-  }
-  .reorder-btns {
-    display: flex;
-    gap: 0.25rem;
-  }
+  .reorder-item:hover { background: rgba(30, 41, 59, 0.85); }
   .btn-sm {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 0.35rem;
-    width: 1.7rem;
-    height: 1.7rem;
+    width: 1.6rem;
+    height: 1.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     transition: all 0.2s;
   }
-  .btn-sm:hover {
-    background: var(--accent);
-    color: #000;
-    border-color: var(--accent);
-  }
+  .btn-sm:hover { background: var(--accent); color: #000; border-color: var(--accent); }
   .footer { text-align: center; margin-top: 1.25rem; font-size: 0.75rem; color: var(--text-muted); }
 </style>
 </head>
@@ -298,399 +388,696 @@ static String buildPortalHtml() {
 <div id="toast"></div>
 <div class="card">
   <div class="header">
-    <div class="badge">Pixel Clock Setup</div>
-    <h1>Ulanzi TC001 Evolved</h1>
-    <p class="sub">Configure Network, Ambient Screen, Weather, Tickers & Firmware</p>
+    <div class="top-bar">
+      <a href="https://github.com/{{GITHUB_REPO}}" target="_blank" rel="noopener" class="v-badge" title="GitHub Repository">
+        <span class="v-dot"></span> v{{FW_VERSION}} &bull; GitHub
+      </a>
+      <div class="lang-switch">
+        <button type="button" class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+        <button type="button" class="lang-btn" id="btn-sk" onclick="setLang('sk')">SK</button>
+      </div>
+    </div>
+    <h1 data-i18n="app_title">Ulanzi TC001 Evolved</h1>
+    <p class="sub" data-i18n="app_sub">Smart Pixel Clock &bull; Ambient Display &bull; Home Assistant</p>
   </div>
 
-  <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.3); border-radius:1rem; padding:1rem; margin-bottom:1.5rem; text-align:center; box-shadow:0 0 25px rgba(56,189,248,0.15);">
+  <div class="live-card">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
-      <span style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em;">&#x1F4FA; Live Display Stream</span>
-      <a href="/api/display/screenshot" target="_blank" download="tc001_screenshot.bmp" style="font-size:0.75rem; color:var(--accent); text-decoration:none; border:1px solid rgba(56,189,248,0.4); padding:0.2rem 0.5rem; border-radius:9999px;">&#x1F4F7; Capture BMP</a>
+      <span style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em;" data-i18n="live_stream">&#x1F4FA; Live Display Stream</span>
+      <a href="/api/display/screenshot" target="_blank" download="tc001_screenshot.bmp" class="scan-btn" style="margin:0; text-decoration:none;" data-i18n="cap_bmp">&#x1F4F7; Capture BMP</a>
     </div>
     <div style="overflow-x:auto; padding:4px 0;">
       <canvas id="virtualMatrix" width="320" height="80" style="background:#05070c; border-radius:6px; box-shadow:inset 0 0 10px #000; max-width:100%; height:auto; display:inline-block; vertical-align:middle;"></canvas>
     </div>
     <div style="display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:0.6rem;">
-      <button type="button" class="scan-btn" style="padding:0.25rem 0.6rem; margin:0;" onclick="switchScreen(-1)">&larr; Prev</button>
+      <button type="button" class="scan-btn" style="padding:0.25rem 0.6rem; margin:0;" onclick="switchScreen(-1)" data-i18n="btn_prev">&larr; Prev</button>
       <span id="screenNameBadge" style="font-size:0.75rem; font-weight:600; color:var(--text); min-width:140px; text-align:center;">{{APP_NAME}}</span>
-      <button type="button" class="scan-btn" style="padding:0.25rem 0.6rem; margin:0;" onclick="switchScreen(1)">Next &rarr;</button>
+      <button type="button" class="scan-btn" style="padding:0.25rem 0.6rem; margin:0;" onclick="switchScreen(1)" data-i18n="btn_next">Next &rarr;</button>
     </div>
-    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.4rem;">Real-time 32&times;8 NeoPixel mirror &bull; Auto-refresh 1.5s</div>
+    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.4rem;" data-i18n="live_hint">Real-time 32&times;8 NeoPixel mirror &bull; Auto-refresh 1.5s</div>
   </div>
 
   <form id="settingsForm" action="/save" method="POST">
+    <input type="hidden" id="ui_lang" name="ui_lang" value="{{PORTAL_LANG}}">
     
-    <div class="section-title">&#x1F4F6; Wi-Fi Network</div>
-    <div class="field">
-      <label for="ssid">Network Name (SSID)</label>
-      <input type="text" id="ssid" name="ssid" value="{{SSID}}" placeholder="Enter Wi-Fi SSID" required autocomplete="off">
-      <button type="button" class="scan-btn" onclick="scanNetworks()">&#x21bb; Scan Nearby Networks</button>
-      <select id="scanSelect" style="display:none; margin-top:0.4rem;" onchange="selectNetwork(this.value)">
-        <option value="">-- Detected Networks --</option>
-      </select>
-    </div>
-    <div class="field">
-      <label for="password">Wi-Fi Password</label>
-      <input type="password" id="password" name="password" placeholder="Leave empty if unchanged">
-    </div>
-
-    <div class="section-title">&#x1F319; Ambient Intelligence & Display</div>
-    <label class="chk-label">
-      <input type="checkbox" name="auto_bri" value="1" {{AUTO_BRI_CHK}}>
-      Auto-Brightness via LDR Light Sensor
-    </label>
-    
-    <div class="field">
-      <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-        <label for="day_bri" style="margin:0;">Day Brightness Ceiling</label>
-        <span id="day_bri_val" style="color:var(--accent); font-weight:700;">{{DAY_BRI}}%</span>
+    <!-- GROUP 1: DISPLAY & CLOCK ENGINE -->
+    <div class="group-box">
+      <div class="group-title" data-i18n="grp_clock">&#x23F0; Display &amp; Clock Engine</div>
+      
+      <div class="sub-title" data-i18n="sub_clock_layout">&#x1F552; Clock &amp; Date Layout</div>
+      <div class="row">
+        <div class="field">
+          <label for="clk_mode" data-i18n="lbl_clk_mode">Clock Display Mode</label>
+          <select id="clk_mode" name="clk_mode">
+            <option value="0" {{CLK_MODE_0_SEL}} data-i18n="opt_clk_time">Time Only</option>
+            <option value="1" {{CLK_MODE_1_SEL}} data-i18n="opt_clk_both">Combined Time &amp; Date (Alternating)</option>
+            <option value="2" {{CLK_MODE_2_SEL}} data-i18n="opt_clk_date">Date Only</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="date_fmt" data-i18n="lbl_date_fmt">Date Format</label>
+          <select id="date_fmt" name="date_fmt">
+            <option value="0" {{DATE_FMT_0_SEL}}>DD.MM. (e.g. 14.10.)</option>
+            <option value="1" {{DATE_FMT_1_SEL}}>DD MMM (e.g. 14 OCT)</option>
+            <option value="2" {{DATE_FMT_2_SEL}}>MM/DD (e.g. 10/14)</option>
+            <option value="3" {{DATE_FMT_3_SEL}}>DAY DD (e.g. WED 14)</option>
+          </select>
+        </div>
       </div>
-      <input type="range" id="day_bri" name="day_bri" min="5" max="100" value="{{DAY_BRI}}" oninput="document.getElementById('day_bri_val').innerText = this.value + '%'">
-    </div>
 
-    <label class="chk-label" style="margin-top:0.75rem;">
-      <input type="checkbox" name="night_mode" value="1" {{NIGHT_MODE_CHK}}>
-      Night Mode (Quiet Dim Red Clock)
-    </label>
-
-    <div class="field">
-      <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-        <label for="night_bri" style="margin:0;">Night Mode Brightness</label>
-        <span id="night_bri_val" style="color:var(--accent); font-weight:700;">{{NIGHT_BRI}}%</span>
+      <div class="row">
+        <div class="field">
+          <label for="clk_icon" data-i18n="lbl_clk_icon">Clock Icon Style</label>
+          <select id="clk_icon" name="clk_icon">
+            <option value="0" {{CLK_ICON_0_SEL}} data-i18n="opt_icon_cal">Dynamic Calendar (Date 1-31)</option>
+            <option value="1" {{CLK_ICON_1_SEL}} data-i18n="opt_icon_heart">Heart (Classic)</option>
+            <option value="2" {{CLK_ICON_2_SEL}} data-i18n="opt_icon_clock">Clock Face</option>
+            <option value="3" {{CLK_ICON_3_SEL}} data-i18n="opt_icon_none">None (Full Width)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="txt_align" data-i18n="lbl_txt_align">Text Alignment</label>
+          <select id="txt_align" name="txt_align">
+            <option value="0" {{TXT_ALIGN_0_SEL}} data-i18n="opt_align_left">Left-Aligned with Icon (Awtrix)</option>
+            <option value="1" {{TXT_ALIGN_1_SEL}} data-i18n="opt_align_center">Centered in Window</option>
+          </select>
+        </div>
       </div>
-      <input type="range" id="night_bri" name="night_bri" min="1" max="25" value="{{NIGHT_BRI}}" oninput="document.getElementById('night_bri_val').innerText = this.value + '%'">
-    </div>
 
-    <div class="row">
-      <div class="field">
-        <label for="night_start">Night Start Hour</label>
-        <input type="number" id="night_start" name="night_start" min="0" max="23" value="{{NIGHT_START}}">
-      </div>
-      <div class="field">
-        <label for="night_end">Night End Hour</label>
-        <input type="number" id="night_end" name="night_end" min="0" max="23" value="{{NIGHT_END}}">
-      </div>
-    </div>
-
-    <div class="section-title">&#x1F3A0; Screen Carousel & Navigation</div>
-    <label class="chk-label">
-      <input type="checkbox" id="auto_rotate" name="auto_rotate" value="1" {{AUTO_ROTATE_CHK}} onchange="document.getElementById('rotate_delay_field').style.display = this.checked ? 'block' : 'none'">
-      Auto-Rotate Screens (Carousel)
-    </label>
-
-    <div style="font-size:0.8rem; font-weight:600; color:var(--text-muted); margin:0.75rem 0 0.35rem 0;">Screens in Carousel (Check to Enable &bull; Use &#x25B2;&#x25BC; to Reorder):</div>
-    <input type="hidden" id="car_ord" name="car_ord" value="{{CAR_ORD}}">
-    <div class="reorder-list" id="carouselScreens">
-      {{REORDER_ITEMS}}
-    </div>
-
-    <div class="field">
-      <label for="active_app">Default / Active Screen</label>
-      <select id="active_app" name="active_app">
-        <option value="0" {{APP_0_SEL}}>Clock (Heart / Time)</option>
-        <option value="1" {{APP_1_SEL}}>Indoor Environment (SHT30 Temp)</option>
-        <option value="2" {{APP_2_SEL}}>Outdoor Weather (Open-Meteo)</option>
-        <option value="3" {{APP_3_SEL}}>Crypto & Financial Markets</option>
-        <option value="4" {{APP_4_SEL}}>YouTube Subscriber Count</option>
-        <option value="5" {{APP_5_SEL}}>Live Airspace Radar (ADS-B)</option>
-        <option value="6" {{APP_6_SEL}}>Battery & Energy Telemetry</option>
-      </select>
-    </div>
-
-    <div class="field" id="rotate_delay_field" style="{{ROTATE_DELAY_DISPLAY}}">
-      <label for="rotate">Carousel Cycle Interval (seconds, 3 - 120)</label>
-      <input type="number" id="rotate" name="rotate" min="3" max="120" value="{{ROTATE}}" required>
-    </div>
-
-    <div class="field">
-      <label for="trans_fx">Screen Transition Effect</label>
-      <select id="trans_fx" name="trans_fx">
-        <option value="0" {{TRANS_0_SEL}}>None (Instant Cut)</option>
-        <option value="1" {{TRANS_1_SEL}}>Slide Left</option>
-        <option value="2" {{TRANS_2_SEL}}>Slide Right</option>
-        <option value="3" {{TRANS_3_SEL}}>Slide Up</option>
-        <option value="4" {{TRANS_4_SEL}}>Slide Down</option>
-        <option value="5" {{TRANS_5_SEL}}>Crossfade / Dissolve</option>
-        <option value="6" {{TRANS_6_SEL}}>Curtain (Center Split Wipe)</option>
-        <option value="7" {{TRANS_7_SEL}}>Random (Shuffle Effects)</option>
-      </select>
-    </div>
-
-    <div class="section-title">&#x26A1; Battery & Energy Telemetry</div>
-    <div class="field">
-      <label for="bat_mode">Battery Display Format</label>
-      <select id="bat_mode" name="bat_mode">
-        <option value="2" {{BAT_MODE_2_SEL}}>Alternating (Percentage &bull; Voltage every 3s)</option>
-        <option value="0" {{BAT_MODE_0_SEL}}>Percentage Only (e.g. 94%)</option>
-        <option value="1" {{BAT_MODE_1_SEL}}>Voltage Only (e.g. 4.12V)</option>
-      </select>
-    </div>
-
-    <div class="section-title">&#x23F0; Clock & Date Layout (Awtrix Style)</div>
-    
-    <div class="field">
-      <label for="clk_mode">Clock Display Mode</label>
-      <select id="clk_mode" name="clk_mode">
-        <option value="0" {{CLK_MODE_0_SEL}}>Time Only</option>
-        <option value="1" {{CLK_MODE_1_SEL}}>Combined Time & Date (Alternating)</option>
-        <option value="2" {{CLK_MODE_2_SEL}}>Date Only</option>
-      </select>
-    </div>
-
-    <label class="chk-label">
-      <input type="checkbox" name="show_sec" value="1" {{SHOW_SEC_CHK}}>
-      Show Seconds in Time Display
-    </label>
-
-    <label class="chk-label">
-      <input type="checkbox" name="wd_bar" value="1" {{WD_BAR_CHK}}>
-      Show 7 Weekday Bars Under Time
-    </label>
-
-    <div class="row">
-      <div class="field">
-        <label for="wd_mon">Week Starts On</label>
-        <select id="wd_mon" name="wd_mon">
-          <option value="1" {{WD_MON_1_SEL}}>Monday (ISO 8601)</option>
-          <option value="0" {{WD_MON_0_SEL}}>Sunday (US Standard)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="wd_acol">Active Day Color</label>
-        <select id="wd_acol" name="wd_acol">
-          <option value="0" {{WD_ACOL_0_SEL}}>Cyan (#00F0FF)</option>
-          <option value="1" {{WD_ACOL_1_SEL}}>Orange (#FF8800)</option>
-          <option value="2" {{WD_ACOL_2_SEL}}>Green (#00FF00)</option>
-          <option value="3" {{WD_ACOL_3_SEL}}>Yellow (#FFFF00)</option>
-          <option value="4" {{WD_ACOL_4_SEL}}>Red (#FF2200)</option>
-          <option value="5" {{WD_ACOL_5_SEL}}>White (#FFFFFF)</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="field">
-        <label for="wd_icol">Inactive Day Color</label>
-        <select id="wd_icol" name="wd_icol">
-          <option value="0" {{WD_ICOL_0_SEL}}>Dim Active Color (Auto - Slightly Dimmer)</option>
-          <option value="1" {{WD_ICOL_1_SEL}}>Slate Gray (#708090)</option>
-          <option value="2" {{WD_ICOL_2_SEL}}>Dim Amber (#906810)</option>
-          <option value="3" {{WD_ICOL_3_SEL}}>Off (Black)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="date_fmt">Date Format</label>
-        <select id="date_fmt" name="date_fmt">
-          <option value="0" {{DATE_FMT_0_SEL}}>DD.MM. (e.g. 14.10.)</option>
-          <option value="1" {{DATE_FMT_1_SEL}}>DD MMM (e.g. 14 OCT)</option>
-          <option value="2" {{DATE_FMT_2_SEL}}>MM/DD (e.g. 10/14)</option>
-          <option value="3" {{DATE_FMT_3_SEL}}>DAY DD (e.g. WED 14)</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="field">
-        <label for="clk_icon">Clock Icon Style</label>
-        <select id="clk_icon" name="clk_icon">
-          <option value="0" {{CLK_ICON_0_SEL}}>Dynamic Calendar (Date 1-31)</option>
-          <option value="1" {{CLK_ICON_1_SEL}}>Heart (Classic)</option>
-          <option value="2" {{CLK_ICON_2_SEL}}>Clock Face</option>
-          <option value="3" {{CLK_ICON_3_SEL}}>None (Full Width)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="txt_align">Text Alignment</label>
-        <select id="txt_align" name="txt_align">
-          <option value="0" {{TXT_ALIGN_0_SEL}}>Left-Aligned with Icon (Awtrix)</option>
-          <option value="1" {{TXT_ALIGN_1_SEL}}>Centered in Window</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="section-title">&#x26C5; Real Outdoor Weather (Open-Meteo)</div>
-    <div class="field">
-      <label for="city_preset">Select Predefined City</label>
-      <select id="city_preset" onchange="applyCityPreset(this.value)">
-        <option value="">-- Choose City Preset --</option>
-        <optgroup label="Slovakia">
-          <option value="Bratislava|48.1486|17.1077">Bratislava</option>
-          <option value="Košice|48.7164|21.2611">Košice</option>
-          <option value="Banská Bystrica|48.7363|19.1462">Banská Bystrica</option>
-          <option value="Žilina|49.2232|18.7394">Žilina</option>
-          <option value="Nitra|48.3061|18.0764">Nitra</option>
-          <option value="Prešov|48.9984|21.2339">Prešov</option>
-          <option value="Trnava|48.3774|17.5883">Trnava</option>
-          <option value="Trenčín|48.8945|18.0444">Trenčín</option>
-          <option value="Poprad|49.0512|20.2970">Poprad</option>
-        </optgroup>
-        <optgroup label="Czech Republic">
-          <option value="Praha|50.0755|14.4378">Praha</option>
-          <option value="Brno|49.1951|16.6068">Brno</option>
-          <option value="Ostrava|49.8209|18.2625">Ostrava</option>
-          <option value="Plzeň|49.7384|13.3736">Plzeň</option>
-          <option value="Olomouc|49.5938|17.2509">Olomouc</option>
-        </optgroup>
-        <optgroup label="Europe">
-          <option value="Vienna|48.2082|16.3738">Vienna (Wien)</option>
-          <option value="Budapest|47.4979|19.0402">Budapest</option>
-          <option value="Warsaw|52.2297|21.0122">Warsaw (Warszawa)</option>
-          <option value="Berlin|52.5200|13.4050">Berlin</option>
-          <option value="London|51.5074|-0.1278">London</option>
-          <option value="Paris|48.8566|2.3522">Paris</option>
-          <option value="Rome|41.9028|12.4964">Rome</option>
-          <option value="Madrid|40.4168|-3.7038">Madrid</option>
-          <option value="Amsterdam|52.3676|4.9041">Amsterdam</option>
-          <option value="Zurich|47.3769|8.5417">Zurich</option>
-        </optgroup>
-        <optgroup label="North America & Worldwide">
-          <option value="New York|40.7128|-74.0060">New York</option>
-          <option value="Los Angeles|34.0522|-118.2437">Los Angeles</option>
-          <option value="Toronto|43.6532|-79.3832">Toronto</option>
-          <option value="Tokyo|35.6762|139.6503">Tokyo</option>
-          <option value="Dubai|25.2048|55.2708">Dubai</option>
-          <option value="Sydney|-33.8688|151.2093">Sydney</option>
-        </optgroup>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="w_city">City Name</label>
-      <input type="text" id="w_city" name="w_city" value="{{W_CITY}}" placeholder="e.g. Bratislava">
-    </div>
-    <div class="row">
-      <div class="field">
-        <label for="w_lat">Latitude</label>
-        <input type="text" id="w_lat" name="w_lat" value="{{W_LAT}}" placeholder="48.1486">
-      </div>
-      <div class="field">
-        <label for="w_lon">Longitude</label>
-        <input type="text" id="w_lon" name="w_lon" value="{{W_LON}}" placeholder="17.1077">
-      </div>
-    </div>
-
-    <div class="section-title">&#x1F4B0; Financial Markets & Crypto (Live Tickers)</div>
-    <div class="field">
-      <label for="c_sym">Popular Asset / Index Preset</label>
-      <select id="c_sym" name="c_sym" onchange="document.getElementById('c_sym_custom').value = ''">
-        <optgroup label="Cryptocurrencies">
-          <option value="BTC" {{C_BTC_SEL}}>Bitcoin (BTC / USDT)</option>
-          <option value="ETH" {{C_ETH_SEL}}>Ethereum (ETH / USDT)</option>
-          <option value="SOL" {{C_SOL_SEL}}>Solana (SOL / USDT)</option>
-          <option value="BNB" {{C_BNB_SEL}}>Binance Coin (BNB / USDT)</option>
-        </optgroup>
-        <optgroup label="Stocks & Indices">
-          <option value="AAPL" {{C_AAPL_SEL}}>Apple Inc. (AAPL - Nasdaq)</option>
-          <option value="TSLA" {{C_TSLA_SEL}}>Tesla Inc. (TSLA - Nasdaq)</option>
-          <option value="NVDA" {{C_NVDA_SEL}}>Nvidia Corp. (NVDA - Nasdaq)</option>
-          <option value="SPX" {{C_SPX_SEL}}>S&P 500 Index (^GSPC)</option>
-        </optgroup>
-        <optgroup label="Commodities & Forex">
-          <option value="GOLD" {{C_GOLD_SEL}}>Gold Bullion (GC=F / USD)</option>
-          <option value="EUR" {{C_EUR_SEL}}>EUR / USD (Euro Forex)</option>
-          <option value="USD" {{C_USD_SEL}}>USD / EUR (US Dollar Forex)</option>
-        </optgroup>
-      </select>
-    </div>
-    <div class="field">
-      <label for="c_sym_custom">Or Custom Ticker / Symbol</label>
-      <input type="text" id="c_sym_custom" name="c_sym_custom" value="{{C_SYM_CUSTOM}}" placeholder="e.g. AAPL, GOLD, EUR, MSFT, BTC">
-    </div>
-
-    <div class="section-title">&#x25B6; YouTube Channel Analytics</div>
-    <div class="field">
-      <label for="yt_channel">Channel ID or @Handle</label>
-      <input type="text" id="yt_channel" name="yt_channel" value="{{YT_CHANNEL}}" placeholder="e.g. @MKBHD or UCxxxxxxxx">
-    </div>
-    <div class="field">
-      <label for="yt_key">YouTube Data API v3 Key</label>
-      <input type="password" id="yt_key" name="yt_key" value="{{YT_KEY}}" placeholder="Google Cloud API key">
-    </div>
-
-    <div class="section-title">&#x1F3E0; Home Assistant &amp; MQTT (Auto-Discovery &amp; Push API)</div>
-    <div class="field">
       <label class="chk-label">
-        <input type="checkbox" name="mqtt_en" id="mqtt_en" {{MQTT_EN_CHK}} onchange="document.getElementById('mqtt_settings').style.display = this.checked ? 'block' : 'none';">
-        Enable MQTT Client &amp; Home Assistant Auto-Discovery
+        <input type="checkbox" name="show_sec" value="1" {{SHOW_SEC_CHK}}>
+        <span data-i18n="chk_show_sec">Show Seconds in Time Display</span>
       </label>
-    </div>
-    <div id="mqtt_settings" style="{{MQTT_DISPLAY}}">
-      <div class="row">
-        <div class="field" style="flex:2;">
-          <label for="mqtt_srv">Broker IP or Hostname</label>
-          <input type="text" id="mqtt_srv" name="mqtt_srv" value="{{MQTT_SRV}}" placeholder="e.g. 192.168.0.100 or homeassistant.local">
-        </div>
-        <div class="field" style="flex:1;">
-          <label for="mqtt_port">Port</label>
-          <input type="number" id="mqtt_port" name="mqtt_port" value="{{MQTT_PORT}}" placeholder="1883">
-        </div>
-      </div>
+
+      <label class="chk-label">
+        <input type="checkbox" name="wd_bar" value="1" {{WD_BAR_CHK}}>
+        <span data-i18n="chk_wd_bar">Show 7 Weekday Bars Under Time</span>
+      </label>
+
       <div class="row">
         <div class="field">
-          <label for="mqtt_user">Username (Optional)</label>
-          <input type="text" id="mqtt_user" name="mqtt_user" value="{{MQTT_USER}}" placeholder="Home Assistant MQTT user">
+          <label for="wd_mon" data-i18n="lbl_wd_mon">Week Starts On</label>
+          <select id="wd_mon" name="wd_mon">
+            <option value="1" {{WD_MON_1_SEL}} data-i18n="opt_mon_iso">Monday (ISO 8601)</option>
+            <option value="0" {{WD_MON_0_SEL}} data-i18n="opt_sun_us">Sunday (US Standard)</option>
+          </select>
         </div>
         <div class="field">
-          <label for="mqtt_pass">Password (Optional)</label>
-          <input type="password" id="mqtt_pass" name="mqtt_pass" value="{{MQTT_PASS}}" placeholder="Password">
+          <label for="wd_acol" data-i18n="lbl_wd_acol">Active Day Color</label>
+          <select id="wd_acol" name="wd_acol">
+            <option value="0" {{WD_ACOL_0_SEL}}>Cyan (#00F0FF)</option>
+            <option value="1" {{WD_ACOL_1_SEL}}>Orange (#FF8800)</option>
+            <option value="2" {{WD_ACOL_2_SEL}}>Green (#00FF00)</option>
+            <option value="3" {{WD_ACOL_3_SEL}}>Yellow (#FFFF00)</option>
+            <option value="4" {{WD_ACOL_4_SEL}}>Red (#FF2200)</option>
+            <option value="5" {{WD_ACOL_5_SEL}}>White (#FFFFFF)</option>
+            <option value="6" {{WD_ACOL_6_SEL}}>Magenta (#FF00FF)</option>
+            <option value="7" {{WD_ACOL_7_SEL}}>Electric Blue (#0066FF)</option>
+            <option value="8" {{WD_ACOL_8_SEL}}>Lime Green (#76FF03)</option>
+            <option value="9" {{WD_ACOL_9_SEL}}>Amber Gold (#FFC107)</option>
+            <option value="10" {{WD_ACOL_10_SEL}}>Soft Pink (#FF4081)</option>
+          </select>
         </div>
       </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="wd_icol" data-i18n="lbl_wd_icol">Inactive Day Color</label>
+          <select id="wd_icol" name="wd_icol">
+            <option value="0" {{WD_ICOL_0_SEL}} data-i18n="opt_inact_auto">Dim Active Color (Auto - Slightly Dimmer)</option>
+            <option value="1" {{WD_ICOL_1_SEL}}>Slate Gray (#708090)</option>
+            <option value="2" {{WD_ICOL_2_SEL}}>Dim Amber (#906810)</option>
+            <option value="3" {{WD_ICOL_3_SEL}}>Dark Blue (#001A40)</option>
+            <option value="4" {{WD_ICOL_4_SEL}}>Deep Wine (#3A000A)</option>
+            <option value="5" {{WD_ICOL_5_SEL}}>Forest Green (#002A0D)</option>
+            <option value="6" {{WD_ICOL_6_SEL}}>Charcoal (#252525)</option>
+            <option value="7" {{WD_ICOL_7_SEL}}>Muted Purple (#2A1035)</option>
+            <option value="8" {{WD_ICOL_8_SEL}}>Dark Cyan (#003038)</option>
+            <option value="9" {{WD_ICOL_9_SEL}} data-i18n="opt_inact_off">Off (Black)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="wd_wcol" data-i18n="lbl_wd_wcol">Weekend Color (Sat &amp; Sun)</label>
+          <select id="wd_wcol" name="wd_wcol">
+            <option value="0" {{WD_WCOL_0_SEL}} data-i18n="opt_wknd_active">Same as Active Weekday</option>
+            <option value="1" {{WD_WCOL_1_SEL}}>Bright Red (#FF2200)</option>
+            <option value="2" {{WD_WCOL_2_SEL}}>Coral Orange (#FF6B4A)</option>
+            <option value="3" {{WD_WCOL_3_SEL}}>Gold (#FFD700)</option>
+            <option value="4" {{WD_WCOL_4_SEL}}>Hot Pink (#FF1493)</option>
+            <option value="5" {{WD_WCOL_5_SEL}}>Purple (#9C27B0)</option>
+            <option value="6" {{WD_WCOL_6_SEL}}>Cyan (#00F0FF)</option>
+            <option value="7" {{WD_WCOL_7_SEL}}>Lime (#76FF03)</option>
+            <option value="8" {{WD_WCOL_8_SEL}}>Pure White (#FFFFFF)</option>
+            <option value="9" {{WD_WCOL_9_SEL}}>Sky Blue (#00BFFF)</option>
+            <option value="10" {{WD_WCOL_10_SEL}}>Emerald (#00E676)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-title" data-i18n="sub_ambient">&#x1F319; Ambient Brightness &amp; Night Schedule</div>
+      <label class="chk-label">
+        <input type="checkbox" name="auto_bri" value="1" {{AUTO_BRI_CHK}}>
+        <span data-i18n="chk_auto_bri">Auto-Brightness via LDR Light Sensor</span>
+      </label>
+      
       <div class="field">
-        <label for="mqtt_pre">Topic Prefix</label>
-        <input type="text" id="mqtt_pre" name="mqtt_pre" value="{{MQTT_PRE}}" placeholder="ulanzi-tc001">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+          <label for="day_bri" style="margin:0;" data-i18n="lbl_day_bri">Day Brightness Ceiling</label>
+          <span id="day_bri_val" style="color:var(--accent); font-weight:700;">{{DAY_BRI}}%</span>
+        </div>
+        <input type="range" id="day_bri" name="day_bri" min="5" max="100" value="{{DAY_BRI}}" oninput="document.getElementById('day_bri_val').innerText = this.value + '%'">
       </div>
-      <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-top:0.25rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:0.5rem; border:1px solid rgba(255,255,255,0.05);">
-        &#x1F4A1; <strong>Push Spotify &amp; Custom Screens:</strong><br>
-        MQTT: Publish JSON to <code>{{MQTT_PRE}}/custom/spotify</code> or <code>{{MQTT_PRE}}/notify</code><br>
-        HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>
-        Payload: <code>{"text":"Song - Artist","icon":"spotify","progress":45,"duration":8}</code>
+
+      <label class="chk-label" style="margin-top:0.75rem;">
+        <input type="checkbox" name="night_mode" value="1" {{NIGHT_MODE_CHK}}>
+        <span data-i18n="chk_night_mode">Night Mode (Quiet Dim Red Clock)</span>
+      </label>
+
+      <div class="field">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+          <label for="night_bri" style="margin:0;" data-i18n="lbl_night_bri">Night Mode Brightness</label>
+          <span id="night_bri_val" style="color:var(--accent); font-weight:700;">{{NIGHT_BRI}}%</span>
+        </div>
+        <input type="range" id="night_bri" name="night_bri" min="1" max="25" value="{{NIGHT_BRI}}" oninput="document.getElementById('night_bri_val').innerText = this.value + '%'">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="night_start" data-i18n="lbl_night_start">Night Start Hour</label>
+          <input type="number" id="night_start" name="night_start" min="0" max="23" value="{{NIGHT_START}}">
+        </div>
+        <div class="field">
+          <label for="night_end" data-i18n="lbl_night_end">Night End Hour</label>
+          <input type="number" id="night_end" name="night_end" min="0" max="23" value="{{NIGHT_END}}">
+        </div>
       </div>
     </div>
 
-    <button type="submit" class="btn-submit">Save & Apply Settings</button>
+    <!-- GROUP 2: SCREENS & CAROUSEL NAVIGATION -->
+    <div class="group-box">
+      <div class="group-title" data-i18n="grp_carousel">&#x1F3A0; Screens &amp; Carousel Navigation</div>
+
+      <label class="chk-label">
+        <input type="checkbox" id="auto_rotate" name="auto_rotate" value="1" {{AUTO_ROTATE_CHK}} onchange="document.getElementById('rotate_delay_field').style.display = this.checked ? 'block' : 'none'">
+        <span data-i18n="chk_auto_rotate">Auto-Rotate Screens (Carousel)</span>
+      </label>
+
+      <div class="field" id="rotate_delay_field" style="{{ROTATE_DELAY_DISPLAY}}">
+        <label for="rotate" data-i18n="lbl_rotate_interval">Carousel Cycle Interval (seconds, 3 - 120)</label>
+        <input type="number" id="rotate" name="rotate" min="3" max="120" value="{{ROTATE}}" required>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="trans_fx" data-i18n="lbl_trans_fx">Screen Transition Effect</label>
+          <select id="trans_fx" name="trans_fx">
+            <option value="0" {{TRANS_0_SEL}} data-i18n="opt_trans_0">None (Instant Cut)</option>
+            <option value="1" {{TRANS_1_SEL}} data-i18n="opt_trans_1">Slide Left</option>
+            <option value="2" {{TRANS_2_SEL}} data-i18n="opt_trans_2">Slide Right</option>
+            <option value="3" {{TRANS_3_SEL}} data-i18n="opt_trans_3">Slide Up</option>
+            <option value="4" {{TRANS_4_SEL}} data-i18n="opt_trans_4">Slide Down</option>
+            <option value="5" {{TRANS_5_SEL}} data-i18n="opt_trans_5">Crossfade / Dissolve</option>
+            <option value="6" {{TRANS_6_SEL}} data-i18n="opt_trans_6">Curtain (Center Split Wipe)</option>
+            <option value="7" {{TRANS_7_SEL}} data-i18n="opt_trans_7">Random (Shuffle Effects)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="active_app" data-i18n="lbl_active_app">Default / Active Screen</label>
+          <select id="active_app" name="active_app">
+            <option value="0" {{APP_0_SEL}} data-i18n="app_name_0">Clock (Heart / Time)</option>
+            <option value="1" {{APP_1_SEL}} data-i18n="app_name_1">Indoor Environment (SHT30 Temp)</option>
+            <option value="2" {{APP_2_SEL}} data-i18n="app_name_2">Outdoor Weather (Open-Meteo)</option>
+            <option value="3" {{APP_3_SEL}} data-i18n="app_name_3">Crypto &amp; Financial Markets</option>
+            <option value="4" {{APP_4_SEL}} data-i18n="app_name_4">YouTube Subscriber Count</option>
+            <option value="5" {{APP_5_SEL}} data-i18n="app_name_5">Live Airspace Radar (ADS-B)</option>
+            <option value="6" {{APP_6_SEL}} data-i18n="app_name_6">Battery &amp; Energy Telemetry</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="font-size:0.8rem; font-weight:600; color:var(--text-muted); margin:0.75rem 0 0.35rem 0;" data-i18n="lbl_carousel_screens">Screens in Carousel (Check to Enable &bull; Use &#x25B2;&#x25BC; to Reorder):</div>
+      <input type="hidden" id="car_ord" name="car_ord" value="{{CAR_ORD}}">
+      <div class="reorder-list" id="carouselScreens">
+        {{REORDER_ITEMS}}
+      </div>
+
+      <div class="sub-title" data-i18n="sub_battery">&#x26A1; Battery &amp; Telemetry</div>
+      <div class="field">
+        <label for="bat_mode" data-i18n="lbl_bat_mode">Battery Display Format</label>
+        <select id="bat_mode" name="bat_mode">
+          <option value="2" {{BAT_MODE_2_SEL}} data-i18n="opt_bat_alt">Alternating (Percentage &bull; Voltage every 3s)</option>
+          <option value="0" {{BAT_MODE_0_SEL}} data-i18n="opt_bat_pct">Percentage Only (e.g. 94%)</option>
+          <option value="1" {{BAT_MODE_1_SEL}} data-i18n="opt_bat_volt">Voltage Only (e.g. 4.12V)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GROUP 3: DATA SERVICES & INTEGRATIONS -->
+    <div class="group-box">
+      <div class="group-title" data-i18n="grp_services">&#x1F310; Data Services &amp; Integrations</div>
+
+      <div class="sub-title" data-i18n="sub_weather">&#x26C5; Real Outdoor Weather (Open-Meteo)</div>
+      <div class="field">
+        <label for="city_preset" data-i18n="lbl_city_preset">Select Predefined City</label>
+        <select id="city_preset" onchange="applyCityPreset(this.value)">
+          <option value="" data-i18n="opt_choose_city">-- Choose City Preset --</option>
+          <optgroup label="Slovakia">
+            <option value="Bratislava|48.1486|17.1077">Bratislava</option>
+            <option value="Košice|48.7164|21.2611">Košice</option>
+            <option value="Banská Bystrica|48.7363|19.1462">Banská Bystrica</option>
+            <option value="Žilina|49.2232|18.7394">Žilina</option>
+            <option value="Nitra|48.3061|18.0764">Nitra</option>
+            <option value="Prešov|48.9984|21.2339">Prešov</option>
+            <option value="Trnava|48.3774|17.5883">Trnava</option>
+            <option value="Trenčín|48.8945|18.0444">Trenčín</option>
+            <option value="Poprad|49.0512|20.2970">Poprad</option>
+          </optgroup>
+          <optgroup label="Czech Republic">
+            <option value="Praha|50.0755|14.4378">Praha</option>
+            <option value="Brno|49.1951|16.6068">Brno</option>
+            <option value="Ostrava|49.8209|18.2625">Ostrava</option>
+            <option value="Plzeň|49.7384|13.3736">Plzeň</option>
+            <option value="Olomouc|49.5938|17.2509">Olomouc</option>
+          </optgroup>
+          <optgroup label="Europe">
+            <option value="Vienna|48.2082|16.3738">Vienna (Wien)</option>
+            <option value="Budapest|47.4979|19.0402">Budapest</option>
+            <option value="Warsaw|52.2297|21.0122">Warsaw (Warszawa)</option>
+            <option value="Berlin|52.5200|13.4050">Berlin</option>
+            <option value="London|51.5074|-0.1278">London</option>
+            <option value="Paris|48.8566|2.3522">Paris</option>
+            <option value="Rome|41.9028|12.4964">Rome</option>
+            <option value="Madrid|40.4168|-3.7038">Madrid</option>
+            <option value="Amsterdam|52.3676|4.9041">Amsterdam</option>
+            <option value="Zurich|47.3769|8.5417">Zurich</option>
+          </optgroup>
+          <optgroup label="North America &amp; Worldwide">
+            <option value="New York|40.7128|-74.0060">New York</option>
+            <option value="Los Angeles|34.0522|-118.2437">Los Angeles</option>
+            <option value="Toronto|43.6532|-79.3832">Toronto</option>
+            <option value="Tokyo|35.6762|139.6503">Tokyo</option>
+            <option value="Dubai|25.2048|55.2708">Dubai</option>
+            <option value="Sydney|-33.8688|151.2093">Sydney</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="w_city" data-i18n="lbl_city_name">City Name</label>
+        <input type="text" id="w_city" name="w_city" value="{{W_CITY}}" placeholder="e.g. Bratislava">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="w_lat" data-i18n="lbl_lat">Latitude</label>
+          <input type="text" id="w_lat" name="w_lat" value="{{W_LAT}}" placeholder="48.1486">
+        </div>
+        <div class="field">
+          <label for="w_lon" data-i18n="lbl_lon">Longitude</label>
+          <input type="text" id="w_lon" name="w_lon" value="{{W_LON}}" placeholder="17.1077">
+        </div>
+      </div>
+
+      <div class="sub-title" data-i18n="sub_finance">&#x1F4B0; Financial Markets &amp; Crypto (Live Tickers)</div>
+      <div class="field">
+        <label for="c_sym" data-i18n="lbl_asset_preset">Popular Asset / Index Preset</label>
+        <select id="c_sym" name="c_sym" onchange="document.getElementById('c_sym_custom').value = ''">
+          <optgroup label="Cryptocurrencies">
+            <option value="BTC" {{C_BTC_SEL}}>Bitcoin (BTC / USDT)</option>
+            <option value="ETH" {{C_ETH_SEL}}>Ethereum (ETH / USDT)</option>
+            <option value="SOL" {{C_SOL_SEL}}>Solana (SOL / USDT)</option>
+            <option value="BNB" {{C_BNB_SEL}}>Binance Coin (BNB / USDT)</option>
+          </optgroup>
+          <optgroup label="Stocks &amp; Indices">
+            <option value="AAPL" {{C_AAPL_SEL}}>Apple Inc. (AAPL - Nasdaq)</option>
+            <option value="TSLA" {{C_TSLA_SEL}}>Tesla Inc. (TSLA - Nasdaq)</option>
+            <option value="NVDA" {{C_NVDA_SEL}}>Nvidia Corp. (NVDA - Nasdaq)</option>
+            <option value="SPX" {{C_SPX_SEL}}>S&amp;P 500 Index (^GSPC)</option>
+          </optgroup>
+          <optgroup label="Commodities &amp; Forex">
+            <option value="GOLD" {{C_GOLD_SEL}}>Gold Bullion (GC=F / USD)</option>
+            <option value="EUR" {{C_EUR_SEL}}>EUR / USD (Euro Forex)</option>
+            <option value="USD" {{C_USD_SEL}}>USD / EUR (US Dollar Forex)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field">
+        <label for="c_sym_custom" data-i18n="lbl_custom_ticker">Or Custom Ticker / Symbol</label>
+        <input type="text" id="c_sym_custom" name="c_sym_custom" value="{{C_SYM_CUSTOM}}" placeholder="e.g. AAPL, GOLD, EUR, MSFT, BTC">
+      </div>
+
+      <div class="sub-title" data-i18n="sub_youtube">&#x25B6; YouTube Channel Analytics</div>
+      <div class="field">
+        <label for="yt_channel" data-i18n="lbl_yt_channel">Channel ID or @Handle</label>
+        <input type="text" id="yt_channel" name="yt_channel" value="{{YT_CHANNEL}}" placeholder="e.g. @MKBHD or UCxxxxxxxx">
+      </div>
+      <div class="field">
+        <label for="yt_key" data-i18n="lbl_yt_key">YouTube Data API v3 Key</label>
+        <input type="password" id="yt_key" name="yt_key" value="{{YT_KEY}}" placeholder="Google Cloud API key">
+      </div>
+
+      <div class="sub-title" data-i18n="sub_ha_mqtt">&#x1F3E0; Home Assistant &amp; MQTT (Auto-Discovery &amp; Push API)</div>
+      <div class="field">
+        <label class="chk-label">
+          <input type="checkbox" name="mqtt_en" id="mqtt_en" {{MQTT_EN_CHK}} onchange="document.getElementById('mqtt_settings').style.display = this.checked ? 'block' : 'none';">
+          <span data-i18n="chk_mqtt_en">Enable MQTT Client &amp; Home Assistant Auto-Discovery</span>
+        </label>
+      </div>
+      <div id="mqtt_settings" style="{{MQTT_DISPLAY}}">
+        <div class="row">
+          <div class="field" style="flex:2;">
+            <label for="mqtt_srv" data-i18n="lbl_mqtt_srv">Broker IP or Hostname</label>
+            <input type="text" id="mqtt_srv" name="mqtt_srv" value="{{MQTT_SRV}}" placeholder="e.g. 192.168.0.100 or homeassistant.local">
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="mqtt_port" data-i18n="lbl_mqtt_port">Port</label>
+            <input type="number" id="mqtt_port" name="mqtt_port" value="{{MQTT_PORT}}" placeholder="1883">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="mqtt_user" data-i18n="lbl_mqtt_user">Username (Optional)</label>
+            <input type="text" id="mqtt_user" name="mqtt_user" value="{{MQTT_USER}}" placeholder="Home Assistant MQTT user">
+          </div>
+          <div class="field">
+            <label for="mqtt_pass" data-i18n="lbl_mqtt_pass">Password (Optional)</label>
+            <input type="password" id="mqtt_pass" name="mqtt_pass" value="{{MQTT_PASS}}" placeholder="Password">
+          </div>
+        </div>
+        <div class="field">
+          <label for="mqtt_pre" data-i18n="lbl_mqtt_pre">Topic Prefix</label>
+          <input type="text" id="mqtt_pre" name="mqtt_pre" value="{{MQTT_PRE}}" placeholder="ulanzi-tc001">
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.4; margin-top:0.25rem; background:rgba(0,0,0,0.2); padding:0.6rem; border-radius:0.5rem; border:1px solid rgba(255,255,255,0.05);" data-i18n="box_custom_push">
+          &#x1F4A1; <strong>Push Spotify &amp; Custom Screens:</strong><br>
+          MQTT: Publish JSON to <code>{{MQTT_PRE}}/custom/spotify</code> or <code>{{MQTT_PRE}}/notify</code><br>
+          HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>
+          Payload: <code>{"text":"Song - Artist","icon":"spotify","progress":45,"duration":8}</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- GROUP 4: NETWORK & SYSTEM -->
+    <div class="group-box">
+      <div class="group-title" data-i18n="grp_network">&#x1F4F6; Network &amp; System</div>
+      <div class="field">
+        <label for="ssid" data-i18n="lbl_ssid">Network Name (SSID)</label>
+        <input type="text" id="ssid" name="ssid" value="{{SSID}}" placeholder="Enter Wi-Fi SSID" required autocomplete="off">
+        <button type="button" class="scan-btn" onclick="scanNetworks()" data-i18n="btn_scan">&#x21bb; Scan Nearby Networks</button>
+        <select id="scanSelect" style="display:none; margin-top:0.4rem;" onchange="selectNetwork(this.value)">
+          <option value="" data-i18n="opt_scan_detect">-- Detected Networks --</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="password" data-i18n="lbl_pass">Wi-Fi Password</label>
+        <input type="password" id="password" name="password" placeholder="Leave empty if unchanged" data-i18n-ph="ph_pass">
+      </div>
+
+      <button type="submit" class="btn-submit" data-i18n="btn_save">Save &amp; Apply Settings</button>
+    </div>
   </form>
 
-  <div class="section-title" style="margin-top:1.75rem;">&#x1F680; Firmware Update (OTA)</div>
-  <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
-    Running Version: <strong style="color:var(--accent);">v{{FW_VERSION}}</strong>
-  </div>
-  <div class="field">
-    <label for="ota_file">Flash Local Binary (.bin)</label>
-    <input type="file" id="ota_file" accept=".bin" style="padding:0.4rem;">
-    <button type="button" class="scan-btn" style="margin-top:0.5rem; width:100%; justify-content:center;" onclick="uploadFirmware()">&#x21E7; Flash Firmware File</button>
-    <div id="ota_progress" style="display:none; margin-top:0.75rem;">
-      <div style="background:rgba(15,23,42,0.8); border-radius:9999px; height:8px; overflow:hidden;">
-        <div id="ota_bar" style="background:var(--accent); width:0%; height:100%; transition:width 0.2s;"></div>
-      </div>
-      <div id="ota_msg" style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.35rem;"></div>
+  <!-- GROUP 5: FIRMWARE UPDATE (OTA) -->
+  <div class="group-box" style="margin-top:1.25rem;">
+    <div class="group-title" data-i18n="grp_ota">&#x1F680; Firmware Update (OTA)</div>
+    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--accent);">v{{FW_VERSION}}</strong>
     </div>
-  </div>
-  <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
-    <button type="button" class="scan-btn" style="width:100%; justify-content:center;" onclick="checkCloudOta()">&#x2601; Check GitHub Releases</button>
-    <div id="cloud_ota_res" style="font-size:0.8rem; margin-top:0.5rem; text-align:center;"></div>
+    <div class="field">
+      <label for="ota_file" data-i18n="lbl_flash_local">Flash Local Binary (.bin)</label>
+      <input type="file" id="ota_file" accept=".bin" style="padding:0.4rem;">
+      <button type="button" class="scan-btn" style="margin-top:0.5rem; width:100%; justify-content:center;" onclick="uploadFirmware()" data-i18n="btn_flash">&#x21E7; Flash Firmware File</button>
+      <div id="ota_progress" style="display:none; margin-top:0.75rem;">
+        <div style="background:rgba(15,23,42,0.8); border-radius:9999px; height:8px; overflow:hidden;">
+          <div id="ota_bar" style="background:var(--accent); width:0%; height:100%; transition:width 0.2s;"></div>
+        </div>
+        <div id="ota_msg" style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.35rem;"></div>
+      </div>
+    </div>
+    <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
+      <button type="button" class="scan-btn" style="width:100%; justify-content:center;" onclick="checkCloudOta()" data-i18n="btn_check_ota">&#x2601; Check GitHub Releases</button>
+      <div id="cloud_ota_res" style="font-size:0.8rem; margin-top:0.5rem; text-align:center;"></div>
+    </div>
   </div>
 
   <div class="footer">Ulanzi TC001 Evolved &bull; Firmware v{{FW_VERSION}}</div>
 </div>
 <script>
+const I18N = {
+  en: {
+    app_title: "Ulanzi TC001 Evolved",
+    app_sub: "Smart Pixel Clock \u2022 Ambient Display \u2022 Home Assistant",
+    live_stream: "\U0001F4FA Live Display Stream",
+    cap_bmp: "\U0001F4F7 Capture BMP",
+    btn_prev: "\u2190 Prev",
+    btn_next: "Next \u2192",
+    live_hint: "Real-time 32\u00D78 NeoPixel mirror \u2022 Auto-refresh 1.5s",
+    grp_clock: "\u23F0 Display & Clock Engine",
+    sub_clock_layout: "\U0001F552 Clock & Date Layout",
+    lbl_clk_mode: "Clock Display Mode",
+    opt_clk_time: "Time Only",
+    opt_clk_both: "Combined Time & Date (Alternating)",
+    opt_clk_date: "Date Only",
+    lbl_date_fmt: "Date Format",
+    lbl_clk_icon: "Clock Icon Style",
+    opt_icon_cal: "Dynamic Calendar (Date 1-31)",
+    opt_icon_heart: "Heart (Classic)",
+    opt_icon_clock: "Clock Face",
+    opt_icon_none: "None (Full Width)",
+    lbl_txt_align: "Text Alignment",
+    opt_align_left: "Left-Aligned with Icon (Awtrix)",
+    opt_align_center: "Centered in Window",
+    chk_show_sec: "Show Seconds in Time Display",
+    chk_wd_bar: "Show 7 Weekday Bars Under Time",
+    lbl_wd_mon: "Week Starts On",
+    opt_mon_iso: "Monday (ISO 8601)",
+    opt_sun_us: "Sunday (US Standard)",
+    lbl_wd_acol: "Active Day Color",
+    lbl_wd_icol: "Inactive Day Color",
+    opt_inact_auto: "Dim Active Color (Auto - Slightly Dimmer)",
+    opt_inact_off: "Off (Black)",
+    lbl_wd_wcol: "Weekend Color (Sat & Sun)",
+    opt_wknd_active: "Same as Active Weekday",
+    sub_ambient: "\U0001F319 Ambient Brightness & Night Schedule",
+    chk_auto_bri: "Auto-Brightness via LDR Light Sensor",
+    lbl_day_bri: "Day Brightness Ceiling",
+    chk_night_mode: "Night Mode (Quiet Dim Red Clock)",
+    lbl_night_bri: "Night Mode Brightness",
+    lbl_night_start: "Night Start Hour",
+    lbl_night_end: "Night End Hour",
+    grp_carousel: "\U0001F3A0 Screens & Carousel Navigation",
+    chk_auto_rotate: "Auto-Rotate Screens (Carousel)",
+    lbl_rotate_interval: "Carousel Cycle Interval (seconds, 3 - 120)",
+    lbl_trans_fx: "Screen Transition Effect",
+    opt_trans_0: "None (Instant Cut)",
+    opt_trans_1: "Slide Left",
+    opt_trans_2: "Slide Right",
+    opt_trans_3: "Slide Up",
+    opt_trans_4: "Slide Down",
+    opt_trans_5: "Crossfade / Dissolve",
+    opt_trans_6: "Curtain (Center Split Wipe)",
+    opt_trans_7: "Random (Shuffle Effects)",
+    lbl_active_app: "Default / Active Screen",
+    app_name_0: "Clock (Heart / Time)",
+    app_name_1: "Indoor Environment (SHT30 Temp)",
+    app_name_2: "Outdoor Weather (Open-Meteo)",
+    app_name_3: "Crypto & Financial Markets",
+    app_name_4: "YouTube Subscriber Count",
+    app_name_5: "Live Airspace Radar (ADS-B)",
+    app_name_6: "Battery & Energy Telemetry",
+    lbl_carousel_screens: "Screens in Carousel (Check to Enable \u2022 Use \u25B2\u25BC to Reorder):",
+    sub_battery: "\u26A1 Battery & Telemetry",
+    lbl_bat_mode: "Battery Display Format",
+    opt_bat_alt: "Alternating (Percentage \u2022 Voltage every 3s)",
+    opt_bat_pct: "Percentage Only (e.g. 94%)",
+    opt_bat_volt: "Voltage Only (e.g. 4.12V)",
+    grp_services: "\U0001F310 Data Services & Integrations",
+    sub_weather: "\u26C5 Real Outdoor Weather (Open-Meteo)",
+    lbl_city_preset: "Select Predefined City",
+    opt_choose_city: "-- Choose City Preset --",
+    lbl_city_name: "City Name",
+    lbl_lat: "Latitude",
+    lbl_lon: "Longitude",
+    sub_finance: "\U0001F4B0 Financial Markets & Crypto (Live Tickers)",
+    lbl_asset_preset: "Popular Asset / Index Preset",
+    lbl_custom_ticker: "Or Custom Ticker / Symbol",
+    sub_youtube: "\u25B6 YouTube Channel Analytics",
+    lbl_yt_channel: "Channel ID or @Handle",
+    lbl_yt_key: "YouTube Data API v3 Key",
+    sub_ha_mqtt: "\U0001F3E0 Home Assistant & MQTT (Auto-Discovery & Push API)",
+    chk_mqtt_en: "Enable MQTT Client & Home Assistant Auto-Discovery",
+    lbl_mqtt_srv: "Broker IP or Hostname",
+    lbl_mqtt_port: "Port",
+    lbl_mqtt_user: "Username (Optional)",
+    lbl_mqtt_pass: "Password (Optional)",
+    lbl_mqtt_pre: "Topic Prefix",
+    box_custom_push: "\U0001F4A1 <strong>Push Spotify &amp; Custom Screens:</strong><br>MQTT: Publish JSON to <code>{{MQTT_PRE}}/custom/spotify</code> or <code>{{MQTT_PRE}}/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>Payload: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
+    grp_network: "\U0001F4F6 Network & System",
+    lbl_ssid: "Network Name (SSID)",
+    btn_scan: "\u21BB Scan Nearby Networks",
+    opt_scan_detect: "-- Detected Networks --",
+    lbl_pass: "Wi-Fi Password",
+    ph_pass: "Leave empty if unchanged",
+    btn_save: "Save & Apply Settings",
+    grp_ota: "\U0001F680 Firmware Update (OTA)",
+    lbl_running_ver: "Running Version:",
+    lbl_flash_local: "Flash Local Binary (.bin)",
+    btn_flash: "\u21E7 Flash Firmware File",
+    btn_check_ota: "\u2601 Check GitHub Releases",
+    toast_saved: "\u2713 Settings Saved Automatically!",
+    toast_saving: "Saving..."
+  },
+  sk: {
+    app_title: "Ulanzi TC001 Evolved",
+    app_sub: "Inteligentn\u00E9 pixelov\u00E9 hodiny \u2022 Ambientn\u00FD displej \u2022 Home Assistant",
+    live_stream: "\U0001F4FA \u017Div\u00FD n\u00E1h\u013Ead displeja",
+    cap_bmp: "\U0001F4F7 Sn\u00EDmka BMP",
+    btn_prev: "\u2190 Predch\u00E1dzaj\u00FAca",
+    btn_next: "\u010Eal\u0161ia \u2192",
+    live_hint: "\u017Div\u00E9 32\u00D78 zrkadlenie v re\u00E1lnom \u010Dase \u2022 Obnova ka\u017Ed\u00FDch 1.5s",
+    grp_clock: "\u23F0 Displej a Hodiny",
+    sub_clock_layout: "\U0001F552 Rozlo\u017Eenie hod\u00EDn a d\u00E1tumu",
+    lbl_clk_mode: "Re\u017Eim zobrazenia hod\u00EDn",
+    opt_clk_time: "Iba \u010Das",
+    opt_clk_both: "Kombinovan\u00FD \u010Das a d\u00E1tum (striedanie)",
+    opt_clk_date: "Iba d\u00E1tum",
+    lbl_date_fmt: "Form\u00E1t d\u00E1tumu",
+    lbl_clk_icon: "\u0160t\u00FDl ikony hod\u00EDn",
+    opt_icon_cal: "Dynamick\u00FD kalend\u00E1r (de\u0148 1-31)",
+    opt_icon_heart: "Srdie\u010Dko (Klasick\u00E9)",
+    opt_icon_clock: "Cifern\u00EDk",
+    opt_icon_none: "\u017Diadna ikona (pln\u00E1 \u0161\u00EDrka)",
+    lbl_txt_align: "Zarovnanie textu",
+    opt_align_left: "Zarovnan\u00E9 do\u013Eava s ikonou (Awtrix)",
+    opt_align_center: "Vycentrovan\u00E9 na stred",
+    chk_show_sec: "Zobrazi\u0165 sekundy na displeji \u010Dasu",
+    chk_wd_bar: "Zobrazi\u0165 7 p\u00E1sikov dn\u00ED v t\u00FD\u017Edni pod \u010Dasom",
+    lbl_wd_mon: "T\u00FD\u017Ede\u0148 za\u010D\u00EDna d\u0148om",
+    opt_mon_iso: "Pondelok (ISO 8601)",
+    opt_sun_us: "Nede\u013Ea (US \u0161tandard)",
+    lbl_wd_acol: "Farba akt\u00EDvneho d\u0148a",
+    lbl_wd_icol: "Farba neakt\u00EDvneho d\u0148a",
+    opt_inact_auto: "Tlmen\u00E1 akt\u00EDvna farba (Auto - jemne stmaven\u00E1)",
+    opt_inact_off: "Vypnut\u00E9 (\u010Dierna)",
+    lbl_wd_wcol: "Farba v\u00EDkendu (Sobota a Nede\u013Ea)",
+    opt_wknd_active: "Rovnak\u00E1 ako akt\u00EDvny de\u0148",
+    sub_ambient: "\U0001F319 Ambientn\u00FD jas a No\u010Dn\u00FD re\u017Eim",
+    chk_auto_bri: "Automatick\u00FD jas cez LDR sveteln\u00FD senzor",
+    lbl_day_bri: "Maxim\u00E1lny denn\u00FD jas",
+    chk_night_mode: "No\u010Dn\u00FD re\u017Eim (Tich\u00FD tlmen\u00FD \u010Derven\u00FD \u010Das)",
+    lbl_night_bri: "Jas v no\u010Dnom re\u017Eime",
+    lbl_night_start: "Za\u010Diatok no\u010Dn\u00E9ho re\u017Eimu (hodina)",
+    lbl_night_end: "Koniec no\u010Dn\u00E9ho re\u017Eimu (hodina)",
+    grp_carousel: "\U0001F3A0 Obrazovky a Rot\u00E1cia",
+    chk_auto_rotate: "Automatick\u00E9 striedanie obrazoviek (Koloto\u010D)",
+    lbl_rotate_interval: "Interval striedania obrazoviek (sekundy, 3 - 120)",
+    lbl_trans_fx: "Prechodov\u00FD efekt obrazoviek",
+    opt_trans_0: "\u017Diadny (Okam\u017Eit\u00FD prepis)",
+    opt_trans_1: "Posun do\u013Eava (Slide Left)",
+    opt_trans_2: "Posun doprava (Slide Right)",
+    opt_trans_3: "Posun nahor (Slide Up)",
+    opt_trans_4: "Posun nadol (Slide Down)",
+    opt_trans_5: "Prel\u00EDnanie (Crossfade / Dissolve)",
+    opt_trans_6: "Opona (Center Split Wipe)",
+    opt_trans_7: "N\u00E1hodn\u00FD efekt (Shuffle)",
+    lbl_active_app: "Predvolen\u00E1 / Akt\u00EDvna obrazovka",
+    app_name_0: "Hodiny (\u010Cas / srdce)",
+    app_name_1: "Vn\u00FAtorn\u00E9 prostredie (SHT30 teplota)",
+    app_name_2: "Predpove\u010F po\u010Dasia (Open-Meteo)",
+    app_name_3: "Kryptomeny a Finan\u010Dn\u00E9 trhy",
+    app_name_4: "Po\u010D\u00EDtadlom YouTube odberate\u013Eov",
+    app_name_5: "\u017Div\u00FD radar lietadiel (ADS-B)",
+    app_name_6: "Stav bat\u00E9rie a nap\u00E1jania",
+    lbl_carousel_screens: "Obrazovky v koloto\u010Di (za\u0161krtnite pre zapnutie \u2022 \u25B2\u25BC pre poradie):",
+    sub_battery: "\u26A1 Telemetria bat\u00E9rie a nap\u00E1jania",
+    lbl_bat_mode: "Form\u00E1t zobrazenia bat\u00E9rie",
+    opt_bat_alt: "Striedav\u00E9 (Percent\u00E1 \u2022 Nap\u00E4tie ka\u017Ed\u00E9 3s)",
+    opt_bat_pct: "Iba percent\u00E1 (napr. 94%)",
+    opt_bat_volt: "Iba nap\u00E4tie (napr. 4.12V)",
+    grp_services: "\U0001F310 D\u00E1tov\u00E9 Slu\u017Eby a Integr\u00E1cie",
+    sub_weather: "\u26C5 Predpove\u010F po\u010Dasia (Open-Meteo)",
+    lbl_city_preset: "V\u00FDber predvolen\u00E9ho mesta",
+    opt_choose_city: "-- Vyberte mesto zo zoznamu --",
+    lbl_city_name: "N\u00E1zov mesta",
+    lbl_lat: "Zemepisn\u00E1 \u0161\u00EDrka (Latitude)",
+    lbl_lon: "Zemepisn\u00E1 d\u013A\u017Eka (Longitude)",
+    sub_finance: "\U0001F4B0 Finan\u010Dn\u00E9 trhy a Kryptomeny",
+    lbl_asset_preset: "Predvolen\u00E9 akt\u00EDvum / Ticker",
+    lbl_custom_ticker: "Alebo vlastn\u00FD symbol / ticker",
+    sub_youtube: "\u25B6 Analytika YouTube kan\u00E1la",
+    lbl_yt_channel: "ID kan\u00E1la alebo @Handle",
+    lbl_yt_key: "K\u013E\u00FA\u010D YouTube Data API v3",
+    sub_ha_mqtt: "\U0001F3E0 Home Assistant & MQTT (Auto-Discovery & Push API)",
+    chk_mqtt_en: "Povoli\u0165 MQTT klienta & Home Assistant Auto-Discovery",
+    lbl_mqtt_srv: "IP alebo n\u00E1zov MQTT brokera",
+    lbl_mqtt_port: "Port",
+    lbl_mqtt_user: "Pou\u017E\u00EDvate\u013Esk\u00E9 meno (Volite\u013En\u00E9)",
+    lbl_mqtt_pass: "Heslo (Volite\u013En\u00E9)",
+    lbl_mqtt_pre: "Prefix t\u00E9my (Topic Prefix)",
+    box_custom_push: "\U0001F4A1 <strong>Odosielanie Spotify a vlastn\u00FDch obrazoviek:</strong><br>MQTT: Publikujte JSON na <code>{{MQTT_PRE}}/custom/spotify</code> alebo <code>{{MQTT_PRE}}/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> alebo <code>POST /api/notify</code><br>Form\u00E1t: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
+    grp_network: "\U0001F4F6 Sie\u0165 a Syst\u00E9m",
+    lbl_ssid: "N\u00E1zov Wi-Fi siete (SSID)",
+    btn_scan: "\u21BB Vyh\u013Eada\u0165 okolit\u00E9 siete",
+    opt_scan_detect: "-- N\u00E1jden\u00E9 siete --",
+    lbl_pass: "Heslo Wi-Fi",
+    ph_pass: "Ponechajte pr\u00E1zdne, ak sa nemenia",
+    btn_save: "Ulo\u017Ei\u0165 a pou\u017Ei\u0165 nastavenia",
+    grp_ota: "\U0001F680 Aktualiz\u00E1cia firmv\u00E9ru (OTA)",
+    lbl_running_ver: "Aktu\u00E1lna verzia:",
+    lbl_flash_local: "Nahra\u0165 lok\u00E1lny s\u00FAbor (.bin)",
+    btn_flash: "\u21E7 Nahra\u0165 a flashn\u00FA\u0165 firmv\u00E9r",
+    btn_check_ota: "\u2601 Skontrolova\u0165 vydania na GitHub",
+    toast_saved: "\u2713 Nastavenia \u00FAspe\u0161ne ulo\u017Een\u00E9!",
+    toast_saving: "Uklad\u00E1m..."
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  if (!I18N[lang]) lang = 'en';
+  currentLang = lang;
+  document.getElementById('ui_lang').value = lang;
+  try { localStorage.setItem('tc001_lang', lang); } catch(e){}
+
+  const bEn = document.getElementById('btn-en');
+  const bSk = document.getElementById('btn-sk');
+  if (bEn && bSk) {
+    bEn.classList.toggle('active', lang === 'en');
+    bSk.classList.toggle('active', lang === 'sk');
+  }
+
+  const dict = I18N[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) {
+      if (dict[key].indexOf('<') !== -1) el.innerHTML = dict[key];
+      else el.textContent = dict[key];
+    }
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const key = el.getAttribute('data-i18n-ph');
+    if (dict[key]) el.setAttribute('placeholder', dict[key]);
+  });
+}
+
 function scanNetworks() {
   const sel = document.getElementById('scanSelect');
   sel.style.display = 'block';
-  sel.innerHTML = '<option>Scanning...</option>';
+  sel.innerHTML = '<option>' + (currentLang === 'sk' ? 'Vyh\u013Ead\u00E1vam siete...' : 'Scanning...') + '</option>';
   fetch('/scan')
     .then(r => r.json())
     .then(data => {
-      sel.innerHTML = '<option value="">-- Detected Networks (' + data.length + ') --</option>';
+      const header = currentLang === 'sk' ? ('-- N\u00E1jden\u00E9 siete (' + data.length + ') --') : ('-- Detected Networks (' + data.length + ') --');
+      sel.innerHTML = '<option value="">' + header + '</option>';
       data.forEach(net => {
         const opt = document.createElement('option');
         opt.value = net.ssid;
-        opt.textContent = net.ssid + ' (' + net.rssi + ' dBm' + (net.secure ? ' 🔒' : '') + ')';
+        opt.textContent = net.ssid + ' (' + net.rssi + ' dBm' + (net.secure ? ' \U0001F512' : '') + ')';
         sel.appendChild(opt);
       });
     })
     .catch(() => {
-      sel.innerHTML = '<option value="">Scan failed, enter SSID manually</option>';
+      sel.innerHTML = '<option value="">' + (currentLang === 'sk' ? 'Vyh\u013Ead\u00E1vanie zlyhalo, zadajte SSID ru\u010Dne' : 'Scan failed, enter SSID manually') + '</option>';
     });
 }
 function selectNetwork(val) {
@@ -708,7 +1095,7 @@ function applyCityPreset(val) {
 function uploadFirmware() {
   const fileInput = document.getElementById('ota_file');
   if (!fileInput.files.length) {
-    alert('Please select a .bin firmware file first');
+    alert(currentLang === 'sk' ? 'Najprv vyberte .bin s\u00FAbor firmv\u00E9ru' : 'Please select a .bin firmware file first');
     return;
   }
   const file = fileInput.files[0];
@@ -719,7 +1106,7 @@ function uploadFirmware() {
   const bar = document.getElementById('ota_bar');
   const msg = document.getElementById('ota_msg');
   prog.style.display = 'block';
-  msg.textContent = 'Uploading: 0%';
+  msg.textContent = (currentLang === 'sk' ? 'Odosielanie: ' : 'Uploading: ') + '0%';
 
   const xhr = new XMLHttpRequest();
   xhr.open('POST', '/update', true);
@@ -727,46 +1114,48 @@ function uploadFirmware() {
     if (e.lengthComputable) {
       const pct = Math.round((e.loaded / e.total) * 100);
       bar.style.width = pct + '%';
-      msg.textContent = 'Uploading & Flashing: ' + pct + '%';
+      msg.textContent = (currentLang === 'sk' ? 'Nahr\u00E1vanie a flashovanie: ' : 'Uploading & Flashing: ') + pct + '%';
     }
   };
   xhr.onload = function() {
     if (xhr.status === 200) {
       bar.style.width = '100%';
       bar.style.background = '#10b981';
-      msg.innerHTML = '<strong style="color:#10b981;">✓ Flash Complete! Rebooting clock...</strong>';
+      msg.innerHTML = '<strong style="color:#10b981;">\u2713 ' + (currentLang === 'sk' ? 'Flash dokon\u010Den\u00FD! Re\u0161tartujem hodiny...' : 'Flash Complete! Rebooting clock...') + '</strong>';
       setTimeout(() => location.reload(), 6000);
     } else {
       bar.style.background = '#ef4444';
-      msg.innerHTML = '<strong style="color:#ef4444;">✗ Update Error: ' + xhr.responseText + '</strong>';
+      msg.innerHTML = '<strong style="color:#ef4444;">\u2717 ' + (currentLang === 'sk' ? 'Chyba aktualiz\u00E1cie: ' : 'Update Error: ') + xhr.responseText + '</strong>';
     }
   };
   xhr.onerror = function() {
     bar.style.background = '#ef4444';
-    msg.innerHTML = '<strong style="color:#ef4444;">✗ Network connection error</strong>';
+    msg.innerHTML = '<strong style="color:#ef4444;">\u2717 ' + (currentLang === 'sk' ? 'Chyba sie\u0165ov\u00E9ho pripojenia' : 'Network connection error') + '</strong>';
   };
   xhr.send(formData);
 }
 function checkCloudOta() {
   const res = document.getElementById('cloud_ota_res');
-  res.innerHTML = '<span style="color:var(--text-muted);">Checking GitHub Releases...</span>';
+  res.innerHTML = '<span style="color:var(--text-muted);">' + (currentLang === 'sk' ? 'Kontrolujem GitHub vydania...' : 'Checking GitHub Releases...') + '</span>';
   fetch('/api/ota/check')
     .then(r => r.json())
     .then(data => {
       if (data.has_update) {
-        res.innerHTML = '<div style="color:#10b981; font-weight:700; margin-bottom:0.35rem;">★ New Version Available: v' + data.latest_version + '</div>' +
-          '<button type="button" class="scan-btn" style="background:#0284c7; color:#fff; border:none;" onclick="installCloudOta(\'' + data.download_url + '\')">Install v' + data.latest_version + ' Now</button>';
+        const title = currentLang === 'sk' ? ('\u2605 Nov\u00E1 verzia k dispoz\u00EDcii: v' + data.latest_version) : ('\u2605 New Version Available: v' + data.latest_version);
+        const btnText = currentLang === 'sk' ? ('In\u0161talova\u0165 v' + data.latest_version + ' teraz') : ('Install v' + data.latest_version + ' Now');
+        res.innerHTML = '<div style="color:#10b981; font-weight:700; margin-bottom:0.35rem;">' + title + '</div>' +
+          '<button type="button" class="scan-btn" style="background:#0284c7; color:#fff; border:none;" onclick="installCloudOta(\'' + data.download_url + '\')">' + btnText + '</button>';
       } else {
-        res.innerHTML = '<span style="color:#10b981;">✓ Firmware is up to date (v' + data.current_version + ')</span>';
+        res.innerHTML = '<span style="color:#10b981;">\u2713 ' + (currentLang === 'sk' ? ('Firmv\u00E9r je aktu\u00E1lny (v' + data.current_version + ')') : ('Firmware is up to date (v' + data.current_version + ')')) + '</span>';
       }
     })
     .catch(() => {
-      res.innerHTML = '<span style="color:#ef4444;">Cannot reach GitHub releases</span>';
+      res.innerHTML = '<span style="color:#ef4444;">' + (currentLang === 'sk' ? 'Nie je mo\u017En\u00E9 kontaktova\u0165 GitHub' : 'Cannot reach GitHub releases') + '</span>';
     });
 }
 function installCloudOta(url) {
   const res = document.getElementById('cloud_ota_res');
-  res.innerHTML = '<span style="color:var(--accent);">Downloading and flashing from GitHub... Watch clock display!</span>';
+  res.innerHTML = '<span style="color:var(--accent);">' + (currentLang === 'sk' ? 'S\u0165ahujem a flashujem z GitHubu... Sledujte displej hod\u00EDn!' : 'Downloading and flashing from GitHub... Watch clock display!') + '</span>';
   const fd = new FormData();
   fd.append('url', url);
   fetch('/api/ota/install', { method: 'POST', body: fd })
@@ -843,7 +1232,7 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
   const form = this;
   const btn = form.querySelector('.btn-submit');
   const origText = btn.innerText;
-  btn.innerText = 'Saving...';
+  btn.innerText = I18N[currentLang].toast_saving || 'Saving...';
   btn.disabled = true;
 
   const params = new URLSearchParams(new FormData(form));
@@ -860,7 +1249,7 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
   .then(res => {
     btn.innerText = origText;
     btn.disabled = false;
-    showToast('✓ Settings Saved Automatically!');
+    showToast(I18N[currentLang].toast_saved || '\u2713 Settings Saved Automatically!');
     updateVirtualMatrix();
   })
   .catch(err => {
@@ -869,8 +1258,16 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
     form.submit();
   });
 });
+
+// Initialize Portal Language from NVS or saved preference
+(function() {
+  const nvsLang = document.getElementById('ui_lang').value;
+  let saved = 'en';
+  try { saved = localStorage.getItem('tc001_lang'); } catch(e){}
+  const active = (nvsLang && (nvsLang === 'sk' || nvsLang === 'en')) ? nvsLang : (saved || 'en');
+  setLang(active);
+})();
 </script>
-</body>
 </html>
 )rawliteral");
 
@@ -932,15 +1329,20 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
     html.replace("{{WD_BAR_CHK}}", s_weekdayBar ? "checked" : "");
     html.replace("{{WD_MON_1_SEL}}", s_weekdayStartMon ? "selected" : "");
     html.replace("{{WD_MON_0_SEL}}", !s_weekdayStartMon ? "selected" : "");
-    for (int i = 0; i < 6; i++) {
-        char tag[20];
-        snprintf(tag, sizeof(tag), "{{WD_ACOL_%d_SEL}}", i);
+    for (size_t i = 0; i < s_numWdActiveColors; i++) {
+        char tag[24];
+        snprintf(tag, sizeof(tag), "{{WD_ACOL_%d_SEL}}", (int)i);
         html.replace(tag, (s_weekdayActiveColIdx == i) ? "selected" : "");
     }
-    for (int i = 0; i < 4; i++) {
-        char tag[20];
-        snprintf(tag, sizeof(tag), "{{WD_ICOL_%d_SEL}}", i);
+    for (size_t i = 0; i < s_numWdInactiveColors; i++) {
+        char tag[24];
+        snprintf(tag, sizeof(tag), "{{WD_ICOL_%d_SEL}}", (int)i);
         html.replace(tag, (s_weekdayInactColIdx == i) ? "selected" : "");
+    }
+    for (size_t i = 0; i < s_numWdWeekendColors; i++) {
+        char tag[24];
+        snprintf(tag, sizeof(tag), "{{WD_WCOL_%d_SEL}}", (int)i);
+        html.replace(tag, (s_weekdayWeekendColIdx == i) ? "selected" : "");
     }
     for (int i = 0; i < 4; i++) {
         char tag[20];
@@ -991,6 +1393,8 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
     html.replace("{{MQTT_PRE}}", s_mqttPrefix);
 
     html.replace("{{FW_VERSION}}", FW_VERSION);
+    html.replace("{{GITHUB_REPO}}", GITHUB_REPO);
+    html.replace("{{PORTAL_LANG}}", s_portalLang);
     return html;
 }
 
@@ -1140,6 +1544,12 @@ static void handleSave() {
     }
     if (s_server.hasArg("wd_icol")) {
         Network_SetWeekdayInactiveColorIndex((uint8_t)s_server.arg("wd_icol").toInt());
+    }
+    if (s_server.hasArg("wd_wcol")) {
+        Network_SetWeekdayWeekendColorIndex((uint8_t)s_server.arg("wd_wcol").toInt());
+    }
+    if (s_server.hasArg("ui_lang")) {
+        Network_SetPortalLanguage(s_server.arg("ui_lang"));
     }
     if (s_server.hasArg("date_fmt")) {
         Network_SetDateFormat((uint8_t)s_server.arg("date_fmt").toInt());
@@ -1306,9 +1716,13 @@ void Network_Init() {
     s_weekdayBar = s_prefs.getBool(PREF_KEY_WEEKDAY_BAR, true);
     s_weekdayStartMon = s_prefs.getBool(PREF_KEY_WD_START_MON, true);
     s_weekdayActiveColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_ACTIVE_COL, 0);
-    if (s_weekdayActiveColIdx > 5) s_weekdayActiveColIdx = 0;
+    if (s_weekdayActiveColIdx >= s_numWdActiveColors) s_weekdayActiveColIdx = 0;
     s_weekdayInactColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_INACT_COL, 0);
-    if (s_weekdayInactColIdx > 3) s_weekdayInactColIdx = 0;
+    if (s_weekdayInactColIdx >= s_numWdInactiveColors) s_weekdayInactColIdx = 0;
+    s_weekdayWeekendColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_WKND_COL, 0);
+    if (s_weekdayWeekendColIdx >= s_numWdWeekendColors) s_weekdayWeekendColIdx = 0;
+    s_portalLang = s_prefs.getString(PREF_KEY_PORTAL_LANG, "en");
+    if (s_portalLang != "sk" && s_portalLang != "en") s_portalLang = "en";
     s_dateFormat = (uint8_t)s_prefs.getUChar(PREF_KEY_DATE_FORMAT, 0);
     if (s_dateFormat > 3) s_dateFormat = 0;
     s_clockIcon = (uint8_t)s_prefs.getUChar(PREF_KEY_CLOCK_ICON, 0);
@@ -1775,16 +2189,16 @@ void Network_SetWeekdayStartMonday(bool startMonday) {
 
 uint8_t Network_GetWeekdayActiveColorIndex() { return s_weekdayActiveColIdx; }
 void Network_SetWeekdayActiveColorIndex(uint8_t idx) {
-    s_weekdayActiveColIdx = (idx <= 5) ? idx : 0;
+    s_weekdayActiveColIdx = (idx < s_numWdActiveColors) ? idx : 0;
     s_prefs.putUChar(PREF_KEY_WD_ACTIVE_COL, s_weekdayActiveColIdx);
 }
 uint16_t Network_GetWeekdayActiveColor() {
-    return s_wdActiveColors[(s_weekdayActiveColIdx <= 5) ? s_weekdayActiveColIdx : 0];
+    return s_wdActiveColors[(s_weekdayActiveColIdx < s_numWdActiveColors) ? s_weekdayActiveColIdx : 0];
 }
 
 uint8_t Network_GetWeekdayInactiveColorIndex() { return s_weekdayInactColIdx; }
 void Network_SetWeekdayInactiveColorIndex(uint8_t idx) {
-    s_weekdayInactColIdx = (idx <= 3) ? idx : 0;
+    s_weekdayInactColIdx = (idx < s_numWdInactiveColors) ? idx : 0;
     s_prefs.putUChar(PREF_KEY_WD_INACT_COL, s_weekdayInactColIdx);
 }
 uint16_t Network_GetWeekdayInactiveColor() {
@@ -1799,7 +2213,38 @@ uint16_t Network_GetWeekdayInactiveColor() {
         b = (uint8_t)(((uint16_t)b * 170) >> 8);
         return (r << 11) | (g << 5) | b;
     }
-    return s_wdInactiveColors[(s_weekdayInactColIdx <= 3) ? s_weekdayInactColIdx : 0];
+    return s_wdInactiveColors[(s_weekdayInactColIdx < s_numWdInactiveColors) ? s_weekdayInactColIdx : 0];
+}
+
+uint8_t Network_GetWeekdayWeekendColorIndex() { return s_weekdayWeekendColIdx; }
+void Network_SetWeekdayWeekendColorIndex(uint8_t idx) {
+    s_weekdayWeekendColIdx = (idx < s_numWdWeekendColors) ? idx : 0;
+    s_prefs.putUChar(PREF_KEY_WD_WKND_COL, s_weekdayWeekendColIdx);
+}
+uint16_t Network_GetWeekdayWeekendColor() {
+    if (s_weekdayWeekendColIdx == 0) {
+        return Network_GetWeekdayActiveColor();
+    }
+    return s_wdWeekendColors[(s_weekdayWeekendColIdx < s_numWdWeekendColors) ? s_weekdayWeekendColIdx : 0];
+}
+uint16_t Network_GetWeekdayInactiveWeekendColor() {
+    if (s_weekdayInactColIdx == 0) {
+        uint16_t wc = Network_GetWeekdayWeekendColor();
+        uint8_t r = (wc >> 11) & 0x1F;
+        uint8_t g = (wc >> 5) & 0x3F;
+        uint8_t b = wc & 0x1F;
+        r = (uint8_t)(((uint16_t)r * 170) >> 8);
+        g = (uint8_t)(((uint16_t)g * 170) >> 8);
+        b = (uint8_t)(((uint16_t)b * 170) >> 8);
+        return (r << 11) | (g << 5) | b;
+    }
+    return Network_GetWeekdayInactiveColor();
+}
+
+String Network_GetPortalLanguage() { return s_portalLang; }
+void Network_SetPortalLanguage(const String& lang) {
+    s_portalLang = (lang == "sk") ? "sk" : "en";
+    s_prefs.putString(PREF_KEY_PORTAL_LANG, s_portalLang);
 }
 
 uint8_t Network_GetDateFormat() { return s_dateFormat; }

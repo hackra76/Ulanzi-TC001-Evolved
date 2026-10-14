@@ -153,14 +153,12 @@ static void renderClockApp() {
         }
 
         bool showWd = Network_GetWeekdayBar();
-        int activeIdx = 0;
-        if (Network_GetWeekdayStartMonday()) {
-            activeIdx = (wday + 6) % 7; // Mon=0 .. Sun=6
-        } else {
-            activeIdx = wday; // Sun=0 .. Sat=6
-        }
+        bool startMon = Network_GetWeekdayStartMonday();
+        int activeIdx = startMon ? ((wday + 6) % 7) : wday;
         uint16_t aCol = Network_GetWeekdayActiveColor();
         uint16_t iCol = Network_GetWeekdayInactiveColor();
+        uint16_t wCol = Network_GetWeekdayWeekendColor();
+        uint16_t iwCol = Network_GetWeekdayInactiveWeekendColor();
 
         // 3x5 font at y=1 leaves row 0 empty above and row 6 empty below.
         // Weekday bar is drawn at y=7, eliminating vertical touching completely!
@@ -168,20 +166,20 @@ static void renderClockApp() {
             // Full width without icon: width 27 centered at startX = 2
             DisplayMatrix_DrawFullTime3x5(2, 1, h, m, s, blink, C_WHITE, C_WHITE, 0x07FF);
             if (showWd) {
-                DisplayMatrix_DrawWeekdayBar(activeIdx, aCol, iCol, 6, 7);
+                DisplayMatrix_DrawWeekdayBar(activeIdx, aCol, iCol, wCol, iwCol, startMon, 6, 7);
             }
         } else {
             if (hasIcon) {
                 int16_t startX = (Network_GetTextAlign() == 1) ? 12 : 10;
                 DisplayMatrix_DrawTime3x5(startX, 1, h, m, blink, C_WHITE, C_WHITE);
                 if (showWd) {
-                    DisplayMatrix_DrawWeekdayBar(activeIdx, aCol, iCol, 10, 7);
+                    DisplayMatrix_DrawWeekdayBar(activeIdx, aCol, iCol, wCol, iwCol, startMon, 10, 7);
                 }
             } else {
                 int16_t startX = 7;
                 DisplayMatrix_DrawTime3x5(startX, 1, h, m, blink, C_WHITE, C_WHITE);
                 if (showWd) {
-                    DisplayMatrix_DrawWeekdayBar(activeIdx, aCol, iCol, 6, 7);
+                    DisplayMatrix_DrawWeekdayBar(activeIdx, aCol, iCol, wCol, iwCol, startMon, 6, 7);
                 }
             }
         }
@@ -193,9 +191,11 @@ static void renderClockApp() {
 static void renderNightClock() {
     int h = (s_seconds / 3600) % 24;
     int m = (s_seconds / 60) % 60;
-    char buf[10];
-    snprintf(buf, sizeof(buf), "%02d:%02d", h, m);
-    renderIconWithSmallText(ICON_MOON, buf, 0x8000); // Dim Red (RGB565)
+    bool blink = (s_seconds % 2) == 0;
+    DisplayMatrix_Clear();
+    // Ultra-dim night clock: centered 3x5 time, no bright icon, pure glare-free deep red
+    DisplayMatrix_DrawTime3x5(7, 1, h, m, blink, 0x8000, 0x8000);
+    DisplayMatrix_Show();
 }
 
 static void renderIndoorApp() {

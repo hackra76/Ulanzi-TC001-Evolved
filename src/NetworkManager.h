@@ -104,6 +104,14 @@ uint8_t Network_GetWeekdayInactiveColorIndex();
 void Network_SetWeekdayInactiveColorIndex(uint8_t idx);
 uint16_t Network_GetWeekdayInactiveColor();
 
+uint8_t Network_GetWeekdayWeekendColorIndex();
+void Network_SetWeekdayWeekendColorIndex(uint8_t idx);
+uint16_t Network_GetWeekdayWeekendColor();
+uint16_t Network_GetWeekdayInactiveWeekendColor();
+
+String Network_GetPortalLanguage();
+void Network_SetPortalLanguage(const String& lang);
+
 uint8_t Network_GetDateFormat();
 void Network_SetDateFormat(uint8_t fmt);
 

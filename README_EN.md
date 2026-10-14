@@ -13,10 +13,12 @@ Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** runn
 
 ## ✨ Features
 
-- **📱 Captive Portal Wi-Fi Provisioning:**
+- **📱 Captive Portal & Logically Grouped Web Interface:**
+  - Modern, responsive Web Portal categorized into 4 logical groups: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
+  - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
+  - **Direct GitHub Repo Link**: Header version badge (`v1.4.0 • GitHub`) linking directly to the latest releases and source code.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
-  - Non-blocking Wi-Fi credential scanner with signal strength indicators.
-  - Seamless background station reconnection and credential storage in NVS (`Preferences`).
+  - Non-blocking Wi-Fi credential scanner with signal strength indicators and AJAX instant save.
 - **📺 Live Display Stream & Virtual Matrix:**
   - Real-time 32×8 NeoPixel mirror canvas directly in the Web Portal with 1.5s auto-refresh.
   - One-click BMP screenshot export (`/api/display/screenshot`).
@@ -24,7 +26,11 @@ Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** runn
   - Web-based Next/Previous screen testing buttons.
 - **⏰ Awtrix-Style Clock & Date Layout:**
   - 3 Display Modes: Time Only, Combined Time & Date (alternating 5s/3s), or Date Only.
-  - 7 Weekday Bars under time with dynamic auto-contrast (maintains visible contrast even when dimmed) or configurable inactive colors, with Monday (ISO 8601) or Sunday week start.
+  - **7 Weekday Bars with Weekend Customization**:
+    - 11 Active Day colors (Cyan, Orange, Green, Yellow, Red, White, Magenta, Electric Blue, Lime, Amber Gold, Pink).
+    - 10 Inactive Day colors (Dim Active Auto, Slate Gray, Amber, Dark Blue, Deep Wine, Forest Green, Charcoal, Purple, Dark Cyan, Off Black).
+    - Dedicated Weekend Day color selector (11 options) with automatic proportional inactive weekend dimming.
+    - Monday (ISO 8601) or Sunday week start.
   - Date formats: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
   - Clock icons: Dynamic calendar (shows day 1–31), Heart, Clock face, or Full-Width.
   - Seconds Display: Full-width centered `HH:MM:SS` with dividers; automatically hides icon when seconds are enabled for clean spacing.
@@ -52,7 +58,7 @@ Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** runn
 - **💡 Ambient Intelligence & Screen Management:**
   - Dynamic auto-brightness via LDR sensor using exponential moving average filtering and gamma curves.
   - Day Brightness Ceiling slider (5% – 100%) and Night Brightness slider (1% – 25%).
-  - Configurable Night Mode quiet hours schedule with ultra-dim red crescent moon clock.
+  - Configurable Night Mode quiet hours schedule with ultra-dim, distraction-free pure deep-red centered 3×5 clock time (zero yellow moon glare for bedroom rest).
   - Quick Wake: Any button press temporarily wakes display for 12 seconds during night mode.
 - **🎛️ Reorderable Screen Carousel:**
   - Drag-and-drop style `▲` / `▼` controls in web portal to customize screen display order.

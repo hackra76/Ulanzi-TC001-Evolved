@@ -13,10 +13,12 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
 
 ## ✨ Kľúčové funkcie
 
-- **📱 Wi-Fi Captive Portal & Sprievodca pripojením:**
+- **📱 Prehľadný Webový portál & Captive Portal:**
+  - Moderné, prehľadné rozhranie rozdelené do 4 logických kategórií: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
+  - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.4.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
-  - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI).
-  - Spoľahlivé ukladanie prístupových údajov do pamäte NVS (`Preferences`) s automatickým opätovným pripájaním.
+  - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI) a bleskovým ukladaním cez AJAX.
 - **📺 Živý stream displeja & Virtuálna matica:**
   - Zrkadlenie 32×8 NeoPixel displeja v reálnom čase priamo vo webovom portáli s automatickou obnovou každých 1,5s.
   - Export snímky displeja do BMP na jeden klik (`/api/display/screenshot`).
@@ -24,7 +26,11 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
   - Tlačidlá na manuálne prepínanie obrazoviek priamo z prehliadača.
 - **⏰ Awtrix-Style Hodiny & Dátum:**
   - 3 režimy zobrazenia: Iba čas, Kombinovaný čas a dátum (striedanie 5s/3s) alebo Iba dátum.
-  - 7 stĺpcov dní v týždni pod časom s dynamickým auto-kontrastom (zostáva jasne viditeľný aj pri stlmenom jase) alebo voliteľnými farbami, začiatok týždňa v pondelok (ISO 8601) alebo v nedeľu.
+  - **7 pásikov dní v týždni s farebným odlíšením víkendov**:
+    - 11 farieb pre aktívny deň (Tyrkysová, Oranžová, Zelená, Žltá, Červená, Biela, Purpurová, Elektrická modrá, Limetková, Zlatá, Ružová).
+    - 10 farieb pre neaktívny deň (Tlmená aktívna farba Auto, Sivá bridlicová, Tlmená jantárová, Tmavomodrá, Hlboké víno, Lesná zelená, Uhlíková, Tlmená fialová, Tmavá azúrová, Vypnuté/čierna).
+    - Samostatný výber farby pre víkendy (11 možností) s automatickým kontrastom neaktívnych víkendových dní.
+    - Začiatok týždňa v pondelok (ISO 8601) alebo v nedeľu.
   - Formáty dátumu: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
   - Štýly ikon hodín: Dynamický kalendár (číslo dňa 1–31), Srdiečko, Ciferník alebo Plná šírka bez ikony.
   - Zobrazenie sekúnd: Plná šírka s vycentrovaným časom `HH:MM:SS` a dvojbodkami; pri zapnutých sekundách sa ikona automaticky skryje pre dokonalú čitateľnosť.
@@ -52,7 +58,7 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
 - **💡 Adaptívny jas & Nočný režim:**
   - Plynulý automatický jas riadený fotorezistorom (LDR) s filtrom EMA a nelineárnou gama krivkou.
   - Denný strop jasu (5% – 100%) a Nočný jas (1% – 25%).
-  - Konfigurovateľné tiché hodiny s tlmenými červenými hodinami a polmesiacom.
+  - Konfigurovateľné tiché nočné hodiny s ultra-tlmeným, neoslňujúcim čistým tmavočerveným vycentrovaným časom (bez rušivého žltého mesiaca pre ničím nerušený spánok).
   - Rýchle prebudenie: Stlačenie ľubovoľného tlačidla v noci dočasne rozsvieti displej na 12 sekúnd na denný jas.
 - **🎛️ Zoradenie obrazoviek kolotoča:**
   - Tlačidlá `▲` / `▼` vo webovom portáli na zmenu poradia obrazoviek podľa vlastného výberu.

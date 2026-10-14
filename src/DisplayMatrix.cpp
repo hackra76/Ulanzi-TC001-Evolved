@@ -414,9 +414,17 @@ void DisplayMatrix_DrawCalendarIcon(int16_t x, int16_t y, int dayOfMonth) {
     }
 }
 
-void DisplayMatrix_DrawWeekdayBar(int activeDayIndex, uint16_t activeColor, uint16_t inactiveColor, int startX, int y) {
+void DisplayMatrix_DrawWeekdayBar(int activeDayIndex, uint16_t activeColor, uint16_t inactiveColor,
+                                   uint16_t weekendColor, uint16_t inactiveWeekendColor,
+                                   bool isMondayStart, int startX, int y) {
     for (int i = 0; i < 7; i++) {
-        uint16_t col = (i == activeDayIndex) ? activeColor : inactiveColor;
+        bool isWknd = isMondayStart ? (i == 5 || i == 6) : (i == 0 || i == 6);
+        uint16_t col;
+        if (i == activeDayIndex) {
+            col = (isWknd && weekendColor != 0) ? weekendColor : activeColor;
+        } else {
+            col = (isWknd && inactiveWeekendColor != 0) ? inactiveWeekendColor : inactiveColor;
+        }
         int bx = startX + i * 3;
         s_matrix.drawPixel(bx,     y, col);
         s_matrix.drawPixel(bx + 1, y, col);

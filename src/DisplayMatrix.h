@@ -25,7 +25,7 @@ int16_t DisplayMatrix_DrawSmallChar(int16_t x, int16_t y, char c, uint16_t color
 int16_t DisplayMatrix_DrawSmallText(int16_t x, int16_t y, const char* text, uint16_t color);
 int16_t DisplayMatrix_GetSmallTextWidth(const char* text);
 void DisplayMatrix_DrawCalendarIcon(int16_t x, int16_t y, int dayOfMonth);
-void DisplayMatrix_DrawWeekdayBar(int activeDayIndex, uint16_t activeColor, uint16_t inactiveColor, int startX = 10, int y = 7);
+void DisplayMatrix_DrawWeekdayBar(int activeDayIndex, uint16_t activeColor, uint16_t inactiveColor, uint16_t weekendColor = 0, uint16_t inactiveWeekendColor = 0, bool isMondayStart = true, int startX = 10, int y = 7);
 
 // 3x5 Compact Digit & Time Rendering (eliminates vertical collision with weekday bars)
 int16_t DisplayMatrix_DrawDigit3x5(int16_t x, int16_t y, uint8_t digit, uint16_t color);
