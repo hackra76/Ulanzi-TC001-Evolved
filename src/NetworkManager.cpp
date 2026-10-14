@@ -75,9 +75,9 @@ static const uint16_t s_wdActiveColors[] = {
 };
 
 static const uint16_t s_wdInactiveColors[] = {
-    0x4228, // 0: Dim Slate (#404850) - clearly visible inactive segments
-    0x2104, // 1: Dark Slate (#202830)
-    0x3100, // 2: Dim Amber (#302000)
+    0x0000, // 0: Auto (computed dynamically from active color at ~65% intensity)
+    0x7432, // 1: Slate Gray (#708090)
+    0x9342, // 2: Dim Amber (#906810)
     0x0000  // 3: Off (Black)
 };
 
@@ -473,9 +473,9 @@ static String buildPortalHtml() {
       <div class="field">
         <label for="wd_icol">Inactive Day Color</label>
         <select id="wd_icol" name="wd_icol">
-          <option value="0" {{WD_ICOL_0_SEL}}>Dim Slate (#202830)</option>
-          <option value="1" {{WD_ICOL_1_SEL}}>Dark Gray (#181818)</option>
-          <option value="2" {{WD_ICOL_2_SEL}}>Dim Amber (#302000)</option>
+          <option value="0" {{WD_ICOL_0_SEL}}>Dim Active Color (Auto - Slightly Dimmer)</option>
+          <option value="1" {{WD_ICOL_1_SEL}}>Slate Gray (#708090)</option>
+          <option value="2" {{WD_ICOL_2_SEL}}>Dim Amber (#906810)</option>
           <option value="3" {{WD_ICOL_3_SEL}}>Off (Black)</option>
         </select>
       </div>
@@ -1788,6 +1788,17 @@ void Network_SetWeekdayInactiveColorIndex(uint8_t idx) {
     s_prefs.putUChar(PREF_KEY_WD_INACT_COL, s_weekdayInactColIdx);
 }
 uint16_t Network_GetWeekdayInactiveColor() {
+    if (s_weekdayInactColIdx == 0) {
+        // Slightly dimmer than active day color (~65% intensity)
+        uint16_t ac = Network_GetWeekdayActiveColor();
+        uint8_t r = (ac >> 11) & 0x1F;
+        uint8_t g = (ac >> 5) & 0x3F;
+        uint8_t b = ac & 0x1F;
+        r = (uint8_t)(((uint16_t)r * 170) >> 8);
+        g = (uint8_t)(((uint16_t)g * 170) >> 8);
+        b = (uint8_t)(((uint16_t)b * 170) >> 8);
+        return (r << 11) | (g << 5) | b;
+    }
     return s_wdInactiveColors[(s_weekdayInactColIdx <= 3) ? s_weekdayInactColIdx : 0];
 }
 

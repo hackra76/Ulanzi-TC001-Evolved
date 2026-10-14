@@ -88,7 +88,7 @@
 #define DEFAULT_NIGHT_END       7
 #define DEFAULT_DAY_BRI         35
 #define DEFAULT_NIGHT_BRI       2
-#define MIN_AUTO_BRI            2
+#define MIN_AUTO_BRI            4
 #define MAX_AUTO_BRI            85
 
 // --- Outdoor Weather (Open-Meteo) ---

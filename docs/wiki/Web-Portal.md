@@ -48,7 +48,9 @@ The web configuration portal is hosted on port 80 of the device's IP address (`h
 - **Show Seconds**: When enabled, the clock icon is automatically hidden to allow full-width centered `HH:MM:SS` with colons and weekday bars to fit cleanly without crowding or clipping.
 - **7 Weekday Bars**: Horizontal bar indicators under time.
 - **Week Starts On**: Monday (ISO 8601) or Sunday (US Standard).
-- **Active / Inactive Day Colors**: Cyan, Orange, Green, Yellow, Red, White, Dim Slate, Dark Gray, Dim Amber, Off.
+- **Active Day Colors**: Cyan, Orange, Green, Yellow, Red, White.
+- **Inactive Day Colors**: Dim Active Color (Auto - Slightly Dimmer, scales ~65% of active day so it stays visible even when the matrix is dimmed), Slate Gray (#708090), Dim Amber (#906810), Off (Black).
+- **Typography**: Unified 3×5 compact bitmap font across all screens with 1px top margin and clear vertical separation from progress and weekday bars.
 - **Date Format**: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
 - **Clock Icon Style**: Dynamic calendar with day of month (1–31), Heart, Clock Face, or None.
 - **Text Alignment**: Left-aligned with icon (Awtrix default) or Centered.

@@ -24,11 +24,11 @@ Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** runn
   - Web-based Next/Previous screen testing buttons.
 - **⏰ Awtrix-Style Clock & Date Layout:**
   - 3 Display Modes: Time Only, Combined Time & Date (alternating 5s/3s), or Date Only.
-  - 7 Weekday Bars under time with configurable active and inactive day colors, and Monday (ISO 8601) or Sunday week start.
+  - 7 Weekday Bars under time with dynamic auto-contrast (maintains visible contrast even when dimmed) or configurable inactive colors, with Monday (ISO 8601) or Sunday week start.
   - Date formats: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
   - Clock icons: Dynamic calendar (shows day 1–31), Heart, Clock face, or Full-Width.
   - Seconds Display: Full-width centered `HH:MM:SS` with dividers; automatically hides icon when seconds are enabled for clean spacing.
-  - Proportional 3×5 font at row 1 and weekday bars at row 7, eliminating vertical overlapping.
+  - Unified compact 3×5 typography system across all display screens (Clock, Weather, Tickers, Radar, Battery, Custom Apps) with 1px top margin and clean vertical separation from bars.
 - **✈️ Live Airspace Radar (ADS-B):**
   - Real-time overhead flight tracking via OpenSky Network based on local weather GPS coordinates (~50km bounding radius).
   - Automatically cycles active aircraft callsigns every 4 seconds with cyan airplane icon.

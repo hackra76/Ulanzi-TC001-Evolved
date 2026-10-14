@@ -24,11 +24,11 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
   - Tlačidlá na manuálne prepínanie obrazoviek priamo z prehliadača.
 - **⏰ Awtrix-Style Hodiny & Dátum:**
   - 3 režimy zobrazenia: Iba čas, Kombinovaný čas a dátum (striedanie 5s/3s) alebo Iba dátum.
-  - 7 stĺpcov dní v týždni pod časom s voliteľnými farbami pre aktívny a neaktívny deň, začiatok týždňa v pondelok (ISO 8601) alebo v nedeľu.
+  - 7 stĺpcov dní v týždni pod časom s dynamickým auto-kontrastom (zostáva jasne viditeľný aj pri stlmenom jase) alebo voliteľnými farbami, začiatok týždňa v pondelok (ISO 8601) alebo v nedeľu.
   - Formáty dátumu: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
   - Štýly ikon hodín: Dynamický kalendár (číslo dňa 1–31), Srdiečko, Ciferník alebo Plná šírka bez ikony.
   - Zobrazenie sekúnd: Plná šírka s vycentrovaným časom `HH:MM:SS` a dvojbodkami; pri zapnutých sekundách sa ikona automaticky skryje pre dokonalú čitateľnosť.
-  - 3×5 proporcionálne písmo na riadku 1 a pásiky dní na riadku 7 (žiadny vertikálny dotyk s písmom).
+  - Zjednotené kompaktné 3×5 písmo na všetkých obrazovkách (Hodiny, Počasie, Trhy, Radar, Batéria, Vlastné aplikácie) s 1px horným okrajom a čistým oddelením od pásikov dní a progress barov.
 - **✈️ Živý letecký radar (ADS-B):**
   - Sledovanie prelietavajúcich lietadiel v reálnom čase cez OpenSky Network v okruhu ~50 km okolo nastavených GPS súradníc počasia.
   - Automatické striedanie volacích znakov (Callsign) lietadiel každé 4 sekundy s tyrkysovou ikonou lietadla.

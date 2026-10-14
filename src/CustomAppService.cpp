@@ -267,7 +267,7 @@ static void renderAppFrame(const char* text, uint16_t textColor, const uint16_t*
 
     int16_t textW = DisplayMatrix_GetSmallTextWidth(text);
     uint32_t now = millis();
-    int16_t textY = (progress >= 0) ? 0 : 1;
+    int16_t textY = 1;
 
     if (textW <= windowWidth || !scroll) {
         // Fits statically without scroll jitter
