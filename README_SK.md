@@ -11,12 +11,34 @@ Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodin
 
 ---
 
+## 🖥️ Galéria obrazoviek a možnosti displeja
+
+RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vysokým vizuálnym kontrastom, zjednoteným 3×5 písmom a precíznymi 8×8 ikonami.
+
+![Ulanzi TC001 Prehľad obrazoviek](docs/media/screens_showcase.png)
+
+| Obrazovka & Funkcia | Živý náhľad matice | Popis a technické možnosti |
+|---|:---:|---|
+| **Obrazovka 0: Hodiny a Kalendár** | <img src="docs/media/screen_0_clock.png" width="340" alt="Obrazovka hodín a kalendára"> | Dynamická karta kalendára (deň 1–31 v štýle Awtrix), digitálny 3×5 čas a 7 pásikov dní v týždni s vlastnými farbami pre aktívny deň, neaktívne dni a víkendy. |
+| **Obrazovka 1: Vnútorné prostredie** | <img src="docs/media/screen_1_indoor.png" width="340" alt="Obrazovka vnútorného prostredia"> | Presná telemetria zo senzora Sensirion SHT30 v reálnom čase (teplota v `°C` a vlhkosť) cez hardvérovú I2C zbernicu. |
+| **Obrazovka 2: Vonkajšie počasie** | <img src="docs/media/screen_2_outdoor.png" width="340" alt="Obrazovka vonkajšieho počasia"> | Živá predpoveď z Open-Meteo s WMO ikonami počasia (Slnko, Oblaky, Dážď, Sneh, Búrka) a viac ako 25 prednastavenými mestami. |
+| **Obrazovka 3: Finančné trhy a Krypto** | <img src="docs/media/screen_3_crypto.png" width="340" alt="Obrazovka finančných trhov"> | Živý cenový ticker bez nutnosti API kľúčov pre Bitcoin, Ethereum, Solana, Apple, Tesla, Nvidia, S&P 500, Zlato a vlastné burzové symboly. |
+| **Obrazovka 4: YouTube štatistiky** | <img src="docs/media/screen_4_youtube.png" width="340" alt="Obrazovka YouTube odberateľov"> | Živé počítadlo odberateľov YouTube kanála s prepracovanou vycentrovanou bielou ikonou prehrávača cez Google Data API v3. |
+| **Obrazovka 5: Živý letecký radar** | <img src="docs/media/screen_5_airspace.png" width="340" alt="Obrazovka leteckého radaru"> | Sledovanie prelietavajúcich lietadiel v reálnom čase (ADS-B) cez OpenSky Network v okruhu ~50 km s tyrkysovou ikonou lietadla. |
+| **Obrazovka 6: Telemetria batérie** | <img src="docs/media/screen_6_battery.png" width="340" alt="Obrazovka telemetrie batérie"> | Výrazná neónovo žltá/biela ikona blesku s voliteľným režimom: Percentá (`93%`), Napätie (`4.12V`) alebo Striedanie. |
+| **Vlastná aplikácia: Spotify & Notifikácie** | <img src="docs/media/screen_custom_spotify.png" width="340" alt="Obrazovka Spotify a vlastných aplikácií"> | Dynamické MQTT / REST push API so zelenou ikonou Spotify, plynule rolujúcim názvom skladby a spodným ukazovateľom priebehu (progress bar). |
+
+---
+
 ## ✨ Kľúčové funkcie
 
-- **📱 Prehľadný Webový portál & Captive Portal:**
-  - Moderné, prehľadné rozhranie rozdelené do 4 logických kategórií: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
+- **🎛️ Priemyselný Webový portál (Tactile Field Instrument):**
+  - Postavený na princípoch priemyselného dizajnu **Tactile Field Instrument** (estetika Braun / Teenage Engineering / Švajčiarska mriežka).
+  - Telemetrická lišta s vysokou hustotou dát: živý Wi-Fi RSSI signál, stav flash pamäte a čas behu zariadenia v monospace hlavičkách.
+  - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
+  - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.4.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.5.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
   - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI) a bleskovým ukladaním cez AJAX.
 - **📺 Živý stream displeja & Virtuálna matica:**

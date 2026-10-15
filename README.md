@@ -11,12 +11,34 @@ Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** runn
 
 ---
 
+## 🖥️ Screen Gallery & Display Capabilities
+
+The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual contrast, unified 3×5 typography, and dedicated 8×8 icons.
+
+![Ulanzi TC001 Screen Showcase](docs/media/screens_showcase.png)
+
+| Screen & Function | Matrix Live Preview | Details & Capabilities |
+|---|:---:|---|
+| **Screen 0: Clock & Calendar** | <img src="docs/media/screen_0_clock.png" width="340" alt="Clock and Calendar Screen"> | Dynamic calendar card (Awtrix day 1–31), 3×5 digital time, and 7 weekday bars with custom active, inactive, and weekend color accents. |
+| **Screen 1: Indoor Environment** | <img src="docs/media/screen_1_indoor.png" width="340" alt="Indoor Environment Screen"> | Real-time Sensirion SHT30 precision telemetry (`°C` temperature and humidity) via hardware I2C bus. |
+| **Screen 2: Outdoor Weather** | <img src="docs/media/screen_2_outdoor.png" width="340" alt="Outdoor Weather Screen"> | Live Open-Meteo forecasts with WMO condition icons (Sun, Clouds, Rain, Snow, Storm) and 25+ city presets. |
+| **Screen 3: Financial Markets & Crypto** | <img src="docs/media/screen_3_crypto.png" width="340" alt="Financial Markets Screen"> | Zero-key live price ticker for Bitcoin, Ethereum, Solana, Apple, Tesla, Nvidia, S&P 500, Gold Bullion, and custom symbols. |
+| **Screen 4: YouTube Analytics** | <img src="docs/media/screen_4_youtube.png" width="340" alt="YouTube Subscriber Counter Screen"> | Live channel subscriber counter with redesigned centered play button icon via Google Data API v3. |
+| **Screen 5: Live Airspace Radar** | <img src="docs/media/screen_5_airspace.png" width="340" alt="Airspace Radar Screen"> | Real-time overhead flight tracking (ADS-B) via OpenSky Network within ~50km radius with cyan plane icon. |
+| **Screen 6: Battery & Energy Telemetry** | <img src="docs/media/screen_6_battery.png" width="340" alt="Battery Telemetry Screen"> | Distinctive neon yellow/white glowing lightning bolt with Percentage, Voltage, or Alternating display modes. |
+| **Custom App: Spotify & Push Alerts** | <img src="docs/media/screen_custom_spotify.png" width="340" alt="Spotify and Custom App Screen"> | Dynamic MQTT / REST push API with Spotify green icon, smooth scrolling track ticker, and bottom progress bar. |
+
+---
+
 ## ✨ Features
 
-- **📱 Captive Portal & Logically Grouped Web Interface:**
-  - Modern, responsive Web Portal categorized into 4 logical groups: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
+- **🎛️ Tactile Field Instrument Web Portal (Industrial Design):**
+  - Engineered with a modern **Tactile Field Instrument** industrial design system (Braun / Teenage Engineering / Swiss Grid aesthetic).
+  - High-density telemetry deck: real-time Wi-Fi RSSI gauge, flash memory meter, and uptime clock in monospace data headers.
+  - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
+  - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v1.4.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v1.5.0 • GitHub`) linking directly to the latest releases and source code.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
   - Non-blocking Wi-Fi credential scanner with signal strength indicators and AJAX instant save.
 - **📺 Live Display Stream & Virtual Matrix:**

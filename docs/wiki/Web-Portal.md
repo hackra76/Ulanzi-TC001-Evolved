@@ -2,13 +2,13 @@
 
 The web configuration portal is hosted on port 80 of the device's IP address (`http://<device-ip>/`) or `http://192.168.4.1/` when in SoftAP setup mode.
 
-It features a streamlined, modern glassmorphic interface organized into 4 logical groups, instant multilingual language support (English and Slovak), and live matrix mirroring.
+It features a precision **Tactile Field Instrument** industrial design system (inspired by Braun, Teenage Engineering, and Swiss Grid typography) organized into 4 logical equipment decks, high-density telemetry instrumentation, instant multilingual language support (English and Slovak), and live matrix mirroring.
 
 ---
 
 ## Top Navigation & Language Switcher
 
-- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.4.0 • GitHub`) linking directly to the project GitHub repository.
+- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.5.0 • GitHub`) linking directly to the project GitHub repository.
 - **Multilingual Support (EN / SK)**: Switch between English and Slovak with a single click. The choice is saved immediately in client-side `localStorage` and synchronized with device NVS (`ui_lang`).
 
 ---

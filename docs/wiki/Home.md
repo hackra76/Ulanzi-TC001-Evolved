@@ -14,7 +14,24 @@
 
 ---
 
-## ⚡ Core Highlights
+## 🖥️ Screen Gallery
+
+The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibrant 8×8 icons across all screens.
+
+![Ulanzi TC001 Screen Showcase](../media/screens_showcase.png)
+
+| Screen & App | Matrix Live Preview | Summary |
+|---|:---:|---|
+| **Screen 0: Clock & Calendar** | <img src="../media/screen_0_clock.png" width="320" alt="Clock"> | Dynamic calendar card, 3×5 time, and 7 weekday bars. |
+| **Screen 1: Indoor Environment** | <img src="../media/screen_1_indoor.png" width="320" alt="Indoor"> | Sensirion SHT30 precision temperature & humidity telemetry. |
+| **Screen 2: Outdoor Weather** | <img src="../media/screen_2_outdoor.png" width="320" alt="Weather"> | Live Open-Meteo forecasts with WMO condition icons. |
+| **Screen 3: Financial Markets** | <img src="../media/screen_3_crypto.png" width="320" alt="Markets"> | Bitcoin, Ethereum, Solana, Apple, Tesla, S&P 500, Gold tickers. |
+| **Screen 4: YouTube Analytics** | <img src="../media/screen_4_youtube.png" width="320" alt="YouTube"> | Live YouTube subscriber counter via Google Data API v3. |
+| **Screen 5: Airspace Radar** | <img src="../media/screen_5_airspace.png" width="320" alt="Radar"> | Live ADS-B overhead flight tracking via OpenSky Network. |
+| **Screen 6: Battery Telemetry** | <img src="../media/screen_6_battery.png" width="320" alt="Battery"> | Glowing neon lightning bolt with % or Voltage modes. |
+| **Custom App: Spotify & Alerts** | <img src="../media/screen_custom_spotify.png" width="320" alt="Spotify"> | Dynamic MQTT/REST push API with progress bar and notifications. |
+
+---
 
 1. **Zero-Configuration SoftAP Captive Portal**: Built-in DNS server automatically redirects mobile and desktop clients to the dark-mode configuration portal on `192.168.4.1`.
 2. **Real-Time Virtual Matrix Stream**: Live 32×8 canvas mirror in the Web Portal, one-click BMP screenshot capture, and terminal ASCII art output.
