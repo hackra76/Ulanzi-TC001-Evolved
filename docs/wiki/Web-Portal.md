@@ -8,7 +8,7 @@ It features a precision **Tactile Field Instrument** industrial design system (i
 
 ## Top Navigation & Language Switcher
 
-- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.5.0 • GitHub`) linking directly to the project GitHub repository.
+- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.5.1 • GitHub`) linking directly to the project GitHub repository.
 - **Multilingual Support (EN / SK)**: Switch between English and Slovak with a single click. The choice is saved immediately in client-side `localStorage` and synchronized with device NVS (`ui_lang`).
 
 ---

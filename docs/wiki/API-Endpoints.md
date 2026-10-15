@@ -17,7 +17,7 @@ The onboard web server exposes several REST endpoints for status monitoring, con
   "carousel_mask": 127,
   "transition_fx": 1,
   "active_app": 0,
-  "firmware_version": "1.5.0",
+  "firmware_version": "1.5.1",
   "temperature_in": 22.4,
   "humidity_in": 46.2,
   "battery_volts": 4.12,

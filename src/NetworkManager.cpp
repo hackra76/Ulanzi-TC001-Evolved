@@ -116,8 +116,7 @@ static uint32_t s_lastWifiCheckMs = 0;
 static bool s_pendingReconnect = false;
 static uint32_t s_reconnectTriggerMs = 0;
 
-static String buildPortalHtml() {
-    String html = F(R"rawliteral(
+static const char PAGE_PORTAL[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -905,8 +904,8 @@ input:checked + .actuator-label .actuator-box::after,
     </div>
 
     <div class="header-actions">
-      <a href="https://github.com/{{GITHUB_REPO}}" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> v{{FW_VERSION}}
+      <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
+        <span class="badge-dot"></span> v1.5.1
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -958,7 +957,7 @@ input:checked + .actuator-label .actuator-box::after,
       </div>
       <div class="cell-subtext">
         <span data-i18n="tele_bri">AUTO BRIGHTNESS</span>
-        <span class="sub-val" id="teleBriLevel">{{DAY_BRI}}% CEIL</span>
+        <span class="sub-val" id="teleBriLevel">35% CEIL</span>
       </div>
     </div>
 
@@ -973,7 +972,7 @@ input:checked + .actuator-label .actuator-box::after,
       </div>
       <div class="cell-subtext">
         <span data-i18n="tele_act">ACTIVE SCREEN</span>
-        <span class="sub-val" id="teleScreenName">{{APP_NAME}}</span>
+        <span class="sub-val" id="teleScreenName">Clock</span>
       </div>
     </div>
   </div>
@@ -998,7 +997,7 @@ input:checked + .actuator-label .actuator-box::after,
       <button type="button" class="tactile-btn" onclick="switchScreen(-1)" data-i18n="btn_prev">&larr; PREV</button>
       <div class="screen-indicator">
         <span class="ind-tag" data-i18n="lbl_channel">CHANNEL:</span>
-        <span id="screenNameBadge" class="ind-name">{{APP_NAME}}</span>
+        <span id="screenNameBadge" class="ind-name">Clock</span>
       </div>
       <button type="button" class="tactile-btn" onclick="switchScreen(1)" data-i18n="btn_next">NEXT &rarr;</button>
     </div>
@@ -1025,7 +1024,7 @@ input:checked + .actuator-label .actuator-box::after,
 
   <!-- MAIN CONFIGURATION FORM -->
   <form id="settingsForm" action="/save" method="POST">
-    <input type="hidden" id="ui_lang" name="ui_lang" value="{{PORTAL_LANG}}">
+    <input type="hidden" id="ui_lang" name="ui_lang" value="en">
 
     <!-- PANEL 01: DISPLAY & CLOCK -->
     <div class="control-panel-section active" id="panel-clock">
@@ -1038,9 +1037,9 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="clk_mode" name="clk_mode">
-              <option value="0" {{CLK_MODE_0_SEL}} data-i18n="opt_clk_time">Time Only</option>
-              <option value="1" {{CLK_MODE_1_SEL}} data-i18n="opt_clk_both">Combined Time &amp; Date (Alternating)</option>
-              <option value="2" {{CLK_MODE_2_SEL}} data-i18n="opt_clk_date">Date Only</option>
+              <option value="0"  data-i18n="opt_clk_time">Time Only</option>
+              <option value="1"  data-i18n="opt_clk_both">Combined Time &amp; Date (Alternating)</option>
+              <option value="2"  data-i18n="opt_clk_date">Date Only</option>
             </select>
           </td>
         </tr>
@@ -1051,10 +1050,10 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="date_fmt" name="date_fmt">
-              <option value="0" {{DATE_FMT_0_SEL}}>DD.MM. (e.g. 14.10.)</option>
-              <option value="1" {{DATE_FMT_1_SEL}}>DD MMM (e.g. 14 OCT)</option>
-              <option value="2" {{DATE_FMT_2_SEL}}>MM/DD (e.g. 10/14)</option>
-              <option value="3" {{DATE_FMT_3_SEL}}>DAY DD (e.g. WED 14)</option>
+              <option value="0" >DD.MM. (e.g. 14.10.)</option>
+              <option value="1" >DD MMM (e.g. 14 OCT)</option>
+              <option value="2" >MM/DD (e.g. 10/14)</option>
+              <option value="3" >DAY DD (e.g. WED 14)</option>
             </select>
           </td>
         </tr>
@@ -1065,10 +1064,10 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="clk_icon" name="clk_icon">
-              <option value="0" {{CLK_ICON_0_SEL}} data-i18n="opt_icon_cal">Dynamic Calendar (Date 1-31)</option>
-              <option value="1" {{CLK_ICON_1_SEL}} data-i18n="opt_icon_heart">Heart (Classic)</option>
-              <option value="2" {{CLK_ICON_2_SEL}} data-i18n="opt_icon_clock">Clock Face</option>
-              <option value="3" {{CLK_ICON_3_SEL}} data-i18n="opt_icon_none">None (Full Width)</option>
+              <option value="0"  data-i18n="opt_icon_cal">Dynamic Calendar (Date 1-31)</option>
+              <option value="1"  data-i18n="opt_icon_heart">Heart (Classic)</option>
+              <option value="2"  data-i18n="opt_icon_clock">Clock Face</option>
+              <option value="3"  data-i18n="opt_icon_none">None (Full Width)</option>
             </select>
           </td>
         </tr>
@@ -1079,8 +1078,8 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="txt_align" name="txt_align">
-              <option value="0" {{TXT_ALIGN_0_SEL}} data-i18n="opt_align_left">Left-Aligned with Icon (Awtrix)</option>
-              <option value="1" {{TXT_ALIGN_1_SEL}} data-i18n="opt_align_center">Centered in Window</option>
+              <option value="0"  data-i18n="opt_align_left">Left-Aligned with Icon (Awtrix)</option>
+              <option value="1"  data-i18n="opt_align_center">Centered in Window</option>
             </select>
           </td>
         </tr>
@@ -1091,7 +1090,7 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <label class="actuator-label">
-              <input type="checkbox" class="visually-hidden" name="show_sec" value="1" {{SHOW_SEC_CHK}}>
+              <input type="checkbox" class="visually-hidden" name="show_sec" value="1" >
               <span class="actuator-box"></span>
               <span data-i18n="chk_show_sec">Show Seconds in Time Display</span>
             </label>
@@ -1104,7 +1103,7 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <label class="actuator-label">
-              <input type="checkbox" class="visually-hidden" name="wd_bar" value="1" {{WD_BAR_CHK}}>
+              <input type="checkbox" class="visually-hidden" name="wd_bar" value="1" >
               <span class="actuator-box"></span>
               <span data-i18n="chk_wd_bar">Show 7 Weekday Bars Under Time</span>
             </label>
@@ -1117,8 +1116,8 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="wd_mon" name="wd_mon">
-              <option value="1" {{WD_MON_1_SEL}} data-i18n="opt_mon_iso">Monday (ISO 8601)</option>
-              <option value="0" {{WD_MON_0_SEL}} data-i18n="opt_sun_us">Sunday (US Standard)</option>
+              <option value="1"  data-i18n="opt_mon_iso">Monday (ISO 8601)</option>
+              <option value="0"  data-i18n="opt_sun_us">Sunday (US Standard)</option>
             </select>
           </td>
         </tr>
@@ -1129,17 +1128,17 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="wd_acol" name="wd_acol">
-              <option value="0" {{WD_ACOL_0_SEL}}>Cyan (#00F0FF)</option>
-              <option value="1" {{WD_ACOL_1_SEL}}>Orange (#FF8800)</option>
-              <option value="2" {{WD_ACOL_2_SEL}}>Green (#00FF00)</option>
-              <option value="3" {{WD_ACOL_3_SEL}}>Yellow (#FFFF00)</option>
-              <option value="4" {{WD_ACOL_4_SEL}}>Red (#FF2200)</option>
-              <option value="5" {{WD_ACOL_5_SEL}}>White (#FFFFFF)</option>
-              <option value="6" {{WD_ACOL_6_SEL}}>Magenta (#FF00FF)</option>
-              <option value="7" {{WD_ACOL_7_SEL}}>Electric Blue (#0066FF)</option>
-              <option value="8" {{WD_ACOL_8_SEL}}>Lime Green (#76FF03)</option>
-              <option value="9" {{WD_ACOL_9_SEL}}>Amber Gold (#FFC107)</option>
-              <option value="10" {{WD_ACOL_10_SEL}}>Soft Pink (#FF4081)</option>
+              <option value="0" >Cyan (#00F0FF)</option>
+              <option value="1" >Orange (#FF8800)</option>
+              <option value="2" >Green (#00FF00)</option>
+              <option value="3" >Yellow (#FFFF00)</option>
+              <option value="4" >Red (#FF2200)</option>
+              <option value="5" >White (#FFFFFF)</option>
+              <option value="6" >Magenta (#FF00FF)</option>
+              <option value="7" >Electric Blue (#0066FF)</option>
+              <option value="8" >Lime Green (#76FF03)</option>
+              <option value="9" >Amber Gold (#FFC107)</option>
+              <option value="10" >Soft Pink (#FF4081)</option>
             </select>
           </td>
         </tr>
@@ -1150,16 +1149,16 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="wd_icol" name="wd_icol">
-              <option value="0" {{WD_ICOL_0_SEL}} data-i18n="opt_inact_auto">Dim Active Color (Auto - Slightly Dimmer)</option>
-              <option value="1" {{WD_ICOL_1_SEL}}>Slate Gray (#708090)</option>
-              <option value="2" {{WD_ICOL_2_SEL}}>Dim Amber (#906810)</option>
-              <option value="3" {{WD_ICOL_3_SEL}}>Dark Blue (#001A40)</option>
-              <option value="4" {{WD_ICOL_4_SEL}}>Deep Wine (#3A000A)</option>
-              <option value="5" {{WD_ICOL_5_SEL}}>Forest Green (#002A0D)</option>
-              <option value="6" {{WD_ICOL_6_SEL}}>Charcoal (#252525)</option>
-              <option value="7" {{WD_ICOL_7_SEL}}>Muted Purple (#2A1035)</option>
-              <option value="8" {{WD_ICOL_8_SEL}}>Dark Cyan (#003038)</option>
-              <option value="9" {{WD_ICOL_9_SEL}} data-i18n="opt_inact_off">Off (Black)</option>
+              <option value="0"  data-i18n="opt_inact_auto">Dim Active Color (Auto - Slightly Dimmer)</option>
+              <option value="1" >Slate Gray (#708090)</option>
+              <option value="2" >Dim Amber (#906810)</option>
+              <option value="3" >Dark Blue (#001A40)</option>
+              <option value="4" >Deep Wine (#3A000A)</option>
+              <option value="5" >Forest Green (#002A0D)</option>
+              <option value="6" >Charcoal (#252525)</option>
+              <option value="7" >Muted Purple (#2A1035)</option>
+              <option value="8" >Dark Cyan (#003038)</option>
+              <option value="9"  data-i18n="opt_inact_off">Off (Black)</option>
             </select>
           </td>
         </tr>
@@ -1170,17 +1169,17 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="wd_wcol" name="wd_wcol">
-              <option value="0" {{WD_WCOL_0_SEL}} data-i18n="opt_wknd_active">Same as Active Weekday</option>
-              <option value="1" {{WD_WCOL_1_SEL}}>Bright Red (#FF2200)</option>
-              <option value="2" {{WD_WCOL_2_SEL}}>Coral Orange (#FF6B4A)</option>
-              <option value="3" {{WD_WCOL_3_SEL}}>Gold (#FFD700)</option>
-              <option value="4" {{WD_WCOL_4_SEL}}>Hot Pink (#FF1493)</option>
-              <option value="5" {{WD_WCOL_5_SEL}}>Purple (#9C27B0)</option>
-              <option value="6" {{WD_WCOL_6_SEL}}>Cyan (#00F0FF)</option>
-              <option value="7" {{WD_WCOL_7_SEL}}>Lime (#76FF03)</option>
-              <option value="8" {{WD_WCOL_8_SEL}}>Pure White (#FFFFFF)</option>
-              <option value="9" {{WD_WCOL_9_SEL}}>Sky Blue (#00BFFF)</option>
-              <option value="10" {{WD_WCOL_10_SEL}}>Emerald (#00E676)</option>
+              <option value="0"  data-i18n="opt_wknd_active">Same as Active Weekday</option>
+              <option value="1" >Bright Red (#FF2200)</option>
+              <option value="2" >Coral Orange (#FF6B4A)</option>
+              <option value="3" >Gold (#FFD700)</option>
+              <option value="4" >Hot Pink (#FF1493)</option>
+              <option value="5" >Purple (#9C27B0)</option>
+              <option value="6" >Cyan (#00F0FF)</option>
+              <option value="7" >Lime (#76FF03)</option>
+              <option value="8" >Pure White (#FFFFFF)</option>
+              <option value="9" >Sky Blue (#00BFFF)</option>
+              <option value="10" >Emerald (#00E676)</option>
             </select>
           </td>
         </tr>
@@ -1195,7 +1194,7 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <label class="actuator-label">
-              <input type="checkbox" class="visually-hidden" name="auto_bri" value="1" {{AUTO_BRI_CHK}}>
+              <input type="checkbox" class="visually-hidden" name="auto_bri" value="1" >
               <span class="actuator-box"></span>
               <span data-i18n="chk_auto_bri">Auto-Brightness via LDR Light Sensor</span>
             </label>
@@ -1208,8 +1207,8 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <div style="display:flex; align-items:center; gap:12px;">
-              <input type="range" id="day_bri" name="day_bri" min="5" max="100" value="{{DAY_BRI}}" oninput="document.getElementById('day_bri_val').innerText = this.value + '%'">
-              <span id="day_bri_val" style="font-weight:700; color:var(--signal-orange); min-width:44px; text-align:right;">{{DAY_BRI}}%</span>
+              <input type="range" id="day_bri" name="day_bri" min="5" max="100" value="35" oninput="document.getElementById('day_bri_val').innerText = this.value + '%'">
+              <span id="day_bri_val" style="font-weight:700; color:var(--signal-orange); min-width:44px; text-align:right;">35%</span>
             </div>
           </td>
         </tr>
@@ -1220,7 +1219,7 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <label class="actuator-label">
-              <input type="checkbox" class="visually-hidden" name="night_mode" value="1" {{NIGHT_MODE_CHK}}>
+              <input type="checkbox" class="visually-hidden" name="night_mode" value="1" >
               <span class="actuator-box"></span>
               <span data-i18n="chk_night_mode">Night Mode (Quiet Dim Red Clock)</span>
             </label>
@@ -1233,8 +1232,8 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <div style="display:flex; align-items:center; gap:12px;">
-              <input type="range" id="night_bri" name="night_bri" min="1" max="25" value="{{NIGHT_BRI}}" oninput="document.getElementById('night_bri_val').innerText = this.value + '%'">
-              <span id="night_bri_val" style="font-weight:700; color:var(--signal-orange); min-width:44px; text-align:right;">{{NIGHT_BRI}}%</span>
+              <input type="range" id="night_bri" name="night_bri" min="1" max="25" value="2" oninput="document.getElementById('night_bri_val').innerText = this.value + '%'">
+              <span id="night_bri_val" style="font-weight:700; color:var(--signal-orange); min-width:44px; text-align:right;">2%</span>
             </div>
           </td>
         </tr>
@@ -1245,9 +1244,9 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <div style="display:flex; gap:10px; align-items:center;">
-              <input type="number" id="night_start" name="night_start" min="0" max="23" value="{{NIGHT_START}}" style="max-width:80px;">
+              <input type="number" id="night_start" name="night_start" min="0" max="23" value="23" style="max-width:80px;">
               <span style="color:var(--ink-muted);">&rarr;</span>
-              <input type="number" id="night_end" name="night_end" min="0" max="23" value="{{NIGHT_END}}" style="max-width:80px;">
+              <input type="number" id="night_end" name="night_end" min="0" max="23" value="7" style="max-width:80px;">
             </div>
           </td>
         </tr>
@@ -1265,19 +1264,19 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <label class="actuator-label">
-              <input type="checkbox" class="visually-hidden" id="auto_rotate" name="auto_rotate" value="1" {{AUTO_ROTATE_CHK}} onchange="document.getElementById('rotate_delay_field').style.display = this.checked ? 'table-row' : 'none'">
+              <input type="checkbox" class="visually-hidden" id="auto_rotate" name="auto_rotate" value="1"  onchange="document.getElementById('rotate_delay_field').style.display = this.checked ? 'table-row' : 'none'">
               <span class="actuator-box"></span>
               <span data-i18n="chk_auto_rotate">Auto-Rotate Screens (Carousel)</span>
             </label>
           </td>
         </tr>
-        <tr id="rotate_delay_field" style="{{ROTATE_DELAY_DISPLAY}}">
+        <tr id="rotate_delay_field" style="">
           <td class="label-cell">
             <div class="param-name" data-i18n="lbl_rotate_interval">Cycle Interval</div>
             <div class="param-desc">Dwell time per screen (3 - 120 seconds)</div>
           </td>
           <td>
-            <input type="number" id="rotate" name="rotate" min="3" max="120" value="{{ROTATE}}" required style="max-width:120px;">
+            <input type="number" id="rotate" name="rotate" min="3" max="120" value="8" required style="max-width:120px;">
           </td>
         </tr>
         <tr>
@@ -1287,14 +1286,14 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="trans_fx" name="trans_fx">
-              <option value="0" {{TRANS_0_SEL}} data-i18n="opt_trans_0">None (Instant Cut)</option>
-              <option value="1" {{TRANS_1_SEL}} data-i18n="opt_trans_1">Slide Left</option>
-              <option value="2" {{TRANS_2_SEL}} data-i18n="opt_trans_2">Slide Right</option>
-              <option value="3" {{TRANS_3_SEL}} data-i18n="opt_trans_3">Slide Up</option>
-              <option value="4" {{TRANS_4_SEL}} data-i18n="opt_trans_4">Slide Down</option>
-              <option value="5" {{TRANS_5_SEL}} data-i18n="opt_trans_5">Crossfade / Dissolve</option>
-              <option value="6" {{TRANS_6_SEL}} data-i18n="opt_trans_6">Curtain (Center Split Wipe)</option>
-              <option value="7" {{TRANS_7_SEL}} data-i18n="opt_trans_7">Random (Shuffle Effects)</option>
+              <option value="0"  data-i18n="opt_trans_0">None (Instant Cut)</option>
+              <option value="1"  data-i18n="opt_trans_1">Slide Left</option>
+              <option value="2"  data-i18n="opt_trans_2">Slide Right</option>
+              <option value="3"  data-i18n="opt_trans_3">Slide Up</option>
+              <option value="4"  data-i18n="opt_trans_4">Slide Down</option>
+              <option value="5"  data-i18n="opt_trans_5">Crossfade / Dissolve</option>
+              <option value="6"  data-i18n="opt_trans_6">Curtain (Center Split Wipe)</option>
+              <option value="7"  data-i18n="opt_trans_7">Random (Shuffle Effects)</option>
             </select>
           </td>
         </tr>
@@ -1305,22 +1304,22 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="active_app" name="active_app">
-              <option value="0" {{APP_0_SEL}} data-i18n="app_name_0">Clock (Heart / Time)</option>
-              <option value="1" {{APP_1_SEL}} data-i18n="app_name_1">Indoor Environment (SHT30 Temp)</option>
-              <option value="2" {{APP_2_SEL}} data-i18n="app_name_2">Outdoor Weather (Open-Meteo)</option>
-              <option value="3" {{APP_3_SEL}} data-i18n="app_name_3">Crypto &amp; Financial Markets</option>
-              <option value="4" {{APP_4_SEL}} data-i18n="app_name_4">YouTube Subscriber Count</option>
-              <option value="5" {{APP_5_SEL}} data-i18n="app_name_5">Live Airspace Radar (ADS-B)</option>
-              <option value="6" {{APP_6_SEL}} data-i18n="app_name_6">Battery &amp; Energy Telemetry</option>
+              <option value="0"  data-i18n="app_name_0">Clock (Heart / Time)</option>
+              <option value="1"  data-i18n="app_name_1">Indoor Environment (SHT30 Temp)</option>
+              <option value="2"  data-i18n="app_name_2">Outdoor Weather (Open-Meteo)</option>
+              <option value="3"  data-i18n="app_name_3">Crypto &amp; Financial Markets</option>
+              <option value="4"  data-i18n="app_name_4">YouTube Subscriber Count</option>
+              <option value="5"  data-i18n="app_name_5">Live Airspace Radar (ADS-B)</option>
+              <option value="6"  data-i18n="app_name_6">Battery &amp; Energy Telemetry</option>
             </select>
           </td>
         </tr>
       </table>
 
       <div class="section-legend" data-i18n="lbl_carousel_screens">Active Rotation Sequence (Check to Enable &bull; Use &#x25B2;&#x25BC; to Reorder)</div>
-      <input type="hidden" id="car_ord" name="car_ord" value="{{CAR_ORD}}">
+      <input type="hidden" id="car_ord" name="car_ord" value="0,1,2,3,4,5,6">
       <div class="reorder-list" id="carouselScreens">
-        {{REORDER_ITEMS}}
+        
       </div>
 
       <div class="section-legend" data-i18n="sub_battery">Battery Telemetry Format</div>
@@ -1332,9 +1331,9 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <select id="bat_mode" name="bat_mode">
-              <option value="2" {{BAT_MODE_2_SEL}} data-i18n="opt_bat_alt">Alternating (Percentage &bull; Voltage every 3s)</option>
-              <option value="0" {{BAT_MODE_0_SEL}} data-i18n="opt_bat_pct">Percentage Only (e.g. 94%)</option>
-              <option value="1" {{BAT_MODE_1_SEL}} data-i18n="opt_bat_volt">Voltage Only (e.g. 4.12V)</option>
+              <option value="2"  data-i18n="opt_bat_alt">Alternating (Percentage &bull; Voltage every 3s)</option>
+              <option value="0"  data-i18n="opt_bat_pct">Percentage Only (e.g. 94%)</option>
+              <option value="1"  data-i18n="opt_bat_volt">Voltage Only (e.g. 4.12V)</option>
             </select>
           </td>
         </tr>
@@ -1400,7 +1399,7 @@ input:checked + .actuator-label .actuator-box::after,
             <div class="param-desc">Station title for weather reports</div>
           </td>
           <td>
-            <input type="text" id="w_city" name="w_city" value="{{W_CITY}}" placeholder="e.g. Bratislava">
+            <input type="text" id="w_city" name="w_city" value="Bratislava" placeholder="e.g. Bratislava">
           </td>
         </tr>
         <tr>
@@ -1410,8 +1409,8 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <div style="display:flex; gap:10px;">
-              <input type="text" id="w_lat" name="w_lat" value="{{W_LAT}}" placeholder="Lat: 48.1486">
-              <input type="text" id="w_lon" name="w_lon" value="{{W_LON}}" placeholder="Lon: 17.1077">
+              <input type="text" id="w_lat" name="w_lat" value="48.1486" placeholder="Lat: 48.1486">
+              <input type="text" id="w_lon" name="w_lon" value="17.1077" placeholder="Lon: 17.1077">
             </div>
           </td>
         </tr>
@@ -1427,21 +1426,21 @@ input:checked + .actuator-label .actuator-box::after,
           <td>
             <select id="c_sym" name="c_sym" onchange="document.getElementById('c_sym_custom').value = ''">
               <optgroup label="Cryptocurrencies">
-                <option value="BTC" {{C_BTC_SEL}}>Bitcoin (BTC / USDT)</option>
-                <option value="ETH" {{C_ETH_SEL}}>Ethereum (ETH / USDT)</option>
-                <option value="SOL" {{C_SOL_SEL}}>Solana (SOL / USDT)</option>
-                <option value="BNB" {{C_BNB_SEL}}>Binance Coin (BNB / USDT)</option>
+                <option value="BTC" >Bitcoin (BTC / USDT)</option>
+                <option value="ETH" >Ethereum (ETH / USDT)</option>
+                <option value="SOL" >Solana (SOL / USDT)</option>
+                <option value="BNB" >Binance Coin (BNB / USDT)</option>
               </optgroup>
               <optgroup label="Stocks &amp; Indices">
-                <option value="AAPL" {{C_AAPL_SEL}}>Apple Inc. (AAPL - Nasdaq)</option>
-                <option value="TSLA" {{C_TSLA_SEL}}>Tesla Inc. (TSLA - Nasdaq)</option>
-                <option value="NVDA" {{C_NVDA_SEL}}>Nvidia Corp. (NVDA - Nasdaq)</option>
-                <option value="SPX" {{C_SPX_SEL}}>S&amp;P 500 Index (^GSPC)</option>
+                <option value="AAPL" >Apple Inc. (AAPL - Nasdaq)</option>
+                <option value="TSLA" >Tesla Inc. (TSLA - Nasdaq)</option>
+                <option value="NVDA" >Nvidia Corp. (NVDA - Nasdaq)</option>
+                <option value="SPX" >S&amp;P 500 Index (^GSPC)</option>
               </optgroup>
               <optgroup label="Commodities &amp; Forex">
-                <option value="GOLD" {{C_GOLD_SEL}}>Gold Bullion (GC=F / USD)</option>
-                <option value="EUR" {{C_EUR_SEL}}>EUR / USD (Euro Forex)</option>
-                <option value="USD" {{C_USD_SEL}}>USD / EUR (US Dollar Forex)</option>
+                <option value="GOLD" >Gold Bullion (GC=F / USD)</option>
+                <option value="EUR" >EUR / USD (Euro Forex)</option>
+                <option value="USD" >USD / EUR (US Dollar Forex)</option>
               </optgroup>
             </select>
           </td>
@@ -1452,7 +1451,7 @@ input:checked + .actuator-label .actuator-box::after,
             <div class="param-desc">Overrides preset with any valid market ticker</div>
           </td>
           <td>
-            <input type="text" id="c_sym_custom" name="c_sym_custom" value="{{C_SYM_CUSTOM}}" placeholder="e.g. AAPL, GOLD, EUR, MSFT, BTC">
+            <input type="text" id="c_sym_custom" name="c_sym_custom" value="" placeholder="e.g. AAPL, GOLD, EUR, MSFT, BTC">
           </td>
         </tr>
       </table>
@@ -1465,7 +1464,7 @@ input:checked + .actuator-label .actuator-box::after,
             <div class="param-desc">Public YouTube creator channel</div>
           </td>
           <td>
-            <input type="text" id="yt_channel" name="yt_channel" value="{{YT_CHANNEL}}" placeholder="e.g. @MKBHD or UCxxxxxxxx">
+            <input type="text" id="yt_channel" name="yt_channel" value="" placeholder="e.g. @MKBHD or UCxxxxxxxx">
           </td>
         </tr>
         <tr>
@@ -1474,7 +1473,7 @@ input:checked + .actuator-label .actuator-box::after,
             <div class="param-desc">Google Cloud API authentication key</div>
           </td>
           <td>
-            <input type="password" id="yt_key" name="yt_key" value="{{YT_KEY}}" placeholder="Google Cloud API key">
+            <input type="password" id="yt_key" name="yt_key" value="" placeholder="Google Cloud API key">
           </td>
         </tr>
       </table>
@@ -1488,7 +1487,7 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
           <td>
             <label class="actuator-label">
-              <input type="checkbox" class="visually-hidden" name="mqtt_en" id="mqtt_en" {{MQTT_EN_CHK}} onchange="document.getElementById('mqtt_settings').style.display = this.checked ? 'block' : 'none';">
+              <input type="checkbox" class="visually-hidden" name="mqtt_en" id="mqtt_en"  onchange="document.getElementById('mqtt_settings').style.display = this.checked ? 'block' : 'none';">
               <span class="actuator-box"></span>
               <span data-i18n="chk_mqtt_en">Enable MQTT Client &amp; Home Assistant Auto-Discovery</span>
             </label>
@@ -1496,7 +1495,7 @@ input:checked + .actuator-label .actuator-box::after,
         </tr>
       </table>
 
-      <div id="mqtt_settings" style="{{MQTT_DISPLAY}}">
+      <div id="mqtt_settings" style="display:none;">
         <table class="param-table">
           <tr>
             <td class="label-cell">
@@ -1505,8 +1504,8 @@ input:checked + .actuator-label .actuator-box::after,
             </td>
             <td>
               <div style="display:flex; gap:10px;">
-                <input type="text" id="mqtt_srv" name="mqtt_srv" value="{{MQTT_SRV}}" placeholder="192.168.0.100 or homeassistant.local" style="flex:2;">
-                <input type="number" id="mqtt_port" name="mqtt_port" value="{{MQTT_PORT}}" placeholder="1883" style="flex:1; max-width:90px;">
+                <input type="text" id="mqtt_srv" name="mqtt_srv" value="" placeholder="192.168.0.100 or homeassistant.local" style="flex:2;">
+                <input type="number" id="mqtt_port" name="mqtt_port" value="1883" placeholder="1883" style="flex:1; max-width:90px;">
               </div>
             </td>
           </tr>
@@ -1517,8 +1516,8 @@ input:checked + .actuator-label .actuator-box::after,
             </td>
             <td>
               <div style="display:flex; gap:10px;">
-                <input type="text" id="mqtt_user" name="mqtt_user" value="{{MQTT_USER}}" placeholder="Username">
-                <input type="password" id="mqtt_pass" name="mqtt_pass" value="{{MQTT_PASS}}" placeholder="Password">
+                <input type="text" id="mqtt_user" name="mqtt_user" value="" placeholder="Username">
+                <input type="password" id="mqtt_pass" name="mqtt_pass" value="" placeholder="Password">
               </div>
             </td>
           </tr>
@@ -1528,13 +1527,13 @@ input:checked + .actuator-label .actuator-box::after,
               <div class="param-desc">Base topic for sensors and notifications</div>
             </td>
             <td>
-              <input type="text" id="mqtt_pre" name="mqtt_pre" value="{{MQTT_PRE}}" placeholder="ulanzi-tc001">
+              <input type="text" id="mqtt_pre" name="mqtt_pre" value="ulanzi-tc001" placeholder="ulanzi-tc001">
             </td>
           </tr>
         </table>
         <div style="font-size:10px; color:var(--ink-secondary); line-height:1.5; background:var(--chassis-inset); padding:10px 12px; border:1px solid var(--hairline-main); margin-bottom:14px;" data-i18n="box_custom_push">
           &#x1F4A1; <strong>Push Spotify &amp; Custom Screens:</strong><br>
-          MQTT: Publish JSON to <code>{{MQTT_PRE}}/custom/spotify</code> or <code>{{MQTT_PRE}}/notify</code><br>
+          MQTT: Publish JSON to <code>ulanzi-tc001/custom/spotify</code> or <code>ulanzi-tc001/notify</code><br>
           HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>
           Payload: <code>{"text":"Song - Artist","icon":"spotify","progress":45,"duration":8}</code>
         </div>
@@ -1551,7 +1550,7 @@ input:checked + .actuator-label .actuator-box::after,
             <div class="param-desc">2.4 GHz 802.11b/g/n wireless access point</div>
           </td>
           <td>
-            <input type="text" id="ssid" name="ssid" value="{{SSID}}" placeholder="Enter Wi-Fi SSID" required autocomplete="off">
+            <input type="text" id="ssid" name="ssid" value="" placeholder="Enter Wi-Fi SSID" required autocomplete="off">
             <div style="display:flex; gap:8px; margin-top:6px;">
               <button type="button" class="tactile-btn btn-sm" onclick="scanNetworks()" data-i18n="btn_scan">&#x21BB; Scan Nearby Networks</button>
             </div>
@@ -1586,7 +1585,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v{{FW_VERSION}}</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.5.1</strong>
     </div>
 
     <table class="param-table">
@@ -1624,7 +1623,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT</div>
-    <div>FIRMWARE v{{FW_VERSION}} &bull; NVS ARMED</div>
+    <div>FIRMWARE v1.5.1 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -1731,7 +1730,7 @@ const I18N = {
     lbl_mqtt_user: "Authentication",
     lbl_mqtt_pass: "Authentication",
     lbl_mqtt_pre: "Topic Prefix",
-    box_custom_push: "\U0001F4A1 <strong>Push Spotify &amp; Custom Screens:</strong><br>MQTT: Publish JSON to <code>{{MQTT_PRE}}/custom/spotify</code> or <code>{{MQTT_PRE}}/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>Payload: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
+    box_custom_push: "\U0001F4A1 <strong>Push Spotify &amp; Custom Screens:</strong><br>MQTT: Publish JSON to <code>ulanzi-tc001/custom/spotify</code> or <code>ulanzi-tc001/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>Payload: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
     grp_network: "Wi-Fi RF Link Configuration",
     lbl_ssid: "Network Name (SSID)",
     btn_scan: "\u21BB Scan Nearby Networks",
@@ -1848,7 +1847,7 @@ const I18N = {
     lbl_mqtt_user: "Autentifik\u00E1cia",
     lbl_mqtt_pass: "Autentifik\u00E1cia",
     lbl_mqtt_pre: "Prefix t\u00E9my (Topic Prefix)",
-    box_custom_push: "\U0001F4A1 <strong>Odosielanie Spotify a vlastn\u00FDch obrazoviek:</strong><br>MQTT: Publikujte JSON na <code>{{MQTT_PRE}}/custom/spotify</code> alebo <code>{{MQTT_PRE}}/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> alebo <code>POST /api/notify</code><br>Form\u00E1t: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
+    box_custom_push: "\U0001F4A1 <strong>Odosielanie Spotify a vlastn\u00FDch obrazoviek:</strong><br>MQTT: Publikujte JSON na <code>ulanzi-tc001/custom/spotify</code> alebo <code>ulanzi-tc001/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> alebo <code>POST /api/notify</code><br>Form\u00E1t: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
     grp_network: "Wi-Fi RF Spojenie",
     lbl_ssid: "N\u00E1zov Wi-Fi siete (SSID)",
     btn_scan: "\u21BB Vyh\u013Eada\u0165 okolit\u00E9 siete",
@@ -2015,7 +2014,7 @@ function installCloudOta(url) {
     });
 }
 
-let currentAppIndex = {{ACTIVE_APP}};
+let currentAppIndex = 0;
 const appNames = ["Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery"];
 
 function switchScreen(dir) {
@@ -2052,11 +2051,116 @@ function updateVirtualMatrix() {
     .catch(() => {});
 }
 
+
+let configLoaded = false;
+function populateConfig(d) {
+  if (!d) return;
+  if (!configLoaded) {
+    if (d.ssid != null) { const el = document.getElementById('ssid'); if (el) el.value = d.ssid; }
+    if (d.rotate_sec != null) { const el = document.getElementById('rotate'); if (el) el.value = d.rotate_sec; }
+    if (d.auto_rotate != null) {
+      const el = document.getElementById('auto_rotate');
+      if (el) { el.checked = !!d.auto_rotate; const row = document.getElementById('rotate_delay_field'); if (row) row.style.display = d.auto_rotate ? 'table-row' : 'none'; }
+    }
+    if (d.active_app != null) { const el = document.getElementById('active_app'); if (el) el.value = d.active_app; }
+    if (d.bat_mode != null) { const el = document.getElementById('bat_mode'); if (el) el.value = d.bat_mode; }
+    if (d.transition_fx != null) { const el = document.getElementById('trans_fx'); if (el) el.value = d.transition_fx; }
+    if (d.clk_mode != null) { const el = document.getElementById('clk_mode'); if (el) el.value = d.clk_mode; }
+    if (d.show_sec != null) { const el = document.querySelector('input[name="show_sec"]'); if (el) el.checked = !!d.show_sec; }
+    if (d.wd_bar != null) { const el = document.querySelector('input[name="wd_bar"]'); if (el) el.checked = !!d.wd_bar; }
+    if (d.wd_mon != null) { const el = document.getElementById('wd_mon'); if (el) el.value = d.wd_mon ? '1' : '0'; }
+    if (d.wd_acol != null) { const el = document.getElementById('wd_acol'); if (el) el.value = d.wd_acol; }
+    if (d.wd_icol != null) { const el = document.getElementById('wd_icol'); if (el) el.value = d.wd_icol; }
+    if (d.wd_wcol != null) { const el = document.getElementById('wd_wcol'); if (el) el.value = d.wd_wcol; }
+    if (d.date_fmt != null) { const el = document.getElementById('date_fmt'); if (el) el.value = d.date_fmt; }
+    if (d.clk_icon != null) { const el = document.getElementById('clk_icon'); if (el) el.value = d.clk_icon; }
+    if (d.txt_align != null) { const el = document.getElementById('txt_align'); if (el) el.value = d.txt_align; }
+    if (d.auto_bri != null) { const el = document.querySelector('input[name="auto_bri"]'); if (el) el.checked = !!d.auto_bri; }
+    if (d.night_mode != null) { const el = document.querySelector('input[name="night_mode"]'); if (el) el.checked = !!d.night_mode; }
+    if (d.night_start != null) { const el = document.getElementById('night_start'); if (el) el.value = d.night_start; }
+    if (d.night_end != null) { const el = document.getElementById('night_end'); if (el) el.value = d.night_end; }
+    if (d.day_bri != null) { const el = document.getElementById('day_bri'); if (el) { el.value = d.day_bri; const v = document.getElementById('day_bri_val'); if (v) v.innerText = d.day_bri + '%'; } }
+    if (d.night_bri != null) { const el = document.getElementById('night_bri'); if (el) { el.value = d.night_bri; const v = document.getElementById('night_bri_val'); if (v) v.innerText = d.night_bri + '%'; } }
+    if (d.weather_city != null) { const el = document.getElementById('w_city'); if (el) el.value = d.weather_city; }
+    if (d.weather_lat != null) { const el = document.getElementById('w_lat'); if (el) el.value = d.weather_lat; }
+    if (d.weather_lon != null) { const el = document.getElementById('w_lon'); if (el) el.value = d.weather_lon; }
+    if (d.crypto_symbol != null) {
+      const el = document.getElementById('c_sym');
+      if (el) {
+        el.value = d.crypto_symbol;
+        if (el.value !== d.crypto_symbol) {
+          const customEl = document.getElementById('c_sym_custom');
+          if (customEl) customEl.value = d.crypto_symbol;
+        }
+      }
+    }
+    if (d.yt_channel != null) { const el = document.getElementById('yt_channel'); if (el) el.value = d.yt_channel; }
+    if (d.yt_has_key) { const el = document.getElementById('yt_key'); if (el) el.value = '********'; }
+    if (d.mqtt_en != null) {
+      const el = document.getElementById('mqtt_en');
+      if (el) {
+        el.checked = !!d.mqtt_en;
+        const setDiv = document.getElementById('mqtt_settings');
+        if (setDiv) setDiv.style.display = d.mqtt_en ? 'block' : 'none';
+      }
+    }
+    if (d.mqtt_srv != null) { const el = document.getElementById('mqtt_srv'); if (el) el.value = d.mqtt_srv; }
+    if (d.mqtt_port != null) { const el = document.getElementById('mqtt_port'); if (el) el.value = d.mqtt_port; }
+    if (d.mqtt_user != null) { const el = document.getElementById('mqtt_user'); if (el) el.value = d.mqtt_user; }
+    if (d.mqtt_has_pass) { const el = document.getElementById('mqtt_pass'); if (el) el.value = '********'; }
+    if (d.mqtt_pre != null) { const el = document.getElementById('mqtt_pre'); if (el) el.value = d.mqtt_pre; }
+    if (d.ui_lang != null) {
+      const el = document.getElementById('ui_lang');
+      if (el) el.value = d.ui_lang;
+      setLang(d.ui_lang);
+    }
+    if (d.car_ord != null && d.carousel_mask != null) {
+      buildCarouselReorder(d.car_ord, d.carousel_mask);
+    }
+    configLoaded = true;
+  }
+}
+
+function buildCarouselReorder(orderStr, mask) {
+  const container = document.getElementById('carouselScreens');
+  if (!container) return;
+  const appNames = [
+    '&#x23F0; CLOCK', '&#x1F321; INDOOR TEMP', '&#x26C5; OUTDOOR METEO',
+    '&#x1F4B0; CRYPTO &amp; MARKETS', '&#x25B6; YOUTUBE', '&#x2708; AIRSPACE RADAR',
+    '&#x26A1; BATTERY &amp; ENERGY'
+  ];
+  let order = (orderStr || '').split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0 && n < 7);
+  for (let i = 0; i < 7; i++) {
+    if (!order.includes(i)) order.push(i);
+  }
+  container.innerHTML = '';
+  order.forEach(appIdx => {
+    const isChecked = (mask & (1 << appIdx)) !== 0;
+    const div = document.createElement('div');
+    div.className = 'reorder-item';
+    div.setAttribute('data-app', appIdx);
+    div.innerHTML = `
+      <label class="actuator-label" style="margin:0;">
+        <input type="checkbox" class="visually-hidden" name="car_app_${appIdx}" value="1" ${isChecked ? 'checked' : ''} onchange="updateOrderInput()">
+        <span class="actuator-box"></span>
+        <span class="reorder-name">${appNames[appIdx]}</span>
+      </label>
+      <div class="reorder-step-btns">
+        <button type="button" class="tactile-btn btn-xs" onclick="moveScreen(this, -1)">&#x25B2;</button>
+        <button type="button" class="tactile-btn btn-xs" onclick="moveScreen(this, 1)">&#x25BC;</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  updateOrderInput();
+}
+
 function updateTelemetry() {
   fetch('/status')
     .then(r => r.json())
     .then(d => {
       if (d.battery_volts != null) {
+        populateConfig(d);
         document.getElementById('teleBatteryVolts').innerText = d.battery_volts.toFixed(2);
         document.getElementById('teleBatteryPct').innerText = (d.battery_pct != null ? d.battery_pct : '--') + '%';
       }
@@ -2163,135 +2267,7 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
 </script>
 </body>
 </html>
-)rawliteral");
-
-    html.replace("{{SSID}}", s_ssid);
-    html.replace("{{ROTATE}}", String(s_rotateSec));
-    html.replace("{{AUTO_ROTATE_CHK}}", s_autoRotate ? "checked" : "");
-    html.replace("{{ROTATE_DELAY_DISPLAY}}", s_autoRotate ? "" : "display:none;");
-    html.replace("{{ACTIVE_APP}}", String(s_activeApp));
-    static const char* kAppNames[] = {
-        "Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery"
-    };
-    html.replace("{{APP_NAME}}", kAppNames[s_activeApp % 7]);
-    for (int i = 0; i < 7; i++) {
-        char tag[20];
-        snprintf(tag, sizeof(tag), "{{APP_%d_SEL}}", i);
-        html.replace(tag, (s_activeApp == i) ? "selected" : "");
-    }
-
-    String reorderHtml = "";
-    static const char* kAppIconsNames[] = {
-        "&#x23F0; CLOCK", "&#x1F321; INDOOR TEMP", "&#x26C5; OUTDOOR METEO", "&#x1F4B0; CRYPTO &amp; MARKETS", "&#x25B6; YOUTUBE", "&#x2708; AIRSPACE RADAR", "&#x26A1; BATTERY &amp; ENERGY"
-    };
-    for (int i = 0; i < 7; i++) {
-        uint8_t appIdx = s_carouselOrder[i];
-        if (appIdx >= 7) appIdx = i;
-        bool isChecked = (s_carouselMask & (1 << appIdx)) != 0;
-
-        reorderHtml += "<div class=\"reorder-item\" data-app=\"" + String(appIdx) + "\">";
-        reorderHtml += "<label class=\"actuator-label\" style=\"margin:0;\">";
-        reorderHtml += "<input type=\"checkbox\" class=\"visually-hidden\" name=\"car_app_" + String(appIdx) + "\" value=\"1\" " + (isChecked ? "checked " : "") + "onchange=\"updateOrderInput()\">";
-        reorderHtml += "<span class=\"actuator-box\"></span>";
-        reorderHtml += "<span class=\"reorder-name\">" + String(kAppIconsNames[appIdx]) + "</span>";
-        reorderHtml += "</label>";
-        reorderHtml += "<div class=\"reorder-step-btns\">";
-        reorderHtml += "<button type=\"button\" class=\"tactile-btn btn-xs\" onclick=\"moveScreen(this, -1)\">&#x25B2;</button>";
-        reorderHtml += "<button type=\"button\" class=\"tactile-btn btn-xs\" onclick=\"moveScreen(this, 1)\">&#x25BC;</button>";
-        reorderHtml += "</div></div>";
-    }
-    html.replace("{{REORDER_ITEMS}}", reorderHtml);
-    html.replace("{{CAR_ORD}}", Network_GetCarouselOrderString());
-
-    html.replace("{{BAT_MODE_0_SEL}}", (s_batteryMode == 0) ? "selected" : "");
-    html.replace("{{BAT_MODE_1_SEL}}", (s_batteryMode == 1) ? "selected" : "");
-    html.replace("{{BAT_MODE_2_SEL}}", (s_batteryMode == 2) ? "selected" : "");
-
-    // Screen transition effects
-    for (int i = 0; i <= 7; i++) {
-        char tag[20];
-        snprintf(tag, sizeof(tag), "{{TRANS_%d_SEL}}", i);
-        html.replace(tag, (s_transitionFx == i) ? "selected" : "");
-    }
-
-    // Clock & Layout replacements
-    for (int i = 0; i < 3; i++) {
-        char tag[20];
-        snprintf(tag, sizeof(tag), "{{CLK_MODE_%d_SEL}}", i);
-        html.replace(tag, (s_clockMode == i) ? "selected" : "");
-    }
-    html.replace("{{SHOW_SEC_CHK}}", s_showSeconds ? "checked" : "");
-    html.replace("{{WD_BAR_CHK}}", s_weekdayBar ? "checked" : "");
-    html.replace("{{WD_MON_1_SEL}}", s_weekdayStartMon ? "selected" : "");
-    html.replace("{{WD_MON_0_SEL}}", !s_weekdayStartMon ? "selected" : "");
-    for (size_t i = 0; i < s_numWdActiveColors; i++) {
-        char tag[24];
-        snprintf(tag, sizeof(tag), "{{WD_ACOL_%d_SEL}}", (int)i);
-        html.replace(tag, (s_weekdayActiveColIdx == i) ? "selected" : "");
-    }
-    for (size_t i = 0; i < s_numWdInactiveColors; i++) {
-        char tag[24];
-        snprintf(tag, sizeof(tag), "{{WD_ICOL_%d_SEL}}", (int)i);
-        html.replace(tag, (s_weekdayInactColIdx == i) ? "selected" : "");
-    }
-    for (size_t i = 0; i < s_numWdWeekendColors; i++) {
-        char tag[24];
-        snprintf(tag, sizeof(tag), "{{WD_WCOL_%d_SEL}}", (int)i);
-        html.replace(tag, (s_weekdayWeekendColIdx == i) ? "selected" : "");
-    }
-    for (int i = 0; i < 4; i++) {
-        char tag[20];
-        snprintf(tag, sizeof(tag), "{{DATE_FMT_%d_SEL}}", i);
-        html.replace(tag, (s_dateFormat == i) ? "selected" : "");
-    }
-    for (int i = 0; i < 4; i++) {
-        char tag[20];
-        snprintf(tag, sizeof(tag), "{{CLK_ICON_%d_SEL}}", i);
-        html.replace(tag, (s_clockIcon == i) ? "selected" : "");
-    }
-    html.replace("{{TXT_ALIGN_0_SEL}}", (s_textAlign == 0) ? "selected" : "");
-    html.replace("{{TXT_ALIGN_1_SEL}}", (s_textAlign == 1) ? "selected" : "");
-
-    html.replace("{{AUTO_BRI_CHK}}", s_autoBri ? "checked" : "");
-    html.replace("{{NIGHT_MODE_CHK}}", s_nightMode ? "checked" : "");
-    html.replace("{{NIGHT_START}}", String(s_nightStart));
-    html.replace("{{NIGHT_END}}", String(s_nightEnd));
-    html.replace("{{DAY_BRI}}", String(s_dayBri));
-    html.replace("{{NIGHT_BRI}}", String(s_nightBri));
-
-    html.replace("{{W_CITY}}", s_wCity);
-    html.replace("{{W_LAT}}", String(s_wLat, 4));
-    html.replace("{{W_LON}}", String(s_wLon, 4));
-
-    html.replace("{{C_BTC_SEL}}", s_cryptoSym == "BTC" ? "selected" : "");
-    html.replace("{{C_ETH_SEL}}", s_cryptoSym == "ETH" ? "selected" : "");
-    html.replace("{{C_SOL_SEL}}", s_cryptoSym == "SOL" ? "selected" : "");
-    html.replace("{{C_BNB_SEL}}", s_cryptoSym == "BNB" ? "selected" : "");
-    html.replace("{{C_AAPL_SEL}}", s_cryptoSym == "AAPL" ? "selected" : "");
-    html.replace("{{C_GOLD_SEL}}", (s_cryptoSym == "GOLD" || s_cryptoSym == "GC=F") ? "selected" : "");
-    html.replace("{{C_EUR_SEL}}", (s_cryptoSym == "EUR" || s_cryptoSym == "EURUSD" || s_cryptoSym == "EURUSD=X") ? "selected" : "");
-    html.replace("{{C_USD_SEL}}", (s_cryptoSym == "USD" || s_cryptoSym == "USDEUR" || s_cryptoSym == "USDEUR=X") ? "selected" : "");
-    html.replace("{{C_SPX_SEL}}", (s_cryptoSym == "SPX" || s_cryptoSym == "^GSPC") ? "selected" : "");
-    html.replace("{{C_TSLA_SEL}}", s_cryptoSym == "TSLA" ? "selected" : "");
-    html.replace("{{C_NVDA_SEL}}", s_cryptoSym == "NVDA" ? "selected" : "");
-    html.replace("{{C_SYM_CUSTOM}}", s_cryptoSym);
-
-    html.replace("{{YT_CHANNEL}}", s_ytChannel);
-    html.replace("{{YT_KEY}}", s_ytApiKey.length() > 0 ? "********" : "");
-
-    html.replace("{{MQTT_EN_CHK}}", s_mqttEn ? "checked" : "");
-    html.replace("{{MQTT_DISPLAY}}", s_mqttEn ? "" : "display:none;");
-    html.replace("{{MQTT_SRV}}", s_mqttServer);
-    html.replace("{{MQTT_PORT}}", String(s_mqttPort));
-    html.replace("{{MQTT_USER}}", s_mqttUser);
-    html.replace("{{MQTT_PASS}}", s_mqttPass.length() > 0 ? "********" : "");
-    html.replace("{{MQTT_PRE}}", s_mqttPrefix);
-
-    html.replace("{{FW_VERSION}}", FW_VERSION);
-    html.replace("{{GITHUB_REPO}}", GITHUB_REPO);
-    html.replace("{{PORTAL_LANG}}", s_portalLang);
-    return html;
-}
+)rawliteral";
 
 static const char PAGE_SAVED[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -2368,7 +2344,7 @@ static void handleCaptiveRedirect() {
         s_server.send(302, "text/plain", "");
         return;
     }
-    s_server.send(200, "text/html", buildPortalHtml());
+    s_server.send_P(200, "text/html", PAGE_PORTAL);
 }
 
 static void handleScan() {
@@ -2567,6 +2543,33 @@ static void handleStatus() {
     doc["active_app"] = s_activeApp;
     doc["firmware_version"] = FW_VERSION;
 
+    doc["car_ord"] = Network_GetCarouselOrderString();
+    doc["bat_mode"] = s_batteryMode;
+    doc["clk_mode"] = s_clockMode;
+    doc["show_sec"] = s_showSeconds;
+    doc["wd_bar"] = s_weekdayBar;
+    doc["wd_mon"] = s_weekdayStartMon;
+    doc["wd_acol"] = s_weekdayActiveColIdx;
+    doc["wd_icol"] = s_weekdayInactColIdx;
+    doc["wd_wcol"] = s_weekdayWeekendColIdx;
+    doc["date_fmt"] = s_dateFormat;
+    doc["clk_icon"] = s_clockIcon;
+    doc["txt_align"] = s_textAlign;
+    doc["night_start"] = s_nightStart;
+    doc["night_end"] = s_nightEnd;
+    doc["weather_lat"] = s_wLat;
+    doc["weather_lon"] = s_wLon;
+    doc["yt_channel"] = s_ytChannel;
+    doc["yt_has_key"] = (s_ytApiKey.length() > 0);
+    doc["mqtt_en"] = s_mqttEn;
+    doc["mqtt_srv"] = s_mqttServer;
+    doc["mqtt_port"] = s_mqttPort;
+    doc["mqtt_user"] = s_mqttUser;
+    doc["mqtt_has_pass"] = (s_mqttPass.length() > 0);
+    doc["mqtt_pre"] = s_mqttPrefix;
+    doc["ui_lang"] = s_portalLang;
+    doc["github_repo"] = GITHUB_REPO;
+
     // Ambient & Sensor telemetry
     const SensorData& s = Sensors_GetData();
     doc["temperature_in"] = s.temperature;
@@ -2671,7 +2674,7 @@ void Network_Init() {
     WiFi.mode(WIFI_OFF);
 
     s_server.on("/", HTTP_GET, []() {
-        s_server.send(200, "text/html", buildPortalHtml());
+        s_server.send_P(200, "text/html", PAGE_PORTAL);
     });
     s_server.on("/save", HTTP_POST, handleSave);
     s_server.on("/scan", HTTP_GET, handleScan);
