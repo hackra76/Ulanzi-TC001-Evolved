@@ -277,9 +277,9 @@ class MatrixScreen:
         for i in range(7):
             is_wknd = (i == 5 or i == 6) if is_mon_start else (i == 0 or i == 6)
             if i == active_day_idx:
-                col = weekend_col if (is_wknd and weekend_col != 0) else active_col
+                col = active_col
             else:
-                col = inactive_weekend_col if (is_wknd and inactive_weekend_col != 0) else inactive_col
+                col = weekend_col if (is_wknd and weekend_col != 0) else inactive_col
             bx = start_x + i * 3
             self.draw_pixel(bx, y, col)
             self.draw_pixel(bx + 1, y, col)
@@ -381,8 +381,8 @@ def main():
     m0 = MatrixScreen()
     m0.draw_calendar_icon(0, 0, 15) # Day 15
     m0.draw_time_3x5(10, 1, 14, 35, True, C_WHITE, C_WHITE)
-    # Weekday bar: Thursday active (idx 3 with Mon-start), cyan active, dim inactive
-    m0.draw_weekday_bar(3, C_CYAN, 0x2104, C_ORANGE, 0x4101, True, 10, 7)
+    # Weekday bar: Thursday active (idx 3 with Mon-start), cyan active, dim inactive workdays, red weekend
+    m0.draw_weekday_bar(3, C_CYAN, 0x2104, C_RED, 0, True, 10, 7)
     img0 = render_device_image(m0, "SCREEN 0 // CLOCK & CALENDAR", "14:35 UTC+2 | OCT 15")
     img0.save("docs/media/screen_0_clock.png")
     print("Saved screen_0_clock.png")

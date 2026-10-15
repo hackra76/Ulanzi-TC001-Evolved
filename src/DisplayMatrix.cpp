@@ -421,9 +421,9 @@ void DisplayMatrix_DrawWeekdayBar(int activeDayIndex, uint16_t activeColor, uint
         bool isWknd = isMondayStart ? (i == 5 || i == 6) : (i == 0 || i == 6);
         uint16_t col;
         if (i == activeDayIndex) {
-            col = (isWknd && weekendColor != 0) ? weekendColor : activeColor;
+            col = activeColor;
         } else {
-            col = (isWknd && inactiveWeekendColor != 0) ? inactiveWeekendColor : inactiveColor;
+            col = (isWknd && weekendColor != 0) ? weekendColor : inactiveColor;
         }
         int bx = startX + i * 3;
         s_matrix.drawPixel(bx,     y, col);

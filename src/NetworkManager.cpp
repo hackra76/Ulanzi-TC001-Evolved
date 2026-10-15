@@ -75,39 +75,39 @@ static const uint16_t s_wdActiveColors[] = {
     0xF800, // 4: Red (#FF2200)
     0xFFFF, // 5: White (#FFFFFF)
     0xF81F, // 6: Magenta (#FF00FF)
-    0x04DF, // 7: Deep Sky Blue (#0099FF)
-    0xF9B3, // 8: Hot Coral (#FF3399)
-    0x37F3, // 9: Lime Mint (#33FF99)
-    0xFDB0  // 10: Gold Amber (#FFB700)
+    0x033F, // 7: Electric Blue (#0066FF)
+    0x77E0, // 8: Lime Green (#76FF03)
+    0xFE00, // 9: Amber Gold (#FFC107)
+    0xFA10  // 10: Soft Pink (#FF4081)
 };
 static const size_t s_numWdActiveColors = sizeof(s_wdActiveColors) / sizeof(s_wdActiveColors[0]);
 
 static const uint16_t s_wdInactiveColors[] = {
     0x0000, // 0: Auto (computed dynamically from active color at ~65% intensity)
-    0x7432, // 1: Slate Gray (#708090)
+    0x7412, // 1: Slate Gray (#708090)
     0x9342, // 2: Dim Amber (#906810)
-    0x3186, // 3: Dark Charcoal (#333333)
-    0x19F1, // 4: Dim Navy Blue (#1E3A8A)
-    0x02B2, // 5: Dim Teal (#005577)
-    0x7082, // 6: Dim Wine Red (#771111)
-    0x12A2, // 7: Dim Forest Green (#115511)
-    0x40AA, // 8: Dim Purple (#441155)
+    0x00C8, // 3: Dark Blue (#001A40)
+    0x3801, // 4: Deep Wine (#3A000A)
+    0x0141, // 5: Forest Green (#002A0D)
+    0x2124, // 6: Charcoal (#252525)
+    0x2886, // 7: Muted Purple (#2A1035)
+    0x0187, // 8: Dark Cyan (#003038)
     0x0000  // 9: Off (Black)
 };
 static const size_t s_numWdInactiveColors = sizeof(s_wdInactiveColors) / sizeof(s_wdInactiveColors[0]);
 
 static const uint16_t s_wdWeekendColors[] = {
     0x0000, // 0: Same as Active Day Color
-    0xF800, // 1: Red (#FF2200 - Classic Weekend)
-    0xFD20, // 2: Orange (#FF8800)
-    0xFFE0, // 3: Yellow (#FFFF00)
-    0xF9B3, // 4: Hot Coral (#FF3399)
-    0xF81F, // 5: Magenta (#FF00FF)
-    0x04DF, // 6: Deep Sky Blue (#0099FF)
-    0x07FF, // 7: Cyan (#00F0FF)
-    0x37F3, // 8: Lime Mint (#33FF99)
-    0xFDB0, // 9: Gold Amber (#FFB700)
-    0xFFFF  // 10: White (#FFFFFF)
+    0xF800, // 1: Bright Red (#FF2200)
+    0xFB49, // 2: Coral Orange (#FF6B4A)
+    0xFEA0, // 3: Gold (#FFD700)
+    0xF8B2, // 4: Hot Pink (#FF1493)
+    0x9936, // 5: Purple (#9C27B0)
+    0x07FF, // 6: Cyan (#00F0FF)
+    0x77E0, // 7: Lime (#76FF03)
+    0xFFFF, // 8: Pure White (#FFFFFF)
+    0x05FF, // 9: Sky Blue (#00BFFF)
+    0x072E  // 10: Emerald (#00E676)
 };
 static const size_t s_numWdWeekendColors = sizeof(s_wdWeekendColors) / sizeof(s_wdWeekendColors[0]);
 
@@ -3137,22 +3137,12 @@ void Network_SetWeekdayWeekendColorIndex(uint8_t idx) {
 }
 uint16_t Network_GetWeekdayWeekendColor() {
     if (s_weekdayWeekendColIdx == 0) {
-        return Network_GetWeekdayActiveColor();
+        return 0; // 0 indicates "Same as Active Weekday" (no dedicated weekend accent)
     }
     return s_wdWeekendColors[(s_weekdayWeekendColIdx < s_numWdWeekendColors) ? s_weekdayWeekendColIdx : 0];
 }
 uint16_t Network_GetWeekdayInactiveWeekendColor() {
-    if (s_weekdayInactColIdx == 0) {
-        uint16_t wc = Network_GetWeekdayWeekendColor();
-        uint8_t r = (wc >> 11) & 0x1F;
-        uint8_t g = (wc >> 5) & 0x3F;
-        uint8_t b = wc & 0x1F;
-        r = (uint8_t)(((uint16_t)r * 170) >> 8);
-        g = (uint8_t)(((uint16_t)g * 170) >> 8);
-        b = (uint8_t)(((uint16_t)b * 170) >> 8);
-        return (r << 11) | (g << 5) | b;
-    }
-    return Network_GetWeekdayInactiveColor();
+    return Network_GetWeekdayWeekendColor();
 }
 
 String Network_GetPortalLanguage() { return s_portalLang; }
