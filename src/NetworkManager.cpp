@@ -907,7 +907,7 @@ input:checked + .actuator-label .actuator-box::after,
 
     <div class="header-actions">
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> v1.6.0
+        <span class="badge-dot"></span> v1.7.0
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1655,7 +1655,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.6.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.7.0</strong>
     </div>
 
     <table class="param-table">
@@ -1693,7 +1693,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT</div>
-    <div>FIRMWARE v1.6.0 &bull; NVS ARMED</div>
+    <div>FIRMWARE v1.7.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
