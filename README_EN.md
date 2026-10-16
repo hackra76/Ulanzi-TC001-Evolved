@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
 
-Next-generation firmware for the **Ulanzi TC001 Smart Pixel Desktop Clock** running on ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 sensor, ambient intelligence, live crypto tickers, financial markets & stocks, live overhead airspace radar, outdoor weather, YouTube statistics, Awtrix-style layout customization, and dual OTA update system.
+Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)** (manufactured by Shenzhen Ulanzi Technology Co., Ltd.) running on ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 sensor, ambient intelligence, live crypto tickers, financial markets & stocks, live overhead airspace radar, outdoor weather, YouTube statistics, Awtrix-style layout customization, and dual OTA update system.
 
 🌐 **Languages:** [English (Default)](README.md) • [English Mirror](README_EN.md) • [Slovenčina](README_SK.md)
 
@@ -192,6 +192,19 @@ pio device monitor -b 115200
 Pre-compiled binaries for each release are published under [Releases](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases):
 - `firmware.bin`: OTA update file for flashing via Web Portal or GitHub 1-click update.
 - `firmware.factory.bin`: Full factory image for initial USB flashing starting at flash offset `0x0000`.
+
+---
+
+## 🙏 Credits & Hardware Attribution
+
+This project is an independent custom firmware engineered for the **Ulanzi TC001 Smart Pixel Clock**, originally designed and manufactured by **[Shenzhen Ulanzi Technology Co., Ltd. (Ulanzi)](https://www.ulanzi.com/)**.
+
+- **Original Hardware Device**: [Ulanzi Pixel Smart Clock (TC001)](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)
+- **Hardware Engineering**: Special thanks to **Ulanzi** for creating such an accessible, beautifully engineered, and hackable ESP32 desktop device featuring an 8×32 addressable RGB matrix, Sensirion sensor, and portable Li-ion battery.
+- **Inspiration & Ecosystem**: Gratitude to the broader open-source pixel clock community and the **Awtrix** ecosystem for pioneering desktop matrix aesthetics.
+
+> [!NOTE]
+> *Disclaimer: Ulanzi TC001 Evolved is an independent, community-driven open-source project and is not officially affiliated with, endorsed by, or sponsored by Shenzhen Ulanzi Technology Co., Ltd. "Ulanzi" and the TC001 model designation are trademarks of their respective owners.*
 
 ---
 

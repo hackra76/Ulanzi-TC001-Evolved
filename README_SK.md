@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
 
-Pokročilý firmvér novej generácie pre inteligentné stolové pixelové hodiny **Ulanzi TC001 Smart Pixel Desktop Clock** bežiaci na mikrokontroléri ESP32 s **8×32 WS2812B RGB LED maticou**, senzorom Sensirion SHT30, adaptívnym jasom (LDR), sledovaním finančných trhov, akcií a kryptomien, živým leteckým radarom (ADS-B), predpoveďou počasia, YouTube štatistikami, prispôsobiteľným Awtrix rozložením hodín a duálnym OTA systémom aktualizácií.
+Pokročilý firmvér novej generácie pre originálne inteligentné stolové pixelové hodiny **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)** (vyrábané spoločnosťou Shenzhen Ulanzi Technology Co., Ltd.) bežiaci na mikrokontroléri ESP32 s **8×32 WS2812B RGB LED maticou**, senzorom Sensirion SHT30, adaptívnym jasom (LDR), sledovaním finančných trhov, akcií a kryptomien, živým leteckým radarom (ADS-B), predpoveďou počasia, YouTube štatistikami, prispôsobiteľným Awtrix rozložením hodín a duálnym OTA systémom aktualizácií.
 
 🌐 **Jazyky:** [English (Predvolený)](README.md) • [English Zrkadlo](README_EN.md) • [Slovenčina](README_SK.md)
 
@@ -192,6 +192,19 @@ pio device monitor -b 115200
 Predkompilované binárne súbory sú k dispozícii v sekcii [Releases](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases):
 - `firmware.bin`: Súbor pre OTA aktualizáciu cez webové rozhranie alebo GitHub 1-klik aktualizáciu.
 - `firmware.factory.bin`: Kompletný obraz pamäte pre prvotné nahratie cez USB od adresy `0x0000`.
+
+---
+
+## 🙏 Poďakovanie a kredit hardvéru
+
+Tento projekt je nezávislý komunitný open-source firmvér navrhnutý pre **Ulanzi TC001 Smart Pixel Clock**, pôvodne vyvinutý a vyrábaný spoločnosťou **[Shenzhen Ulanzi Technology Co., Ltd. (Ulanzi)](https://www.ulanzi.com/)**.
+
+- **Originálne hardvérové zariadenie**: [Ulanzi Pixel Smart Clock (TC001)](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)
+- **Hardvérové inžinierstvo**: Veľká vďaka patrí spoločnosti **Ulanzi** za vytvorenie kvalitného, cenovo dostupného a pre komunitu otvoreného stolného zariadenia na báze ESP32 s maticou 8×32 WS2812B, senzorom Sensirion SHT30 a integrovanou Li-ion batériou.
+- **Inšpirácia a ekosystém**: Poďakovanie patrí aj celej open-source komunite pixelových hodín a ekosystému **Awtrix** za priekopníctvo v oblasti maticových displejov.
+
+> [!NOTE]
+> *Upozornenie: Ulanzi TC001 Evolved je nezávislý komunitný open-source projekt a nie je oficiálne prepojený, schválený ani sponzorovaný spoločnosťou Shenzhen Ulanzi Technology Co., Ltd. Názov „Ulanzi“ a označenie modelu „TC001“ sú ochrannými známkami príslušných vlastníkov.*
 
 ---
 

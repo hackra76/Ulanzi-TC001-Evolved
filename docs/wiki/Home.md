@@ -44,3 +44,9 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 9. **Home Assistant MQTT Auto-Discovery**: Automatic discovery of 12 synchronized entities (sensors, matrix power/brightness light, switches, buttons, and screen selector).
 10. **Custom App Push API & Spotify**: Push dynamic screens via MQTT or HTTP REST with 8×8 icons, progress bars, and high-priority push notifications with buzzer chime.
 11. **Dual OTA Engine**: Web browser binary upload plus automated 1-click cloud updates from GitHub Releases with live percentage display on matrix.
+
+---
+
+## 🙏 Hardware Credits & Attribution
+
+This open-source firmware runs on the **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)** manufactured by **[Shenzhen Ulanzi Technology Co., Ltd. (Ulanzi)](https://www.ulanzi.com/)**. We express our sincere appreciation to Ulanzi for producing an open, durable, and highly capable ESP32 hardware platform for makers and developers.
