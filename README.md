@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
 
-Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)** (manufactured by Shenzhen Ulanzi Technology Co., Ltd.) running on ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 sensor, ambient intelligence, live crypto tickers, financial markets & stocks, live overhead airspace radar, outdoor weather, YouTube statistics, Awtrix-style layout customization, and dual OTA update system.
+Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** (manufactured by Shenzhen Ulanzi Technology Co., Ltd.) running on ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 sensor, ambient intelligence, live crypto tickers, financial markets & stocks, live overhead airspace radar, outdoor weather, YouTube statistics, Awtrix-style layout customization, and dual OTA update system.
 
 🌐 **Languages:** [English (Default)](README.md) • [English Mirror](README_EN.md) • [Slovenčina](README_SK.md)
 
@@ -199,7 +199,7 @@ Pre-compiled binaries for each release are published under [Releases](https://gi
 
 This project is an independent custom firmware engineered for the **Ulanzi TC001 Smart Pixel Clock**, originally designed and manufactured by **[Shenzhen Ulanzi Technology Co., Ltd. (Ulanzi)](https://www.ulanzi.com/)**.
 
-- **Original Hardware Device**: [Ulanzi Pixel Smart Clock (TC001)](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)
+- **Original Hardware Device**: [Ulanzi Pixel Smart Clock (TC001)](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)
 - **Hardware Engineering**: Special thanks to **Ulanzi** for creating such an accessible, beautifully engineered, and hackable ESP32 desktop device featuring an 8×32 addressable RGB matrix, Sensirion sensor, and portable Li-ion battery.
 - **Inspiration & Ecosystem**: Gratitude to the broader open-source pixel clock community and the **Awtrix** ecosystem for pioneering desktop matrix aesthetics.
 

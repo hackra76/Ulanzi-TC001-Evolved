@@ -49,4 +49,4 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 
 ## 🙏 Hardware Credits & Attribution
 
-This open-source firmware runs on the **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)** manufactured by **[Shenzhen Ulanzi Technology Co., Ltd. (Ulanzi)](https://www.ulanzi.com/)**. We express our sincere appreciation to Ulanzi for producing an open, durable, and highly capable ESP32 hardware platform for makers and developers.
+This open-source firmware runs on the **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** manufactured by **[Shenzhen Ulanzi Technology Co., Ltd. (Ulanzi)](https://www.ulanzi.com/)**. We express our sincere appreciation to Ulanzi for producing an open, durable, and highly capable ESP32 hardware platform for makers and developers.
