@@ -17,7 +17,7 @@ The onboard web server exposes several REST endpoints for status monitoring, con
   "carousel_mask": 127,
   "transition_fx": 1,
   "active_app": 0,
-  "firmware_version": "1.5.1",
+  "firmware_version": "1.6.0",
   "temperature_in": 22.4,
   "humidity_in": 46.2,
   "battery_volts": 4.12,
@@ -31,7 +31,12 @@ The onboard web server exposes several REST endpoints for status monitoring, con
   "weather_city": "Prešov",
   "crypto_symbol": "GOLD",
   "crypto_price": "4.2K",
-  "yt_subscribers": "843"
+  "yt_subscribers": "843",
+  "timer_mode": "countdown",
+  "timer_state": "stopped",
+  "timer_duration": 300,
+  "timer_remaining": 300,
+  "timer_elapsed_ms": 0
 }
 ```
 
@@ -49,9 +54,26 @@ The onboard web server exposes several REST endpoints for status monitoring, con
 ## Screen Control Endpoint
 - **URL**: `GET /api/screen?set=<app_index>&auto=<0|1>`
   - **Parameters**:
-    - `set`: Screen index `0` (Clock), `1` (Indoor Temp), `2` (Outdoor Weather), `3` (Crypto/Markets), `4` (YouTube), `5` (Airspace), `6` (Battery).
+    - `set`: Screen index `0` (Clock), `1` (Indoor Temp), `2` (Outdoor Weather), `3` (Crypto/Markets), `4` (YouTube), `5` (Airspace), `6` (Battery), `7` (Stopwatch & Timer).
     - `auto`: `1` to enable carousel auto-rotation, `0` to pause.
   - **Response**: `{"active_app": 0, "auto_rotate": false, "app_name": "Clock"}`
+
+## Stopwatch & Countdown Timer REST API
+- **URL**: `GET /api/timer` or `POST /api/timer`
+- **Parameters**:
+  - `action`: `start`, `pause`, `toggle`, `reset`
+  - `mode`: `stopwatch` (or `0`), `countdown` (or `1`)
+  - `duration`: Target duration in seconds for countdown mode (e.g. `300` for 5 minutes)
+- **Response**: `application/json`
+```json
+{
+  "mode": "countdown",
+  "state": "running",
+  "duration": 300,
+  "remaining": 284,
+  "elapsed_ms": 16000
+}
+```
 
 ## Wi-Fi Scan Endpoint
 - **URL**: `GET /scan`

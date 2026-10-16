@@ -99,6 +99,28 @@ ICON_SPOTIFY = [
     0,         0,         C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, C_SPOTIFY, 0,         0
 ]
 
+ICON_STOPWATCH = [
+    0,       0,       C_CYAN,  C_WHITE, C_WHITE, 0,       0,       0,
+    0,       0,       0,       C_CYAN,  C_CYAN,  0,       0,       0,
+    0,       C_CYAN,  C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_CYAN,  0,
+    C_CYAN,  C_WHITE, 0,       0,       0,       0,       C_WHITE, C_CYAN,
+    C_CYAN,  C_WHITE, 0,       C_CYAN,  C_CYAN,  0,       C_WHITE, C_CYAN,
+    C_CYAN,  C_WHITE, 0,       0,       C_CYAN,  0,       C_WHITE, C_CYAN,
+    0,       C_CYAN,  C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_CYAN,  0,
+    0,       0,       0,       0,       0,       0,       0,       0
+]
+
+ICON_HOURGLASS = [
+    C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE,
+    0,        C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE, 0,
+    0,        0,        C_ORANGE, C_YELLOW, C_YELLOW, C_ORANGE, 0,        0,
+    0,        0,        0,        C_ORANGE, C_ORANGE, 0,        0,        0,
+    0,        0,        C_ORANGE, 0,        0,        C_ORANGE, 0,        0,
+    0,        C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE, 0,
+    C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE,
+    C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE
+]
+
 FONT_3X5 = [
     [0x07, 0x05, 0x05, 0x05, 0x07], # 0
     [0x02, 0x06, 0x02, 0x02, 0x07], # 1
@@ -435,7 +457,35 @@ def main():
     img6.save("docs/media/screen_6_battery.png")
     print("Saved screen_6_battery.png")
 
-    # 8. Screen Custom: Spotify / Notification
+    # 8. Screen 7: Stopwatch & Countdown Timer
+    m_timer = MatrixScreen()
+    m_timer.draw_icon(0, 0, ICON_HOURGLASS)
+    # Time: 04:25
+    m_timer.draw_digit_3x5(9, 1, 0, C_WHITE)
+    m_timer.draw_digit_3x5(13, 1, 4, C_WHITE)
+    m_timer.draw_pixel(17, 2, C_WHITE)
+    m_timer.draw_pixel(17, 4, C_WHITE)
+    m_timer.draw_digit_3x5(19, 1, 2, C_WHITE)
+    m_timer.draw_digit_3x5(23, 1, 5, C_WHITE)
+    # Play green triangle badge
+    m_timer.draw_pixel(28, 1, C_GREEN)
+    m_timer.draw_pixel(28, 2, C_GREEN)
+    m_timer.draw_pixel(28, 3, C_GREEN)
+    m_timer.draw_pixel(28, 4, C_GREEN)
+    m_timer.draw_pixel(28, 5, C_GREEN)
+    m_timer.draw_pixel(29, 2, C_GREEN)
+    m_timer.draw_pixel(29, 3, C_GREEN)
+    m_timer.draw_pixel(29, 4, C_GREEN)
+    m_timer.draw_pixel(30, 3, C_GREEN)
+    # Bottom progress bar cyan (265s / 300s -> ~20 px)
+    p_len = int(23 * (265.0 / 300.0))
+    for px in range(9, 9 + p_len):
+        m_timer.draw_pixel(px, 7, C_CYAN)
+    img_timer = render_device_image(m_timer, "SCREEN 7 // TIMER & STOPWATCH", "PRECISION CHRONOMETER")
+    img_timer.save("docs/media/screen_7_timer.png")
+    print("Saved screen_7_timer.png")
+
+    # 9. Screen Custom: Spotify / Notification
     m7 = MatrixScreen()
     m7.draw_icon(0, 0, ICON_SPOTIFY)
     m7.draw_small_text(9, 1, "VERIDIS", C_SPOTIFY)
@@ -447,17 +497,16 @@ def main():
     img7.save("docs/media/screen_custom_spotify.png")
     print("Saved screen_custom_spotify.png")
 
-    # 9. Multi-Screen Showcase Grid (8 screens in 2x4 layout)
-    # 2 rows of 4 devices each
-    canvas_w = 4 * 760 + 60
-    canvas_h = 2 * 240 + 60
+    # 10. Multi-Screen Showcase Grid (9 screens in 3x3 layout)
+    canvas_w = 3 * 760 + 50
+    canvas_h = 3 * 240 + 50
     grid_img = Image.new("RGBA", (canvas_w, canvas_h), (12, 13, 16, 255))
-    screens = [img0, img1, img2, img3, img4, img5, img6, img7]
+    screens = [img0, img1, img2, img3, img4, img5, img6, img_timer, img7]
     for idx, s_img in enumerate(screens):
-        row = idx // 4
-        col = idx % 4
-        x = 20 + col * (760 + 10)
-        y = 20 + row * (240 + 10)
+        row = idx // 3
+        col = idx % 3
+        x = 20 + col * (760 + 5)
+        y = 20 + row * (240 + 5)
         grid_img.alpha_composite(s_img, (x, y))
     
     # Scale down composite to 1200px width for fast loading in GitHub README

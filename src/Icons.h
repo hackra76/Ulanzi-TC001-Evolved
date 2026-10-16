@@ -354,6 +354,31 @@ static const uint16_t ICON_CROSS[64] = {
     C_RED,   C_RED,   0,       0,       0,       0,       C_RED,   C_RED
 };
 
+// 8x8 Stopwatch Icon
+static const uint16_t ICON_STOPWATCH[64] = {
+    0,       0,       C_CYAN,  C_WHITE, C_WHITE, 0,       0,       0,
+    0,       0,       0,       C_CYAN,  C_CYAN,  0,       0,       0,
+    0,       C_CYAN,  C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_CYAN,  0,
+    C_CYAN,  C_WHITE, 0,       0,       0,       0,       C_WHITE, C_CYAN,
+    C_CYAN,  C_WHITE, 0,       C_CYAN,  C_CYAN,  0,       C_WHITE, C_CYAN,
+    C_CYAN,  C_WHITE, 0,       0,       C_CYAN,  0,       C_WHITE, C_CYAN,
+    0,       C_CYAN,  C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_CYAN,  0,
+    0,       0,       0,       0,       0,       0,       0,       0
+};
+
+// 8x8 Hourglass / Countdown Icon
+static const uint16_t ICON_HOURGLASS[64] = {
+    C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE,
+    0,        C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE, 0,
+    0,        0,        C_ORANGE, C_YELLOW, C_YELLOW, C_ORANGE, 0,        0,
+    0,        0,        0,        C_ORANGE, C_ORANGE, 0,        0,        0,
+    0,        0,        C_ORANGE, 0,        0,        C_ORANGE, 0,        0,
+    0,        C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE, 0,
+    C_ORANGE, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_ORANGE,
+    C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE
+};
+#define ICON_TIMER ICON_HOURGLASS
+
 inline const uint16_t* Icons_GetByName(const String& name) {
     String lower = name;
     lower.toLowerCase();
@@ -382,6 +407,8 @@ inline const uint16_t* Icons_GetByName(const String& name) {
     if (lower == "bell" || lower == "alert" || lower == "notify") return ICON_BELL;
     if (lower == "check" || lower == "ok") return ICON_CHECK;
     if (lower == "cross" || lower == "cancel" || lower == "error") return ICON_CROSS;
+    if (lower == "stopwatch") return ICON_STOPWATCH;
+    if (lower == "timer" || lower == "hourglass") return ICON_HOURGLASS;
 
     return nullptr;
 }

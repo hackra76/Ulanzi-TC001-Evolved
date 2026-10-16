@@ -15,6 +15,7 @@
 #include "OtaManager.h"
 #include "MqttService.h"
 #include "CustomAppService.h"
+#include "TimerService.h"
 
 // --- Application Modes ---
 enum AppMode {
@@ -25,6 +26,7 @@ enum AppMode {
     APP_YOUTUBE,    // Live YouTube Subscriber count
     APP_AIRSPACE,   // Live ADS-B radar flight ticker
     APP_BATTERY,    // Battery & power telemetry
+    APP_TIMER,      // Stopwatch & Countdown Timer
     APP_COUNT
 };
 
@@ -272,6 +274,7 @@ static void renderCurrentApp() {
         case APP_YOUTUBE:  renderYouTubeApp();  break;
         case APP_AIRSPACE: renderAirspaceApp(); break;
         case APP_BATTERY:  renderBatteryApp();  break;
+        case APP_TIMER:    Timer_Render();      break;
         default:           renderClockApp();    break;
     }
 }
@@ -324,6 +327,7 @@ void setup() {
     Weather_Init();
     Crypto_Init();
     Airspace_Init();
+    Timer_Init();
 
     // Startup splash & sound
     Buzzer_Click();
@@ -368,6 +372,7 @@ void loop() {
     Crypto_Update();
     Airspace_Update();
     MqttService_Update();
+    Timer_Update();
 
     // 3. Clock second counter tick
     if (now - s_lastSecTick >= 1000) {
@@ -440,6 +445,20 @@ void loop() {
         return;
     }
 
+    // High Priority: Timer Alarm Notification (rings buzzer & flashes screen)
+    if (Timer_GetState() == TIMER_STATE_EXPIRED) {
+        if (s_currentApp != APP_TIMER) {
+            switchToScreen(APP_TIMER, false, 0);
+        }
+        if (Buttons_GetEvent(BTN_ID_OK) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_LEFT) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_RIGHT) != BTN_NONE) {
+            Buzzer_Click();
+            Timer_Reset();
+            return;
+        }
+    }
+
     // 8. Night Mode enforcement
     bool nightActive = isNightTime() && (now >= s_nightWakeUntilMs);
     if (nightActive) {
@@ -466,6 +485,32 @@ void loop() {
     // 9. Standard App Navigation & Button Events
     uint8_t customCount = CustomApp_GetActiveCount();
 
+    // Dedicated button actions when viewing Timer App
+    if (s_currentApp == APP_TIMER && !s_showingCustomApp) {
+        if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
+            Timer_Toggle();
+            Buzzer_Click();
+        } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_LONG_PRESS) {
+            if (Timer_GetState() == TIMER_STATE_RUNNING || Timer_GetState() == TIMER_STATE_PAUSED) {
+                Timer_Reset();
+                Buzzer_Alert();
+            } else {
+                Timer_SetMode(Timer_GetMode() == TIMER_MODE_COUNTDOWN ? TIMER_MODE_STOPWATCH : TIMER_MODE_COUNTDOWN);
+                Buzzer_Alert();
+            }
+        } else if (Buttons_GetEvent(BTN_ID_LEFT) == BTN_LONG_PRESS) {
+            if (Timer_GetMode() == TIMER_MODE_COUNTDOWN && Timer_GetState() != TIMER_STATE_RUNNING) {
+                Timer_AdjustDuration(-60);
+                Buzzer_Click();
+            }
+        } else if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_LONG_PRESS) {
+            if (Timer_GetMode() == TIMER_MODE_COUNTDOWN && Timer_GetState() != TIMER_STATE_RUNNING) {
+                Timer_AdjustDuration(60);
+                Buzzer_Click();
+            }
+        }
+    }
+
     if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
         if (s_showingCustomApp) {
@@ -477,7 +522,7 @@ void loop() {
             }
         } else {
             uint8_t mask = Network_GetCarouselMask();
-            if (mask == 0) mask = 0x7F;
+            if (mask == 0) mask = 0xFF;
             const uint8_t* order = Network_GetCarouselOrder();
             int curPos = 0;
             for (int i = 0; i < APP_COUNT; i++) {
@@ -516,7 +561,7 @@ void loop() {
             }
         } else {
             uint8_t mask = Network_GetCarouselMask();
-            if (mask == 0) mask = 0x7F;
+            if (mask == 0) mask = 0xFF;
             const uint8_t* order = Network_GetCarouselOrder();
             int curPos = 0;
             for (int i = 0; i < APP_COUNT; i++) {
@@ -545,7 +590,7 @@ void loop() {
         s_lastAppSwitch = now;
         s_autoRotate = false;
         Network_SetAutoRotate(false);
-    } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
+    } else if (s_currentApp != APP_TIMER && Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
         Buzzer_Click();
         // Cycle manual brightness (pauses auto-brightness until re-enabled in web portal)
         Network_SetAutoBrightness(false);
@@ -553,7 +598,7 @@ void loop() {
         uint8_t next = (cur <= 15) ? 35 : (cur <= 50 ? 80 : 10);
         Network_SetDayBrightness(next);
         DisplayMatrix_SetBrightness(next);
-    } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_LONG_PRESS) {
+    } else if (s_currentApp != APP_TIMER && Buttons_GetEvent(BTN_ID_OK) == BTN_LONG_PRESS) {
         Buzzer_Alert();
         s_autoRotate = !s_autoRotate;
         Network_SetAutoRotate(s_autoRotate);
@@ -569,41 +614,46 @@ void loop() {
     }
 
     if (Network_GetAutoRotate() && (now - s_lastAppSwitch >= rotateMs)) {
-        s_lastAppSwitch = now;
-
-        if (s_showingCustomApp) {
-            uint8_t nextIdx = s_customAppIdx + 1;
-            if (nextIdx >= customCount) {
-                switchToScreen(s_currentApp, false, 0);
-            } else {
-                switchToScreen(s_currentApp, true, nextIdx);
-            }
+        if (s_currentApp == APP_TIMER && Timer_GetState() == TIMER_STATE_RUNNING) {
+            // Keep showing active timer, do not rotate away
+            s_lastAppSwitch = now;
         } else {
-            uint8_t mask = Network_GetCarouselMask();
-            if (mask == 0) mask = 0x01; // Default to at least Clock
-            const uint8_t* order = Network_GetCarouselOrder();
-            int curPos = 0;
-            for (int i = 0; i < APP_COUNT; i++) {
-                if (order[i] == (uint8_t)s_currentApp) {
-                    curPos = i;
-                    break;
+            s_lastAppSwitch = now;
+
+            if (s_showingCustomApp) {
+                uint8_t nextIdx = s_customAppIdx + 1;
+                if (nextIdx >= customCount) {
+                    switchToScreen(s_currentApp, false, 0);
+                } else {
+                    switchToScreen(s_currentApp, true, nextIdx);
                 }
-            }
-            uint8_t nextApp = (uint8_t)s_currentApp;
-            int foundPos = -1;
-            for (int step = 1; step <= APP_COUNT; step++) {
-                int pos = (curPos + step) % APP_COUNT;
-                uint8_t cand = order[pos];
-                if (mask & (1 << cand)) {
-                    nextApp = cand;
-                    foundPos = pos;
-                    break;
-                }
-            }
-            if (foundPos <= curPos && customCount > 0) {
-                switchToScreen(s_currentApp, true, 0);
             } else {
-                switchToScreen((AppMode)nextApp, false, 0);
+                uint8_t mask = Network_GetCarouselMask();
+                if (mask == 0) mask = 0x01; // Default to at least Clock
+                const uint8_t* order = Network_GetCarouselOrder();
+                int curPos = 0;
+                for (int i = 0; i < APP_COUNT; i++) {
+                    if (order[i] == (uint8_t)s_currentApp) {
+                        curPos = i;
+                        break;
+                    }
+                }
+                uint8_t nextApp = (uint8_t)s_currentApp;
+                int foundPos = -1;
+                for (int step = 1; step <= APP_COUNT; step++) {
+                    int pos = (curPos + step) % APP_COUNT;
+                    uint8_t cand = order[pos];
+                    if (mask & (1 << cand)) {
+                        nextApp = cand;
+                        foundPos = pos;
+                        break;
+                    }
+                }
+                if (foundPos <= curPos && customCount > 0) {
+                    switchToScreen(s_currentApp, true, 0);
+                } else {
+                    switchToScreen((AppMode)nextApp, false, 0);
+                }
             }
         }
     }

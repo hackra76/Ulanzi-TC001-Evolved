@@ -8,6 +8,7 @@
 #include "DisplayMatrix.h"
 #include "MqttService.h"
 #include "CustomAppService.h"
+#include "TimerService.h"
 
 static Preferences s_prefs;
 static WebServer s_server(80);
@@ -23,8 +24,8 @@ static IPAddress s_apNetmask(255, 255, 255, 0);
 static bool s_autoRotate = true;
 static uint8_t s_activeApp = 0;
 static uint16_t s_rotateSec = DEFAULT_ROTATE_SEC;
-static uint8_t s_carouselMask = 0x7F; // Bitmask of enabled carousel screens (default: all 7 active)
-static uint8_t s_carouselOrder[7] = {0, 1, 2, 3, 4, 5, 6}; // Screen display sequence
+static uint8_t s_carouselMask = 0xFF; // Bitmask of enabled carousel screens (default: all 8 active)
+static uint8_t s_carouselOrder[8] = {0, 1, 2, 3, 4, 5, 6, 7}; // Screen display sequence
 static uint8_t s_transitionFx = DEFAULT_TRANSITION_FX; // Screen transition animation effect
 static uint8_t s_batteryMode = 2; // 0: Percentage, 1: Voltage, 2: Alternating
 static String s_ytChannel = "";
@@ -905,7 +906,7 @@ input:checked + .actuator-label .actuator-box::after,
 
     <div class="header-actions">
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> v1.5.1
+        <span class="badge-dot"></span> v1.6.0
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1251,6 +1252,35 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
         </tr>
       </table>
+
+      <!-- Stopwatch & Countdown Timer Remote Controller -->
+      <div class="section-legend" data-i18n="grp_timer">&#x23F1; Stopwatch &amp; Countdown Timer Remote</div>
+      <table class="param-table">
+        <tr>
+          <td class="label-cell">
+            <div class="param-name" id="timerModeLabel">COUNTDOWN TIMER</div>
+            <div class="param-desc" id="timerStateLabel">State: Stopped</div>
+          </td>
+          <td>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+              <div id="timerDisplay" style="font-family:var(--font-mono, monospace); font-size:26px; font-weight:800; color:var(--signal-orange); letter-spacing:0.06em;">05:00</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button type="button" class="tactile-btn btn-sm" onclick="apiTimer('toggle')" data-i18n="btn_timer_toggle">&#x25B6; / &#x23F8; Toggle</button>
+                <button type="button" class="tactile-btn btn-sm" onclick="apiTimer('reset')" data-i18n="btn_timer_reset">&#x21BB; Reset</button>
+                <button type="button" class="tactile-btn btn-sm" onclick="switchTimerMode()"><span data-i18n="lbl_timer_mode">Mode:</span> <span id="timerModeBtn">Countdown</span></button>
+              </div>
+            </div>
+            <div style="margin-top:10px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="font-size:10px; font-weight:700; color:var(--ink-muted); text-transform:uppercase;">PRESETS:</span>
+              <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(60)">1m</button>
+              <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(180)">3m</button>
+              <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(300)">5m</button>
+              <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(600)">10m</button>
+              <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(1500)">25m (Pomodoro)</button>
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <!-- PANEL 02: CAROUSEL & SCREENS -->
@@ -1311,13 +1341,14 @@ input:checked + .actuator-label .actuator-box::after,
               <option value="4"  data-i18n="app_name_4">YouTube Subscriber Count</option>
               <option value="5"  data-i18n="app_name_5">Live Airspace Radar (ADS-B)</option>
               <option value="6"  data-i18n="app_name_6">Battery &amp; Energy Telemetry</option>
+              <option value="7"  data-i18n="app_name_7">Stopwatch &amp; Countdown Timer</option>
             </select>
           </td>
         </tr>
       </table>
 
       <div class="section-legend" data-i18n="lbl_carousel_screens">Active Rotation Sequence (Check to Enable &bull; Use &#x25B2;&#x25BC; to Reorder)</div>
-      <input type="hidden" id="car_ord" name="car_ord" value="0,1,2,3,4,5,6">
+      <input type="hidden" id="car_ord" name="car_ord" value="0,1,2,3,4,5,6,7">
       <div class="reorder-list" id="carouselScreens">
         
       </div>
@@ -1585,7 +1616,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.5.1</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.6.0</strong>
     </div>
 
     <table class="param-table">
@@ -1623,7 +1654,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT</div>
-    <div>FIRMWARE v1.5.1 &bull; NVS ARMED</div>
+    <div>FIRMWARE v1.6.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -1704,6 +1735,11 @@ const I18N = {
     app_name_4: "YouTube Subscriber Count",
     app_name_5: "Live Airspace Radar (ADS-B)",
     app_name_6: "Battery & Energy Telemetry",
+    app_name_7: "Stopwatch & Countdown Timer",
+    grp_timer: "Stopwatch & Countdown Timer Remote",
+    btn_timer_toggle: "Toggle (Start/Pause)",
+    btn_timer_reset: "Reset",
+    lbl_timer_mode: "Mode:",
     lbl_carousel_screens: "Active Rotation Sequence (Check to Enable \u2022 Use \u25B2\u25BC to Reorder)",
     sub_battery: "Battery Telemetry Format",
     lbl_bat_mode: "Battery Display Format",
@@ -1821,6 +1857,11 @@ const I18N = {
     app_name_4: "Po\u010D\u00EDtadlom YouTube odberate\u013Eov",
     app_name_5: "\u017Div\u00FD radar lietadiel (ADS-B)",
     app_name_6: "Stav bat\u00E9rie a nap\u00E1jania",
+    app_name_7: "Stopky a odpo\u010D\u00EDtavanie",
+    grp_timer: "Ovl\u00E1da\u010D stopiek a odpo\u010D\u00EDtavania",
+    btn_timer_toggle: "Spusti\u0165 / Pozastavi\u0165",
+    btn_timer_reset: "Vynulova\u0165",
+    lbl_timer_mode: "Re\u017Eim:",
     lbl_carousel_screens: "Akt\u00EDvna rot\u00E1cia (za\u0161krtnite pre zapnutie \u2022 \u25B2\u25BC pre poradie)",
     sub_battery: "Telemetria bat\u00E9rie a nap\u00E1jania",
     lbl_bat_mode: "Form\u00E1t zobrazenia bat\u00E9rie",
@@ -2015,10 +2056,10 @@ function installCloudOta(url) {
 }
 
 let currentAppIndex = 0;
-const appNames = ["Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery"];
+const appNames = ["Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery", "Timer"];
 
 function switchScreen(dir) {
-  currentAppIndex = (currentAppIndex + dir + 7) % 7;
+  currentAppIndex = (currentAppIndex + dir + 8) % 8;
   fetch('/api/screen?set=' + currentAppIndex)
     .then(r => r.json())
     .then(d => {
@@ -2127,10 +2168,10 @@ function buildCarouselReorder(orderStr, mask) {
   const appNames = [
     '&#x23F0; CLOCK', '&#x1F321; INDOOR TEMP', '&#x26C5; OUTDOOR METEO',
     '&#x1F4B0; CRYPTO &amp; MARKETS', '&#x25B6; YOUTUBE', '&#x2708; AIRSPACE RADAR',
-    '&#x26A1; BATTERY &amp; ENERGY'
+    '&#x26A1; BATTERY &amp; ENERGY', '&#x23F1; STOPWATCH &amp; TIMER'
   ];
-  let order = (orderStr || '').split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0 && n < 7);
-  for (let i = 0; i < 7; i++) {
+  let order = (orderStr || '').split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0 && n < 8);
+  for (let i = 0; i < 8; i++) {
     if (!order.includes(i)) order.push(i);
   }
   container.innerHTML = '';
@@ -2155,6 +2196,52 @@ function buildCarouselReorder(orderStr, mask) {
   updateOrderInput();
 }
 
+function apiTimer(action, extraParams = '') {
+  let url = '/api/timer?action=' + action + (extraParams ? '&' + extraParams : '');
+  fetch(url, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => updateTimerUI(d))
+    .catch(() => {});
+}
+
+function switchTimerMode() {
+  const currentMode = document.getElementById('timerModeBtn').innerText.toLowerCase();
+  const nextMode = (currentMode === 'countdown') ? 'stopwatch' : 'countdown';
+  apiTimer('reset', 'mode=' + nextMode);
+}
+
+function setTimerSec(sec) {
+  apiTimer('reset', 'mode=countdown&duration=' + sec);
+}
+
+function updateTimerUI(d) {
+  if (!d) return;
+  const isStopwatch = (d.timer_mode === 'stopwatch' || d.mode === 'stopwatch');
+  const modeLabel = document.getElementById('timerModeLabel');
+  if (modeLabel) modeLabel.innerText = isStopwatch ? 'STOPWATCH' : 'COUNTDOWN TIMER';
+  const modeBtn = document.getElementById('timerModeBtn');
+  if (modeBtn) modeBtn.innerText = isStopwatch ? 'Stopwatch' : 'Countdown';
+  let m = 0, s = 0, tenths = 0;
+  if (isStopwatch) {
+    const ms = (d.timer_elapsed_ms != null) ? d.timer_elapsed_ms : (d.elapsed_ms || 0);
+    m = Math.floor(ms / 60000);
+    s = Math.floor((ms % 60000) / 1000);
+    tenths = Math.floor((ms % 1000) / 100);
+    const disp = document.getElementById('timerDisplay');
+    if (disp) disp.innerText = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + tenths;
+  } else {
+    const rem = (d.timer_remaining != null) ? d.timer_remaining :
+                ((d.remaining != null) ? d.remaining : (d.timer_duration || d.duration || 300));
+    m = Math.floor(rem / 60);
+    s = rem % 60;
+    const disp = document.getElementById('timerDisplay');
+    if (disp) disp.innerText = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+  const stateStr = d.timer_state || d.state || 'stopped';
+  const stateLabel = document.getElementById('timerStateLabel');
+  if (stateLabel) stateLabel.innerText = 'State: ' + stateStr.toUpperCase();
+}
+
 function updateTelemetry() {
   fetch('/status')
     .then(r => r.json())
@@ -2173,6 +2260,9 @@ function updateTelemetry() {
       }
       if (d.rssi != null && d.rssi !== 0) {
         document.getElementById('teleRssi').innerText = d.rssi;
+      }
+      if (d.timer_mode != null) {
+        updateTimerUI(d);
       }
       const dMqtt = document.getElementById('diodeMqtt');
       if (dMqtt) {
@@ -2387,7 +2477,7 @@ static void handleSave() {
         Network_SetCarouselOrderString(s_server.arg("car_ord"));
     }
     uint8_t carMask = 0;
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 8; i++) {
         char argName[16];
         snprintf(argName, sizeof(argName), "car_app_%d", i);
         if (s_server.hasArg(argName)) {
@@ -2403,7 +2493,7 @@ static void handleSave() {
 
     if (s_server.hasArg("active_app")) {
         int app = s_server.arg("active_app").toInt();
-        if (app >= 0 && app < 7) {
+        if (app >= 0 && app < 8) {
             Network_SetActiveApp((uint8_t)app);
         }
     }
@@ -2590,6 +2680,15 @@ static void handleStatus() {
     doc["yt_subscribers"] = YouTube_GetFormattedSubs();
     doc["mqtt_connected"] = MqttService_IsConnected();
 
+    // Timer & Stopwatch telemetry
+    doc["timer_mode"] = (Timer_GetMode() == TIMER_MODE_STOPWATCH) ? "stopwatch" : "countdown";
+    doc["timer_state"] = (Timer_GetState() == TIMER_STATE_RUNNING) ? "running" :
+                         (Timer_GetState() == TIMER_STATE_PAUSED) ? "paused" :
+                         (Timer_GetState() == TIMER_STATE_EXPIRED) ? "expired" : "stopped";
+    doc["timer_duration"] = Timer_GetDuration();
+    doc["timer_remaining"] = Timer_GetRemainingSeconds();
+    doc["timer_elapsed_ms"] = Timer_GetElapsedMillis();
+
     String out;
     serializeJson(doc, out);
     s_server.send(200, "application/json", out);
@@ -2609,15 +2708,15 @@ void Network_Init() {
     s_pass = s_prefs.getString(PREF_KEY_PASS, "");
     s_autoRotate = s_prefs.getBool(PREF_KEY_AUTO_ROTATE, true);
     s_activeApp = (uint8_t)s_prefs.getUChar(PREF_KEY_ACTIVE_APP, 0);
-    if (s_activeApp >= 7) s_activeApp = 0;
+    if (s_activeApp >= 8) s_activeApp = 0;
     s_rotateSec = (uint16_t)s_prefs.getUInt(PREF_KEY_ROTATE_SEC, DEFAULT_ROTATE_SEC);
     if (s_rotateSec < MIN_ROTATE_SEC || s_rotateSec > MAX_ROTATE_SEC) {
         s_rotateSec = DEFAULT_ROTATE_SEC;
     }
-    s_carouselMask = (uint8_t)s_prefs.getUChar(PREF_KEY_CAROUSEL_MASK, 0x7F);
-    if (s_carouselMask == 0) s_carouselMask = 0x7F;
+    s_carouselMask = (uint8_t)s_prefs.getUChar(PREF_KEY_CAROUSEL_MASK, 0xFF);
+    if (s_carouselMask == 0) s_carouselMask = 0xFF;
 
-    String savedOrder = s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6");
+    String savedOrder = s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6,7");
     Network_SetCarouselOrderString(savedOrder);
     s_transitionFx = (uint8_t)s_prefs.getUChar(PREF_KEY_TRANSITION_FX, DEFAULT_TRANSITION_FX);
     if (s_transitionFx > 7) s_transitionFx = DEFAULT_TRANSITION_FX;
@@ -2705,7 +2804,7 @@ void Network_Init() {
         }
         if (s_server.hasArg("set")) {
             int app = s_server.arg("set").toInt();
-            if (app >= 0 && app < 7) {
+            if (app >= 0 && app < 8) {
                 Network_SetActiveApp((uint8_t)app);
                 if (!s_server.hasArg("auto")) {
                     Network_SetAutoRotate(false);
@@ -2717,13 +2816,60 @@ void Network_Init() {
         doc["auto_rotate"] = Network_GetAutoRotate();
         static const char* kNames[] = {
             "Clock", "Indoor Environment", "Outdoor Weather",
-            "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power"
+            "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power",
+            "Stopwatch & Timer"
         };
-        doc["app_name"] = kNames[Network_GetActiveApp() % 7];
+        doc["app_name"] = kNames[Network_GetActiveApp() % 8];
         String out;
         serializeJson(doc, out);
         s_server.send(200, "application/json", out);
     });
+
+    // Stopwatch & Countdown Timer REST API
+    auto handleTimerApi = []() {
+        if (s_server.hasArg("mode")) {
+            String m = s_server.arg("mode");
+            m.toLowerCase();
+            if (m == "stopwatch" || m == "0") {
+                Timer_SetMode(TIMER_MODE_STOPWATCH);
+            } else if (m == "countdown" || m == "timer" || m == "1") {
+                Timer_SetMode(TIMER_MODE_COUNTDOWN);
+            }
+        }
+        if (s_server.hasArg("duration")) {
+            uint32_t dur = (uint32_t)s_server.arg("duration").toInt();
+            if (dur > 0) {
+                Timer_SetDuration(dur);
+            }
+        }
+        if (s_server.hasArg("action")) {
+            String act = s_server.arg("action");
+            act.toLowerCase();
+            if (act == "start") {
+                Timer_Start();
+            } else if (act == "pause") {
+                Timer_Pause();
+            } else if (act == "toggle") {
+                Timer_Toggle();
+            } else if (act == "reset") {
+                Timer_Reset();
+            }
+        }
+        JsonDocument doc;
+        doc["mode"] = (Timer_GetMode() == TIMER_MODE_STOPWATCH) ? "stopwatch" : "countdown";
+        doc["state"] = (Timer_GetState() == TIMER_STATE_RUNNING) ? "running" :
+                       (Timer_GetState() == TIMER_STATE_PAUSED) ? "paused" :
+                       (Timer_GetState() == TIMER_STATE_EXPIRED) ? "expired" : "stopped";
+        doc["duration"] = Timer_GetDuration();
+        doc["remaining"] = Timer_GetRemainingSeconds();
+        doc["elapsed_ms"] = Timer_GetElapsedMillis();
+        String out;
+        serializeJson(doc, out);
+        s_server.send(200, "application/json", out);
+    };
+
+    s_server.on("/api/timer", HTTP_GET, handleTimerApi);
+    s_server.on("/api/timer", HTTP_POST, handleTimerApi);
 
     // Custom App & Notification REST Push API
     s_server.on("/api/custom", HTTP_GET, []() {
@@ -3171,12 +3317,12 @@ void Network_SetTextAlign(uint8_t align) {
 
 uint8_t Network_GetCarouselMask() { return s_carouselMask; }
 void Network_SetCarouselMask(uint8_t mask) {
-    s_carouselMask = (mask == 0) ? 0x01 : (mask & 0x7F);
+    s_carouselMask = (mask == 0) ? 0x01 : mask;
     s_prefs.putUChar(PREF_KEY_CAROUSEL_MASK, s_carouselMask);
 }
 
 bool Network_IsAppInCarousel(uint8_t appIndex) {
-    if (appIndex >= 7) return false;
+    if (appIndex >= 8) return false;
     return (s_carouselMask & (1 << appIndex)) != 0;
 }
 
@@ -3202,7 +3348,7 @@ const uint8_t* Network_GetCarouselOrder() {
 
 String Network_GetCarouselOrderString() {
     String res = "";
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 8; i++) {
         if (i > 0) res += ",";
         res += String(s_carouselOrder[i]);
     }
@@ -3212,28 +3358,28 @@ String Network_GetCarouselOrderString() {
 void Network_SetCarouselOrderString(const String& str) {
     int idx = 0;
     int start = 0;
-    bool seen[7] = {false};
-    uint8_t newOrder[7];
+    bool seen[8] = {false};
+    uint8_t newOrder[8];
     
-    while (idx < 7 && start < (int)str.length()) {
+    while (idx < 8 && start < (int)str.length()) {
         int comma = str.indexOf(',', start);
         String token = (comma == -1) ? str.substring(start) : str.substring(start, comma);
         token.trim();
         int val = token.toInt();
-        if (val >= 0 && val < 7 && !seen[val]) {
+        if (val >= 0 && val < 8 && !seen[val]) {
             newOrder[idx++] = (uint8_t)val;
             seen[val] = true;
         }
         if (comma == -1) break;
         start = comma + 1;
     }
-    for (int i = 0; i < 7; i++) {
-        if (!seen[i] && idx < 7) {
+    for (int i = 0; i < 8; i++) {
+        if (!seen[i] && idx < 8) {
             newOrder[idx++] = (uint8_t)i;
             seen[i] = true;
         }
     }
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 8; i++) {
         s_carouselOrder[i] = newOrder[i];
     }
     s_prefs.putString(PREF_KEY_CAROUSEL_ORDER, Network_GetCarouselOrderString());

@@ -26,6 +26,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
 | **Obrazovka 4: YouTube štatistiky** | <img src="docs/media/screen_4_youtube.png" width="340" alt="Obrazovka YouTube odberateľov"> | Živé počítadlo odberateľov YouTube kanála s prepracovanou vycentrovanou bielou ikonou prehrávača cez Google Data API v3. |
 | **Obrazovka 5: Živý letecký radar** | <img src="docs/media/screen_5_airspace.png" width="340" alt="Obrazovka leteckého radaru"> | Sledovanie prelietavajúcich lietadiel v reálnom čase (ADS-B) cez OpenSky Network v okruhu ~50 km s tyrkysovou ikonou lietadla. |
 | **Obrazovka 6: Telemetria batérie** | <img src="docs/media/screen_6_battery.png" width="340" alt="Obrazovka telemetrie batérie"> | Výrazná neónovo žltá/biela ikona blesku s voliteľným režimom: Percentá (`93%`), Napätie (`4.12V`) alebo Striedanie. |
+| **Obrazovka 7: Stopky a Odpočítavanie** | <img src="docs/media/screen_7_timer.png" width="340" alt="Obrazovka stopiek a časovača"> | Dvojitý chronometer (Stopky s desatinami sekundy a Odpočítavanie so zvukovým alarmom, dynamickým progress barom a stavovým odznakom). |
 | **Vlastná aplikácia: Spotify & Notifikácie** | <img src="docs/media/screen_custom_spotify.png" width="340" alt="Obrazovka Spotify a vlastných aplikácií"> | Dynamické MQTT / REST push API so zelenou ikonou Spotify, plynule rolujúcim názvom skladby a spodným ukazovateľom priebehu (progress bar). |
 
 ---
@@ -38,7 +39,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
   - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.5.1 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.6.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
   - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI) a bleskovým ukladaním cez AJAX.
 - **📺 Živý stream displeja & Virtuálna matica:**
@@ -111,6 +112,12 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - **Čistá typografia bez kolízií**: Text sa posúva na riadkoch 0–6 pri aktívnom progress bare na riadku 7 bez prekrývania.
   - **Pripnuté ikony**: Ľavá ikona zostáva fixne na vrchu s vyčistenými stĺpcami 0–8, takže rolujúci text plynule mizne za ňou.
   - **🚨 Prioritné notifikácie**: Okamžité výstrahy cez `POST /api/notify` alebo `<prefix>/notify`, ktoré prerušia aktívnu obrazovku so zvukovým signálom a po skončení vrátia pôvodný obsah.
+- **⏱️ Presné Stopky a Odpočítavanie času:**
+  - **Dvojitý režim (Dual Engine)**: Plnohodnotné Stopky (meranie času `MM:SS.t` s desatinami sekundy) a Odpočítavanie (`MM:SS` s dynamickým spodným progress barom a stavovým odznakom).
+  - **Akustický a vizuálny alarm**: Pulzujúci 2.4 kHz piezo bzučiak a blikajúci zvonček na matici po vypršaní času, okamžite vypnuteľný stlačením ľubovoľného tlačidla.
+  - **Zámok rotácie obrazoviek (Carousel Lock)**: Automatický kolotoč obrazoviek sa automaticky pozastaví počas behu stopiek alebo odpočítavania, aby sa obrazovka svojvoľne neprepla.
+  - **Taktilný ovládač vo Webovom portáli**: Interaktívny ovládací panel vo webovom rozhraní s rýchlymi predvoľbami (1m, 3m, 5m, 10m, 15m), prepínačom režimu a živým zrkadlením stavu.
+  - **Vzdialené REST API**: Plné ovládanie cez `GET /api/timer` alebo `POST /api/timer` (`action=start|pause|toggle|reset`, `mode=stopwatch|countdown`, `duration=<sekundy>`).
 - **🔄 Duálny Over-The-Air (OTA) aktualizačný systém:**
   - Priame nahrávanie `.bin` súboru priamo z webového prehliadača cez `/update` s ukazovateľom priebehu v percentách.
   - 1-Klik aktualizácia priamo z GitHub Releases (`/api/ota/check`, `/api/ota/install`).
@@ -124,8 +131,13 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
 |---|---|---|
 | **Vľavo** (GPIO 26) | Krátke stlačenie | Prepnutie na predchádzajúcu obrazovku podľa vlastného poradia (pozastaví rotáciu) |
 | **Vpravo** (GPIO 14) | Krátke stlačenie | Prepnutie na nasledujúcu obrazovku podľa vlastného poradia (pozastaví rotáciu) |
-| **OK / Stred** (GPIO 27) | Krátke stlačenie | Cyklická zmena manuálneho jasu (Nízky / Stredný / Vysoký) |
-| **OK / Stred** (GPIO 27) | Dlhé stlačenie (>700ms) | Zapnutie / vypnutie automatického kolotoča obrazoviek |
+| **OK / Stred** (GPIO 27) | Krátke stlačenie | Cyklická zmena manuálneho jasu (Nízky / Stredný / Vysoký) *(mimo obrazovky časovača)* |
+| **OK / Stred** (GPIO 27) | Dlhé stlačenie (>700ms) | Zapnutie / vypnutie automatického kolotoča obrazoviek *(mimo obrazovky časovača)* |
+| **OK / Stred** (Obrazovka časovača) | Krátke stlačenie | Spustenie / Pozastavenie (Toggle) stopiek alebo odpočítavania |
+| **OK / Stred** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Vynulovanie (Reset pri behu/pozastavení) / Prepnutie režimu Stopky/Odpočítavanie (pri zastavení) |
+| **Vľavo** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Skrátenie času odpočítavania o -1 minútu (pri zastavenom stave) |
+| **Vpravo** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Predĺženie času odpočítavania o +1 minútu (pri zastavenom stave) |
+| **Ľubovoľné tlačidlo** | Stlačenie pri zvonení alarmu | Okamžité stíšenie a vypnutie alarmu odpočítavania |
 | **Ľubovoľné tlačidlo** | Stlačenie v nočnom režime | Dočasné prebudenie displeja na 12 sekúnd na denný jas |
 
 ---

@@ -8,7 +8,7 @@ It features a precision **Tactile Field Instrument** industrial design system (i
 
 ## Top Navigation & Language Switcher
 
-- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.5.1 • GitHub`) linking directly to the project GitHub repository.
+- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.6.0 • GitHub`) linking directly to the project GitHub repository.
 - **Multilingual Support (EN / SK)**: Switch between English and Slovak with a single click. The choice is saved immediately in client-side `localStorage` and synchronized with device NVS (`ui_lang`).
 
 ---
@@ -66,6 +66,11 @@ It features a precision **Tactile Field Instrument** industrial design system (i
   - `Alternating`: Cycles between Percentage (e.g. `93%`) and Voltage (e.g. `4.12V`) every 3 seconds.
   - `Percentage Only`: Displays state of charge (e.g. `93%`).
   - `Voltage Only`: Displays cell voltage (e.g. `4.12V`).
+- **Stopwatch & Countdown Timer Remote**:
+  - Interactive tactile deck reflecting live state and time.
+  - `Toggle (Start/Pause)` and `Reset` pushbuttons with tactile feedback.
+  - Mode switch between Stopwatch and Countdown.
+  - Quick-preset timer duration buttons (1m, 3m, 5m, 10m, 15m) for instant single-click countdowns.
 
 ---
 

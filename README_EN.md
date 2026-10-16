@@ -26,6 +26,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
 | **Screen 4: YouTube Analytics** | <img src="docs/media/screen_4_youtube.png" width="340" alt="YouTube Subscriber Counter Screen"> | Live channel subscriber counter with redesigned centered play button icon via Google Data API v3. |
 | **Screen 5: Live Airspace Radar** | <img src="docs/media/screen_5_airspace.png" width="340" alt="Airspace Radar Screen"> | Real-time overhead flight tracking (ADS-B) via OpenSky Network within ~50km radius with cyan plane icon. |
 | **Screen 6: Battery & Energy Telemetry** | <img src="docs/media/screen_6_battery.png" width="340" alt="Battery Telemetry Screen"> | Distinctive neon yellow/white glowing lightning bolt with Percentage, Voltage, or Alternating display modes. |
+| **Screen 7: Stopwatch & Countdown Timer** | <img src="docs/media/screen_7_timer.png" width="340" alt="Stopwatch & Timer Screen"> | Dual-mode chronometer (Stopwatch with tenths of seconds & Countdown with acoustic alarm, dynamic bottom progress bar, and state badge). |
 | **Custom App: Spotify & Push Alerts** | <img src="docs/media/screen_custom_spotify.png" width="340" alt="Spotify and Custom App Screen"> | Dynamic MQTT / REST push API with Spotify green icon, smooth scrolling track ticker, and bottom progress bar. |
 
 ---
@@ -38,7 +39,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
   - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v1.5.1 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v1.6.0 • GitHub`) linking directly to the latest releases and source code.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
   - Non-blocking Wi-Fi credential scanner with signal strength indicators and AJAX instant save.
 - **📺 Live Display Stream & Virtual Matrix:**
@@ -111,6 +112,12 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - **Clean Typography & Layout**: Text rendered at rows 0–6 when progress bar is active at row 7, eliminating vertical collisions.
   - **Pinned Icons**: Left icon is pinned with columns 0–8 masked so marquee text scrolls cleanly behind the icon without pixel bleeding.
   - **🚨 High-Priority Notifications**: Push instant alerts via `POST /api/notify` or `<prefix>/notify` that interrupt the active screen with buzzer chime and auto-dismiss back to the carousel.
+- **⏱️ Precision Stopwatch & Countdown Timer:**
+  - **Dual Chronometer Engine**: Full-featured Stopwatch (counts up `MM:SS.t` with tenths of seconds) and Countdown Timer (`MM:SS` with real-time bottom progress bar and state badge).
+  - **Acoustic & Visual Alarm**: Pulsing 2.4 kHz piezo buzzer chime and flashing matrix bell alarm upon timer expiration, instantly dismissible with any physical button press.
+  - **Carousel Pinning**: Auto-rotation automatically locks in place while the timer is actively running, preventing the display from rotating away.
+  - **Tactile Web Portal Remote**: Interactive chronometer control deck in the Web Portal with quick duration buttons (1m, 3m, 5m, 10m, 15m), mode switcher, and live state reflection.
+  - **Remote REST API**: Remote automation via `GET /api/timer` or `POST /api/timer` (`action=start|pause|toggle|reset`, `mode=stopwatch|countdown`, `duration=<sec>`).
 - **🔄 Dual Over-The-Air (OTA) Updates:**
   - Direct web browser `.bin` binary upload (`/update`) with real-time percentage progress bar.
   - 1-Click cloud updates from GitHub Releases (`/api/ota/check`, `/api/ota/install`).
@@ -124,8 +131,13 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
 |---|---|---|
 | **Left** (GPIO 26) | Short Click | Switch to Previous Screen along custom order (pauses carousel) |
 | **Right** (GPIO 14) | Short Click | Switch to Next Screen along custom order (pauses carousel) |
-| **OK / Center** (GPIO 27) | Short Click | Cycle Manual Brightness (Low / Med / High) |
-| **OK / Center** (GPIO 27) | Long Press (>700ms) | Toggle Auto-Rotation Carousel On/Off |
+| **OK / Center** (GPIO 27) | Short Click | Cycle Manual Brightness (Low / Med / High) *(when not on Timer screen)* |
+| **OK / Center** (GPIO 27) | Long Press (>700ms) | Toggle Auto-Rotation Carousel On/Off *(when not on Timer screen)* |
+| **OK / Center** (Timer Screen) | Short Click | Start / Pause (Toggle) Stopwatch or Countdown Timer |
+| **OK / Center** (Timer Screen) | Long Press (>700ms) | Reset Timer (if running/paused) / Switch between Stopwatch & Countdown (if stopped) |
+| **Left** (Timer Screen) | Long Press (>700ms) | Adjust Countdown Duration -1 minute (when stopped/paused) |
+| **Right** (Timer Screen) | Long Press (>700ms) | Adjust Countdown Duration +1 minute (when stopped/paused) |
+| **Any Button** | Click (during Timer Alarm) | Instantly silence and dismiss countdown alarm |
 | **Any Button** | Click (in Night Mode) | Temporarily wake display at Day Brightness for 12s |
 
 ---
