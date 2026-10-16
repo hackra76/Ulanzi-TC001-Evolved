@@ -323,6 +323,46 @@ header.machinery-bar {
   background: var(--chassis-hover);
   border-color: var(--signal-orange);
 }
+.coffee-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFDD00;
+  background: var(--chassis-well);
+  border: 1px solid var(--hairline-bright);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: all 0.1s;
+}
+.coffee-badge:hover {
+  background: var(--chassis-hover);
+  border-color: #FFDD00;
+  color: #FFE640;
+}
+.footer-coffee-link {
+  color: #FFDD00;
+  text-decoration: none;
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+.footer-coffee-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+/* Buy Me a Coffee Widget Overrides against Global 0px Border-Radius */
+#bmc-wbtn {
+  border-radius: 50% !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4) !important;
+}
+#bmc-close-btn {
+  border-radius: 50% !important;
+}
+#bmc-iframe {
+  border-radius: 8px !important;
+}
 .badge-dot {
   width: 5px;
   height: 5px;
@@ -906,8 +946,12 @@ input:checked + .actuator-label .actuator-box::after,
     </div>
 
     <div class="header-actions">
+      <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="coffee-badge" onclick="openBmc(event)" title="Buy Me a Coffee (@hackra)">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="M20.216 6.415l-.132-.666c-.119-.597-.384-1.144-.766-1.583-.564-.647-1.355-.985-2.288-.985H4.07c-.477 0-.917.184-1.25.518-.337.338-.52.782-.516 1.25.045 5.344.408 10.22 1.077 14.502.585 3.738 2.658 5.464 6.16 5.464 3.513 0 5.586-1.726 6.171-5.464.444-2.836.733-5.99.883-9.452.484-.047.935-.187 1.309-.434.577-.381.94-.972 1.022-1.666l.006-.051c.074-.593-.053-1.182-.366-1.668-.31-.482-.78-.813-1.32-.931l-.38-.083zm-2.846-1.815c.571 0 1.05.195 1.385.579.222.255.374.571.442.915l.094.475c-.65.178-1.353.284-2.1.317l-.208-1.84c.129-.278.267-.446.387-.446zm-2.903 16.985c-.482 3.08-2.094 4.38-5.018 4.38-2.934 0-4.545-1.3-5.027-4.38-.636-4.07-.985-8.73-1.03-13.88h12.11c-.13 4.254-.42 8.784-1.035 13.88z"/></svg>
+        <span>COFFEE</span>
+      </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> v1.7.0
+        <span class="badge-dot"></span> v1.8.0
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1655,7 +1699,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.7.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.8.0</strong>
     </div>
 
     <table class="param-table">
@@ -1692,8 +1736,8 @@ input:checked + .actuator-label .actuator-box::after,
 
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
-    <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT</div>
-    <div>FIRMWARE v1.7.0 &bull; NVS ARMED</div>
+    <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
+    <div>FIRMWARE v1.8.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -2416,7 +2460,16 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
   try { savedPlate = localStorage.getItem('tc001_plate') || 'clock'; } catch(e){}
   switchPlate(savedPlate);
 })();
+
+function openBmc(e) {
+  var btn = document.getElementById('bmc-wbtn');
+  if (btn) {
+    if (e && e.preventDefault) e.preventDefault();
+    btn.click();
+  }
+}
 </script>
+<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="hackra" data-description="Support me on Buy me a coffee!" data-message="" data-color="#FFDD00" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 </body>
 </html>
 )rawliteral";

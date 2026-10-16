@@ -9,6 +9,8 @@ Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Cl
 
 🌐 **Languages:** [English (Default)](README.md) • [English Mirror](README_EN.md) • [Slovenčina](README_SK.md)
 
+<a href="https://buymeacoffee.com/hackra" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 48px !important;width: 174px !important;" ></a>
+
 ---
 
 ## 🖥️ Screen Gallery & Display Capabilities
@@ -40,7 +42,8 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
   - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v1.7.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v1.8.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
   - Non-blocking Wi-Fi credential scanner with signal strength indicators and AJAX instant save.
 - **📺 Live Display Stream & Virtual Matrix:**
