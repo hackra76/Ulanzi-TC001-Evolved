@@ -9,6 +9,7 @@
 #include "MqttService.h"
 #include "CustomAppService.h"
 #include "TimerService.h"
+#include "ScreensaverService.h"
 
 static Preferences s_prefs;
 static WebServer s_server(80);
@@ -24,8 +25,8 @@ static IPAddress s_apNetmask(255, 255, 255, 0);
 static bool s_autoRotate = true;
 static uint8_t s_activeApp = 0;
 static uint16_t s_rotateSec = DEFAULT_ROTATE_SEC;
-static uint8_t s_carouselMask = 0xFF; // Bitmask of enabled carousel screens (default: all 8 active)
-static uint8_t s_carouselOrder[8] = {0, 1, 2, 3, 4, 5, 6, 7}; // Screen display sequence
+static uint16_t s_carouselMask = 0x1FF; // Bitmask of enabled carousel screens (default: all 9 active)
+static uint8_t s_carouselOrder[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8}; // Screen display sequence
 static uint8_t s_transitionFx = DEFAULT_TRANSITION_FX; // Screen transition animation effect
 static uint8_t s_batteryMode = 2; // 0: Percentage, 1: Voltage, 2: Alternating
 static String s_ytChannel = "";
@@ -1342,13 +1343,14 @@ input:checked + .actuator-label .actuator-box::after,
               <option value="5"  data-i18n="app_name_5">Live Airspace Radar (ADS-B)</option>
               <option value="6"  data-i18n="app_name_6">Battery &amp; Energy Telemetry</option>
               <option value="7"  data-i18n="app_name_7">Stopwatch &amp; Countdown Timer</option>
+              <option value="8"  data-i18n="app_name_8">Retro Ambient Screensaver</option>
             </select>
           </td>
         </tr>
       </table>
 
       <div class="section-legend" data-i18n="lbl_carousel_screens">Active Rotation Sequence (Check to Enable &bull; Use &#x25B2;&#x25BC; to Reorder)</div>
-      <input type="hidden" id="car_ord" name="car_ord" value="0,1,2,3,4,5,6,7">
+      <input type="hidden" id="car_ord" name="car_ord" value="0,1,2,3,4,5,6,7,8">
       <div class="reorder-list" id="carouselScreens">
         
       </div>
@@ -1365,6 +1367,43 @@ input:checked + .actuator-label .actuator-box::after,
               <option value="2"  data-i18n="opt_bat_alt">Alternating (Percentage &bull; Voltage every 3s)</option>
               <option value="0"  data-i18n="opt_bat_pct">Percentage Only (e.g. 94%)</option>
               <option value="1"  data-i18n="opt_bat_volt">Voltage Only (e.g. 4.12V)</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Retro Ambient Screensaver -->
+      <div class="section-legend" data-i18n="grp_screensaver">&#x1F47E; Retro Ambient Screensaver</div>
+      <table class="param-table">
+        <tr>
+          <td class="label-cell">
+            <div class="param-name" data-i18n="lbl_ss_style">Screensaver Style</div>
+            <div class="param-desc">Zero-heap procedural animation engine</div>
+          </td>
+          <td>
+            <select id="ss_style" name="ss_style">
+              <option value="0" data-i18n="opt_ss_0">Matrix Digital Rain (Cyberpunk Phosphor)</option>
+              <option value="1" data-i18n="opt_ss_1">NeoPixel Fire / Lava (Thermal Simulation)</option>
+              <option value="2" data-i18n="opt_ss_2">Pac-Man &amp; Blinky (80s Arcade Chase)</option>
+              <option value="3" data-i18n="opt_ss_3">Conway's Game of Life (Cellular Automata)</option>
+              <option value="4" data-i18n="opt_ss_4">Dynamic Shuffle (Cycle All Styles)</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-cell">
+            <div class="param-name" data-i18n="lbl_ss_timeout">Idle Inactivity Timeout</div>
+            <div class="param-desc">Activates screensaver after no button activity</div>
+          </td>
+          <td>
+            <select id="ss_time" name="ss_time">
+              <option value="0" data-i18n="opt_ss_to_0">Disabled (Carousel Only)</option>
+              <option value="1">1 Minute</option>
+              <option value="2">2 Minutes</option>
+              <option value="5">5 Minutes</option>
+              <option value="10">10 Minutes</option>
+              <option value="15">15 Minutes</option>
+              <option value="30">30 Minutes</option>
             </select>
           </td>
         </tr>
@@ -1736,6 +1775,16 @@ const I18N = {
     app_name_5: "Live Airspace Radar (ADS-B)",
     app_name_6: "Battery & Energy Telemetry",
     app_name_7: "Stopwatch & Countdown Timer",
+    app_name_8: "Retro Ambient Screensaver",
+    grp_screensaver: "Retro Ambient Screensaver",
+    lbl_ss_style: "Screensaver Visual Style",
+    opt_ss_0: "Matrix Digital Rain (Cyberpunk Phosphor)",
+    opt_ss_1: "NeoPixel Fire / Lava (Thermal Simulation)",
+    opt_ss_2: "Pac-Man & Blinky (80s Arcade Chase)",
+    opt_ss_3: "Conway's Game of Life (Cellular Automata)",
+    opt_ss_4: "Dynamic Shuffle (Cycle All Styles)",
+    lbl_ss_timeout: "Inactivity Auto-Activation Timeout",
+    opt_ss_to_0: "Disabled (Carousel Only)",
     grp_timer: "Stopwatch & Countdown Timer Remote",
     btn_timer_toggle: "Toggle (Start/Pause)",
     btn_timer_reset: "Reset",
@@ -1858,6 +1907,16 @@ const I18N = {
     app_name_5: "\u017Div\u00FD radar lietadiel (ADS-B)",
     app_name_6: "Stav bat\u00E9rie a nap\u00E1jania",
     app_name_7: "Stopky a odpo\u010D\u00EDtavanie",
+    app_name_8: "Retro \u0161etri\u010D obrazovky",
+    grp_screensaver: "Retro \u0161etri\u010D obrazovky",
+    lbl_ss_style: "\u0160t\u00FDl \u0161etri\u010Da obrazovky",
+    opt_ss_0: "Matrix digit\u00E1lny d\u00E1\u017E\u010F (zelen\u00FD fosfor)",
+    opt_ss_1: "Doom ohe\u0148 / term\u00E1lna l\u00E1va",
+    opt_ss_2: "Pac-Man ark\u00E1dov\u00E1 nah\u00E1\u0148a\u010Dka (80. roky)",
+    opt_ss_3: "Conwayova hra \u017Eivota (Game of Life)",
+    opt_ss_4: "Dynamick\u00E9 striedanie \u0161t\u00FDlov",
+    lbl_ss_timeout: "\u010Cas ne\u010Dinnosti pre automatick\u00E9 zapnutie",
+    opt_ss_to_0: "Vypnut\u00E9 (iba v koloto\u010Di)",
     grp_timer: "Ovl\u00E1da\u010D stopiek a odpo\u010D\u00EDtavania",
     btn_timer_toggle: "Spusti\u0165 / Pozastavi\u0165",
     btn_timer_reset: "Vynulova\u0165",
@@ -2056,10 +2115,10 @@ function installCloudOta(url) {
 }
 
 let currentAppIndex = 0;
-const appNames = ["Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery", "Timer"];
+const appNames = ["Clock", "Indoor Temp", "Outdoor Weather", "Crypto", "YouTube", "Airspace", "Battery", "Timer", "Screensaver"];
 
 function switchScreen(dir) {
-  currentAppIndex = (currentAppIndex + dir + 8) % 8;
+  currentAppIndex = (currentAppIndex + dir + 9) % 9;
   fetch('/api/screen?set=' + currentAppIndex)
     .then(r => r.json())
     .then(d => {
@@ -2155,6 +2214,8 @@ function populateConfig(d) {
       if (el) el.value = d.ui_lang;
       setLang(d.ui_lang);
     }
+    if (d.screensaver_style != null) { const el = document.getElementById('ss_style'); if (el) el.value = d.screensaver_style; }
+    if (d.screensaver_timeout != null) { const el = document.getElementById('ss_time'); if (el) el.value = d.screensaver_timeout; }
     if (d.car_ord != null && d.carousel_mask != null) {
       buildCarouselReorder(d.car_ord, d.carousel_mask);
     }
@@ -2168,10 +2229,11 @@ function buildCarouselReorder(orderStr, mask) {
   const appNames = [
     '&#x23F0; CLOCK', '&#x1F321; INDOOR TEMP', '&#x26C5; OUTDOOR METEO',
     '&#x1F4B0; CRYPTO &amp; MARKETS', '&#x25B6; YOUTUBE', '&#x2708; AIRSPACE RADAR',
-    '&#x26A1; BATTERY &amp; ENERGY', '&#x23F1; STOPWATCH &amp; TIMER'
+    '&#x26A1; BATTERY &amp; ENERGY', '&#x23F1; STOPWATCH &amp; TIMER',
+    '&#x1F47E; SCREENSAVER'
   ];
-  let order = (orderStr || '').split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0 && n < 8);
-  for (let i = 0; i < 8; i++) {
+  let order = (orderStr || '').split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0 && n < 9);
+  for (let i = 0; i < 9; i++) {
     if (!order.includes(i)) order.push(i);
   }
   container.innerHTML = '';
@@ -2476,8 +2538,8 @@ static void handleSave() {
     if (s_server.hasArg("car_ord")) {
         Network_SetCarouselOrderString(s_server.arg("car_ord"));
     }
-    uint8_t carMask = 0;
-    for (int i = 0; i < 8; i++) {
+    uint16_t carMask = 0;
+    for (int i = 0; i < 9; i++) {
         char argName[16];
         snprintf(argName, sizeof(argName), "car_app_%d", i);
         if (s_server.hasArg(argName)) {
@@ -2493,8 +2555,21 @@ static void handleSave() {
 
     if (s_server.hasArg("active_app")) {
         int app = s_server.arg("active_app").toInt();
-        if (app >= 0 && app < 8) {
+        if (app >= 0 && app < 9) {
             Network_SetActiveApp((uint8_t)app);
+        }
+    }
+
+    if (s_server.hasArg("ss_style")) {
+        int st = s_server.arg("ss_style").toInt();
+        if (st >= 0 && st < SCREENSAVER_STYLE_COUNT) {
+            Screensaver_SetStyle((ScreensaverStyle)st);
+        }
+    }
+    if (s_server.hasArg("ss_time")) {
+        int to = s_server.arg("ss_time").toInt();
+        if (to >= 0 && to <= 60) {
+            Screensaver_SetTimeoutMin((uint8_t)to);
         }
     }
     if (s_server.hasArg("rotate")) {
@@ -2689,6 +2764,11 @@ static void handleStatus() {
     doc["timer_remaining"] = Timer_GetRemainingSeconds();
     doc["timer_elapsed_ms"] = Timer_GetElapsedMillis();
 
+    // Retro Ambient Screensaver telemetry
+    doc["screensaver_style"] = (int)Screensaver_GetStyle();
+    doc["screensaver_timeout"] = Screensaver_GetTimeoutMin();
+    doc["screensaver_active"] = Screensaver_IsActive();
+
     String out;
     serializeJson(doc, out);
     s_server.send(200, "application/json", out);
@@ -2708,15 +2788,15 @@ void Network_Init() {
     s_pass = s_prefs.getString(PREF_KEY_PASS, "");
     s_autoRotate = s_prefs.getBool(PREF_KEY_AUTO_ROTATE, true);
     s_activeApp = (uint8_t)s_prefs.getUChar(PREF_KEY_ACTIVE_APP, 0);
-    if (s_activeApp >= 8) s_activeApp = 0;
+    if (s_activeApp >= 9) s_activeApp = 0;
     s_rotateSec = (uint16_t)s_prefs.getUInt(PREF_KEY_ROTATE_SEC, DEFAULT_ROTATE_SEC);
     if (s_rotateSec < MIN_ROTATE_SEC || s_rotateSec > MAX_ROTATE_SEC) {
         s_rotateSec = DEFAULT_ROTATE_SEC;
     }
-    s_carouselMask = (uint8_t)s_prefs.getUChar(PREF_KEY_CAROUSEL_MASK, 0xFF);
-    if (s_carouselMask == 0) s_carouselMask = 0xFF;
+    s_carouselMask = s_prefs.getUShort(PREF_KEY_CAROUSEL_MASK, 0x1FF);
+    if (s_carouselMask == 0) s_carouselMask = 0x1FF;
 
-    String savedOrder = s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6,7");
+    String savedOrder = s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6,7,8");
     Network_SetCarouselOrderString(savedOrder);
     s_transitionFx = (uint8_t)s_prefs.getUChar(PREF_KEY_TRANSITION_FX, DEFAULT_TRANSITION_FX);
     if (s_transitionFx > 7) s_transitionFx = DEFAULT_TRANSITION_FX;
@@ -2804,7 +2884,7 @@ void Network_Init() {
         }
         if (s_server.hasArg("set")) {
             int app = s_server.arg("set").toInt();
-            if (app >= 0 && app < 8) {
+            if (app >= 0 && app < 9) {
                 Network_SetActiveApp((uint8_t)app);
                 if (!s_server.hasArg("auto")) {
                     Network_SetAutoRotate(false);
@@ -2817,9 +2897,9 @@ void Network_Init() {
         static const char* kNames[] = {
             "Clock", "Indoor Environment", "Outdoor Weather",
             "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power",
-            "Stopwatch & Timer"
+            "Stopwatch & Timer", "Ambient Screensaver"
         };
-        doc["app_name"] = kNames[Network_GetActiveApp() % 8];
+        doc["app_name"] = kNames[Network_GetActiveApp() % 9];
         String out;
         serializeJson(doc, out);
         s_server.send(200, "application/json", out);
@@ -2870,6 +2950,43 @@ void Network_Init() {
 
     s_server.on("/api/timer", HTTP_GET, handleTimerApi);
     s_server.on("/api/timer", HTTP_POST, handleTimerApi);
+
+    // Retro Ambient Screensaver REST API
+    auto handleScreensaverApi = []() {
+        if (s_server.hasArg("style")) {
+            int st = s_server.arg("style").toInt();
+            if (st >= 0 && st < SCREENSAVER_STYLE_COUNT) {
+                Screensaver_SetStyle((ScreensaverStyle)st);
+            }
+        }
+        if (s_server.hasArg("timeout")) {
+            int to = s_server.arg("timeout").toInt();
+            if (to >= 0 && to <= 60) {
+                Screensaver_SetTimeoutMin((uint8_t)to);
+            }
+        }
+        if (s_server.hasArg("action")) {
+            String act = s_server.arg("action");
+            act.toLowerCase();
+            if (act == "start" || act == "activate") {
+                Screensaver_Activate();
+            } else if (act == "stop" || act == "deactivate" || act == "wake") {
+                Screensaver_Deactivate();
+            }
+        }
+        JsonDocument doc;
+        doc["style"] = (int)Screensaver_GetStyle();
+        doc["active_style"] = (int)Screensaver_GetActiveStyle();
+        doc["timeout"] = Screensaver_GetTimeoutMin();
+        doc["active"] = Screensaver_IsActive();
+        doc["idle_ms"] = Screensaver_GetIdleMs();
+        String out;
+        serializeJson(doc, out);
+        s_server.send(200, "application/json", out);
+    };
+
+    s_server.on("/api/screensaver", HTTP_GET, handleScreensaverApi);
+    s_server.on("/api/screensaver", HTTP_POST, handleScreensaverApi);
 
     // Custom App & Notification REST Push API
     s_server.on("/api/custom", HTTP_GET, []() {
@@ -3315,14 +3432,14 @@ void Network_SetTextAlign(uint8_t align) {
     s_prefs.putUChar(PREF_KEY_TEXT_ALIGN, s_textAlign);
 }
 
-uint8_t Network_GetCarouselMask() { return s_carouselMask; }
-void Network_SetCarouselMask(uint8_t mask) {
-    s_carouselMask = (mask == 0) ? 0x01 : mask;
-    s_prefs.putUChar(PREF_KEY_CAROUSEL_MASK, s_carouselMask);
+uint16_t Network_GetCarouselMask() { return s_carouselMask; }
+void Network_SetCarouselMask(uint16_t mask) {
+    s_carouselMask = (mask == 0) ? 0x01 : (mask & 0x1FF);
+    s_prefs.putUShort(PREF_KEY_CAROUSEL_MASK, s_carouselMask);
 }
 
 bool Network_IsAppInCarousel(uint8_t appIndex) {
-    if (appIndex >= 8) return false;
+    if (appIndex >= 9) return false;
     return (s_carouselMask & (1 << appIndex)) != 0;
 }
 
@@ -3348,7 +3465,7 @@ const uint8_t* Network_GetCarouselOrder() {
 
 String Network_GetCarouselOrderString() {
     String res = "";
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         if (i > 0) res += ",";
         res += String(s_carouselOrder[i]);
     }
@@ -3358,28 +3475,28 @@ String Network_GetCarouselOrderString() {
 void Network_SetCarouselOrderString(const String& str) {
     int idx = 0;
     int start = 0;
-    bool seen[8] = {false};
-    uint8_t newOrder[8];
+    bool seen[9] = {false};
+    uint8_t newOrder[9];
     
-    while (idx < 8 && start < (int)str.length()) {
+    while (idx < 9 && start < (int)str.length()) {
         int comma = str.indexOf(',', start);
         String token = (comma == -1) ? str.substring(start) : str.substring(start, comma);
         token.trim();
         int val = token.toInt();
-        if (val >= 0 && val < 8 && !seen[val]) {
+        if (val >= 0 && val < 9 && !seen[val]) {
             newOrder[idx++] = (uint8_t)val;
             seen[val] = true;
         }
         if (comma == -1) break;
         start = comma + 1;
     }
-    for (int i = 0; i < 8; i++) {
-        if (!seen[i] && idx < 8) {
+    for (int i = 0; i < 9; i++) {
+        if (!seen[i] && idx < 9) {
             newOrder[idx++] = (uint8_t)i;
             seen[i] = true;
         }
     }
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
         s_carouselOrder[i] = newOrder[i];
     }
     s_prefs.putString(PREF_KEY_CAROUSEL_ORDER, Network_GetCarouselOrderString());

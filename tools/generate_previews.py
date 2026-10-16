@@ -121,6 +121,17 @@ ICON_HOURGLASS = [
     C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE, C_ORANGE
 ]
 
+ICON_PACMAN = [
+    0,        0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,
+    0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,
+    C_YELLOW, C_YELLOW, 0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW,
+    C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,        0,
+    C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,        0,        0,
+    C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,        0,
+    0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,
+    0,        0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0
+]
+
 FONT_3X5 = [
     [0x07, 0x05, 0x05, 0x05, 0x07], # 0
     [0x02, 0x06, 0x02, 0x02, 0x07], # 1
@@ -485,7 +496,36 @@ def main():
     img_timer.save("docs/media/screen_7_timer.png")
     print("Saved screen_7_timer.png")
 
-    # 9. Screen Custom: Spotify / Notification
+    # 9. Screen 8: Ambient Screensaver (Matrix Rain / Pac-Man / Fire / Life)
+    m_ss = MatrixScreen()
+    m_ss.draw_pixel(1, 4, C_WHITE)   # Energizer
+    m_ss.draw_pixel(4, 4, C_ORANGE)
+    m_ss.draw_pixel(7, 4, C_ORANGE)
+    m_ss.draw_pixel(10, 4, C_ORANGE)
+    pac_bitmap = [0x1E, 0x3E, 0x3C, 0x30, 0x3C, 0x1E]
+    for r in range(6):
+        row = pac_bitmap[r]
+        for c in range(6):
+            if row & (1 << (5 - c)):
+                m_ss.draw_pixel(13 + c, 1 + r, C_YELLOW)
+    ghost_body = [0x1E, 0x3F, 0x3F, 0x3F, 0x3F, 0x2D]
+    for r in range(6):
+        row = ghost_body[r]
+        for c in range(6):
+            if row & (1 << (5 - c)):
+                px = 23 + c
+                py = 1 + r
+                if r == 1 and (c == 1 or c == 4):
+                    m_ss.draw_pixel(px, py, C_WHITE)
+                elif r == 2 and (c == 2 or c == 5):
+                    m_ss.draw_pixel(px, py, C_BLUE)
+                else:
+                    m_ss.draw_pixel(px, py, C_RED)
+    img_ss = render_device_image(m_ss, "SCREEN 8 // AMBIENT SCREENSAVER", "MATRIX \u2022 FIRE \u2022 PAC-MAN \u2022 LIFE")
+    img_ss.save("docs/media/screen_8_screensaver.png")
+    print("Saved screen_8_screensaver.png")
+
+    # 10. Screen Custom: Spotify / Notification
     m7 = MatrixScreen()
     m7.draw_icon(0, 0, ICON_SPOTIFY)
     m7.draw_small_text(9, 1, "VERIDIS", C_SPOTIFY)
@@ -497,20 +537,20 @@ def main():
     img7.save("docs/media/screen_custom_spotify.png")
     print("Saved screen_custom_spotify.png")
 
-    # 10. Multi-Screen Showcase Grid (9 screens in 3x3 layout)
-    canvas_w = 3 * 760 + 50
-    canvas_h = 3 * 240 + 50
+    # 11. Multi-Screen Showcase Grid (10 screens in 5x2 layout)
+    canvas_w = 5 * 760 + 50
+    canvas_h = 2 * 240 + 50
     grid_img = Image.new("RGBA", (canvas_w, canvas_h), (12, 13, 16, 255))
-    screens = [img0, img1, img2, img3, img4, img5, img6, img_timer, img7]
+    screens = [img0, img1, img2, img3, img4, img5, img6, img_timer, img_ss, img7]
     for idx, s_img in enumerate(screens):
-        row = idx // 3
-        col = idx % 3
+        row = idx // 5
+        col = idx % 5
         x = 20 + col * (760 + 5)
         y = 20 + row * (240 + 5)
         grid_img.alpha_composite(s_img, (x, y))
     
-    # Scale down composite to 1200px width for fast loading in GitHub README
-    comp_w = 1200
+    # Scale down composite to 1500px width for fast loading in GitHub README
+    comp_w = 1500
     comp_h = int(canvas_h * (comp_w / canvas_w))
     showcase = grid_img.resize((comp_w, comp_h), Image.Resampling.LANCZOS)
     showcase.save("docs/media/screens_showcase.png")

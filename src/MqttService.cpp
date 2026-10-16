@@ -28,7 +28,8 @@ static bool s_discoveryPublished = false;
 
 static const char* kScreenNames[] = {
     "Clock", "Indoor Environment", "Outdoor Weather",
-    "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power"
+    "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power",
+    "Stopwatch & Timer", "Ambient Screensaver"
 };
 
 static void publishDiscoveryEntity(const char* component, const char* objectId, const char* name,
@@ -110,7 +111,7 @@ static void publishAllDiscovery() {
 
     // 12. Screen Selector
     {
-        String payload = "{\"name\":\"Select Screen\",\"cmd_t\":\"" + s_prefix + "/select/screen/set\",\"stat_t\":\"" + s_prefix + "/sensor/active_screen\",\"ops\":[\"Clock\",\"Indoor Environment\",\"Outdoor Weather\",\"Crypto Ticker\",\"YouTube Analytics\",\"Live Airspace\",\"Battery & Power\"],\"uniq_id\":\"" + s_nodeId + "_sel_scr\"" + devCommon + "}";
+        String payload = "{\"name\":\"Select Screen\",\"cmd_t\":\"" + s_prefix + "/select/screen/set\",\"stat_t\":\"" + s_prefix + "/sensor/active_screen\",\"ops\":[\"Clock\",\"Indoor Environment\",\"Outdoor Weather\",\"Crypto Ticker\",\"YouTube Analytics\",\"Live Airspace\",\"Battery & Power\",\"Stopwatch & Timer\",\"Ambient Screensaver\"],\"uniq_id\":\"" + s_nodeId + "_sel_scr\"" + devCommon + "}";
         publishDiscoveryEntity("select", "screen", "Select Screen", payload.c_str());
     }
 
@@ -206,7 +207,7 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
 
     // 7. Select Screen
     if (topicStr == s_prefix + "/select/screen/set") {
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 9; i++) {
             if (msgStr.equalsIgnoreCase(kScreenNames[i])) {
                 Network_SetActiveApp(i);
                 Network_SetAutoRotate(false);
@@ -215,7 +216,7 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
             }
         }
         int appNum = msgStr.toInt();
-        if (appNum >= 0 && appNum < 7) {
+        if (appNum >= 0 && appNum < 9) {
             Network_SetActiveApp(appNum);
             Network_SetAutoRotate(false);
             MqttService_PublishState();
@@ -344,7 +345,7 @@ void MqttService_PublishState() {
 
     // Active Screen
     uint8_t app = Network_GetActiveApp();
-    s_mqttClient.publish((s_prefix + "/sensor/active_screen").c_str(), kScreenNames[app % 7], true);
+    s_mqttClient.publish((s_prefix + "/sensor/active_screen").c_str(), kScreenNames[app % 9], true);
 }
 
 void MqttService_PublishTelemetry() {

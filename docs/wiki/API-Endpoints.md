@@ -36,7 +36,10 @@ The onboard web server exposes several REST endpoints for status monitoring, con
   "timer_state": "stopped",
   "timer_duration": 300,
   "timer_remaining": 300,
-  "timer_elapsed_ms": 0
+  "timer_elapsed_ms": 0,
+  "screensaver_style": 0,
+  "screensaver_timeout": 5,
+  "screensaver_active": false
 }
 ```
 
@@ -54,7 +57,7 @@ The onboard web server exposes several REST endpoints for status monitoring, con
 ## Screen Control Endpoint
 - **URL**: `GET /api/screen?set=<app_index>&auto=<0|1>`
   - **Parameters**:
-    - `set`: Screen index `0` (Clock), `1` (Indoor Temp), `2` (Outdoor Weather), `3` (Crypto/Markets), `4` (YouTube), `5` (Airspace), `6` (Battery), `7` (Stopwatch & Timer).
+    - `set`: Screen index `0` (Clock), `1` (Indoor Temp), `2` (Outdoor Weather), `3` (Crypto/Markets), `4` (YouTube), `5` (Airspace), `6` (Battery), `7` (Stopwatch & Timer), `8` (Ambient Screensaver).
     - `auto`: `1` to enable carousel auto-rotation, `0` to pause.
   - **Response**: `{"active_app": 0, "auto_rotate": false, "app_name": "Clock"}`
 
@@ -72,6 +75,28 @@ The onboard web server exposes several REST endpoints for status monitoring, con
   "duration": 300,
   "remaining": 284,
   "elapsed_ms": 16000
+}
+```
+
+## Retro Ambient Screensaver REST API
+- **URL**: `GET /api/screensaver` or `POST /api/screensaver`
+- **Parameters**:
+  - `style`: Visual animation style:
+    - `0`: Matrix Digital Rain
+    - `1`: NeoPixel Fire / Lava
+    - `2`: Pac-Man & Blinky Arcade Chase
+    - `3`: Conway's Game of Life
+    - `4`: Dynamic Shuffle (cycle all styles every 25s)
+  - `timeout`: Inactivity auto-activation timeout in minutes (`0` = disabled, `1..60`)
+  - `action`: `start` / `activate` (trigger immediately), `stop` / `deactivate` / `wake` (return to active screen)
+- **Response**: `application/json`
+```json
+{
+  "style": 0,
+  "active_style": 0,
+  "timeout": 5,
+  "active": true,
+  "idle_ms": 312000
 }
 ```
 

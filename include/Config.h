@@ -93,6 +93,12 @@
 #define MIN_AUTO_BRI            4
 #define MAX_AUTO_BRI            85
 
+// --- Retro Ambient Screensavers ---
+#define PREF_KEY_SS_STYLE       "ss_style"
+#define PREF_KEY_SS_TIMEOUT     "ss_time"
+#define DEFAULT_SS_STYLE        0  // Matrix Digital Rain
+#define DEFAULT_SS_TIMEOUT      0  // 0 = Disabled (carousel only)
+
 // --- Outdoor Weather (Open-Meteo) ---
 #define PREF_KEY_WEATHER_LAT    "w_lat"
 #define PREF_KEY_WEATHER_LON    "w_lon"

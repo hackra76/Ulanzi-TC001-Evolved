@@ -30,6 +30,7 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 | **Screen 5: Airspace Radar** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_5_airspace.png" width="320" alt="Radar"> | Live ADS-B overhead flight tracking via OpenSky Network. |
 | **Screen 6: Battery Telemetry** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_6_battery.png" width="320" alt="Battery"> | Glowing neon lightning bolt with % or Voltage modes. |
 | **Screen 7: Stopwatch & Timer** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_7_timer.png" width="320" alt="Timer"> | Dual-mode stopwatch with tenths of seconds & countdown with acoustic alarm. |
+| **Screen 8: Retro Screensavers** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_8_screensaver.png" width="320" alt="Screensaver"> | Zero-heap procedural animations: Matrix Digital Rain, Doom Fire, Pac-Man, and Game of Life. |
 | **Custom App: Spotify & Alerts** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_custom_spotify.png" width="320" alt="Spotify"> | Dynamic MQTT/REST push API with progress bar and notifications. |
 
 ---
@@ -43,9 +44,10 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 7. **Custom Screen Reordering**: Move screens up/down in the web portal to define your exact carousel sequence, with instant AJAX saving and toast notifications.
 8. **Screen Transition Effects**: Choice of 8 smooth animations (Instant Cut, Slide Left, Slide Right, Slide Up, Slide Down, Crossfade / Dissolve, Curtain Split Wipe, and Random) with zero brightness loss and native double-buffer rendering.
 9. **Precision Stopwatch & Countdown Timer**: Dual-mode chronometer (tenths of seconds in stopwatch, real-time bottom progress bar in countdown, auto-rotation freeze lock during runs, and 2.4 kHz audible buzzer alarm).
-10. **Home Assistant MQTT Auto-Discovery**: Automatic discovery of 12 synchronized entities (sensors, matrix power/brightness light, switches, buttons, and screen selector).
-11. **Custom App Push API & Spotify**: Push dynamic screens via MQTT or HTTP REST with 8×8 icons, progress bars, and high-priority push notifications with buzzer chime.
-12. **Dual OTA Engine**: Web browser binary upload plus automated 1-click cloud updates from GitHub Releases with live percentage display on matrix.
+10. **Retro Ambient Screensavers**: Procedural zero-heap animations (Matrix Digital Rain, Doom Fire / Thermal Lava, Pac-Man & Blinky Arcade Chase, and Conway's Game of Life) with carousel rotation and inactivity idle auto-trigger.
+11. **Home Assistant MQTT Auto-Discovery**: Automatic discovery of 12 synchronized entities (sensors, matrix power/brightness light, switches, buttons, and screen selector).
+12. **Custom App Push API & Spotify**: Push dynamic screens via MQTT or HTTP REST with 8×8 icons, progress bars, and high-priority push notifications with buzzer chime.
+13. **Dual OTA Engine**: Web browser binary upload plus automated 1-click cloud updates from GitHub Releases with live percentage display on matrix.
 
 ---
 

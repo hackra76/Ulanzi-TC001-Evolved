@@ -71,6 +71,14 @@ It features a precision **Tactile Field Instrument** industrial design system (i
   - `Toggle (Start/Pause)` and `Reset` pushbuttons with tactile feedback.
   - Mode switch between Stopwatch and Countdown.
   - Quick-preset timer duration buttons (1m, 3m, 5m, 10m, 15m) for instant single-click countdowns.
+- **Retro Ambient Screensaver**:
+  - **Screensaver Style**:
+    - `Matrix Digital Rain (Cyberpunk Phosphor)`: Cascading phosphor green streams with bright white spark heads.
+    - `NeoPixel Fire / Lava (Thermal Simulation)`: Doom/PSX style molten thermal ember upward physics.
+    - `Pac-Man & Blinky (80s Arcade Chase)`: Animated arcade chase with dots, energizer, and reversible blue ghost vulnerability mode.
+    - `Conway's Game of Life (Cellular Automata)`: Mathematical cellular simulation with age-based coloration and automatic stagnation re-seeding.
+    - `Dynamic Shuffle (Cycle All Styles)`: Periodically shifts through all four styles every 25 seconds.
+  - **Inactivity Timeout**: Configurable auto-activation timeout (`Disabled`, `1m`, `2m`, `5m`, `10m`, `15m`, `30m`). Instant wake on any physical button press.
 
 ---
 

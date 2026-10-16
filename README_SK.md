@@ -27,6 +27,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
 | **Obrazovka 5: Živý letecký radar** | <img src="docs/media/screen_5_airspace.png" width="340" alt="Obrazovka leteckého radaru"> | Sledovanie prelietavajúcich lietadiel v reálnom čase (ADS-B) cez OpenSky Network v okruhu ~50 km s tyrkysovou ikonou lietadla. |
 | **Obrazovka 6: Telemetria batérie** | <img src="docs/media/screen_6_battery.png" width="340" alt="Obrazovka telemetrie batérie"> | Výrazná neónovo žltá/biela ikona blesku s voliteľným režimom: Percentá (`93%`), Napätie (`4.12V`) alebo Striedanie. |
 | **Obrazovka 7: Stopky a Odpočítavanie** | <img src="docs/media/screen_7_timer.png" width="340" alt="Obrazovka stopiek a časovača"> | Dvojitý chronometer (Stopky s desatinami sekundy a Odpočítavanie so zvukovým alarmom, dynamickým progress barom a stavovým odznakom). |
+| **Obrazovka 8: Retro šetriče obrazovky** | <img src="docs/media/screen_8_screensaver.png" width="340" alt="Obrazovka šetriča"> | Procedurálne animácie s nulovou alokáciou na heape: Matrix digitálny dážď, Doom oheň / termálna láva, Pac-Man arkádová naháňačka a Conwayova hra života. |
 | **Vlastná aplikácia: Spotify & Notifikácie** | <img src="docs/media/screen_custom_spotify.png" width="340" alt="Obrazovka Spotify a vlastných aplikácií"> | Dynamické MQTT / REST push API so zelenou ikonou Spotify, plynule rolujúcim názvom skladby a spodným ukazovateľom priebehu (progress bar). |
 
 ---
@@ -118,6 +119,17 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - **Zámok rotácie obrazoviek (Carousel Lock)**: Automatický kolotoč obrazoviek sa automaticky pozastaví počas behu stopiek alebo odpočítavania, aby sa obrazovka svojvoľne neprepla.
   - **Taktilný ovládač vo Webovom portáli**: Interaktívny ovládací panel vo webovom rozhraní s rýchlymi predvoľbami (1m, 3m, 5m, 10m, 15m), prepínačom režimu a živým zrkadlením stavu.
   - **Vzdialené REST API**: Plné ovládanie cez `GET /api/timer` alebo `POST /api/timer` (`action=start|pause|toggle|reset`, `mode=stopwatch|countdown`, `duration=<sekundy>`).
+- **👾 Retro Ambient šetriče obrazovky (Screensavers):**
+  - **Procedurálne enginy s nulovou alokáciou na heape**:
+    - **Matrix digitálny dážď**: Kyberpunkový dážď zeleného fosforového kódu s jasne svietiacimi bielymi čelnými iskrami.
+    - **Doom oheň / Termálna láva**: Klasická simulácia horenia z Doom/PSX s fyzikálnym vzostupom tepla a dynamickými žeravými uhlíkmi na spodnom riadku.
+    - **Pac-Man & Blinky (80s Arcade)**: Arkádová naháňačka s animovaným otváraním úst, bodkami, energizérom a zraniteľným modrým duchom.
+    - **Conwayova hra života (Game of Life)**: Celulárny automat v reálnom čase s farebným odlíšením veku buniek (tyrkysová -> smaragdová -> žltá -> purpurová) a automatickým znovuzrodením pri stagnácii alebo vymretí.
+    - **Dynamické striedanie (Shuffle)**: Automatické prepínanie všetkých 4 štýlov každých 25 sekúnd.
+  - **Dva spôsoby aktivácie**:
+    - **Obrazovka v kolotoči (Obrazovka 8)**: Bežná súčasť rotačného cyklu popri hodinách, počasí a kurzoch.
+    - **Aktivácia pri nečinnosti**: Automatické zapnutie šetriča po nastaviteľnom čase bez stlačenia tlačidiel (1, 2, 5, 10, 15 alebo 30 minút) s okamžitým prebudením ľubovoľným tlačidlom.
+  - **Samostatné REST API**: Plná automatizácia cez `GET /api/screensaver` a `POST /api/screensaver` (`style=0..4`, `timeout=0..60`, `action=start|stop`).
 - **🔄 Duálny Over-The-Air (OTA) aktualizačný systém:**
   - Priame nahrávanie `.bin` súboru priamo z webového prehliadača cez `/update` s ukazovateľom priebehu v percentách.
   - 1-Klik aktualizácia priamo z GitHub Releases (`/api/ota/check`, `/api/ota/install`).
@@ -138,6 +150,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
 | **Vľavo** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Skrátenie času odpočítavania o -1 minútu (pri zastavenom stave) |
 | **Vpravo** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Predĺženie času odpočítavania o +1 minútu (pri zastavenom stave) |
 | **Ľubovoľné tlačidlo** | Stlačenie pri zvonení alarmu | Okamžité stíšenie a vypnutie alarmu odpočítavania |
+| **Ľubovoľné tlačidlo** | Stlačenie počas šetriča | Okamžité prebudenie displeja a návrat k aktívnemu kolotoču |
 | **Ľubovoľné tlačidlo** | Stlačenie v nočnom režime | Dočasné prebudenie displeja na 12 sekúnd na denný jas |
 
 ---

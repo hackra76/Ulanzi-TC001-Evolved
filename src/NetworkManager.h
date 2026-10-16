@@ -39,8 +39,8 @@ uint8_t Network_GetActiveApp();
 void Network_SetActiveApp(uint8_t app);
 uint16_t Network_GetRotateDelaySec();
 void Network_SetRotateDelaySec(uint16_t sec);
-uint8_t Network_GetCarouselMask();
-void Network_SetCarouselMask(uint8_t mask);
+uint16_t Network_GetCarouselMask();
+void Network_SetCarouselMask(uint16_t mask);
 bool Network_IsAppInCarousel(uint8_t appIndex);
 
 uint8_t Network_GetTransitionFx();

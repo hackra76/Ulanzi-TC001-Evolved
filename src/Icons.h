@@ -379,6 +379,19 @@ static const uint16_t ICON_HOURGLASS[64] = {
 };
 #define ICON_TIMER ICON_HOURGLASS
 
+// 8x8 Pac-Man / Screensaver Icon
+static const uint16_t ICON_PACMAN[64] = {
+    0,        0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,
+    0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,
+    C_YELLOW, C_YELLOW, 0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW,
+    C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,        0,
+    C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,        0,        0,
+    C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0,        0,
+    0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,
+    0,        0,        C_YELLOW, C_YELLOW, C_YELLOW, C_YELLOW, 0,        0
+};
+#define ICON_SCREENSAVER ICON_PACMAN
+
 inline const uint16_t* Icons_GetByName(const String& name) {
     String lower = name;
     lower.toLowerCase();
@@ -409,6 +422,7 @@ inline const uint16_t* Icons_GetByName(const String& name) {
     if (lower == "cross" || lower == "cancel" || lower == "error") return ICON_CROSS;
     if (lower == "stopwatch") return ICON_STOPWATCH;
     if (lower == "timer" || lower == "hourglass") return ICON_HOURGLASS;
+    if (lower == "pacman" || lower == "screensaver") return ICON_PACMAN;
 
     return nullptr;
 }

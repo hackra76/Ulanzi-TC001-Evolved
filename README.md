@@ -27,6 +27,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
 | **Screen 5: Live Airspace Radar** | <img src="docs/media/screen_5_airspace.png" width="340" alt="Airspace Radar Screen"> | Real-time overhead flight tracking (ADS-B) via OpenSky Network within ~50km radius with cyan plane icon. |
 | **Screen 6: Battery & Energy Telemetry** | <img src="docs/media/screen_6_battery.png" width="340" alt="Battery Telemetry Screen"> | Distinctive neon yellow/white glowing lightning bolt with Percentage, Voltage, or Alternating display modes. |
 | **Screen 7: Stopwatch & Countdown Timer** | <img src="docs/media/screen_7_timer.png" width="340" alt="Stopwatch & Timer Screen"> | Dual-mode chronometer (Stopwatch with tenths of seconds & Countdown with acoustic alarm, dynamic bottom progress bar, and state badge). |
+| **Screen 8: Retro Ambient Screensavers** | <img src="docs/media/screen_8_screensaver.png" width="340" alt="Retro Ambient Screensaver Screen"> | Zero-heap procedural animation suite: Matrix Digital Rain, Doom Fire / Thermal Lava, Pac-Man & Blinky Arcade Chase, and Conway's Game of Life. |
 | **Custom App: Spotify & Push Alerts** | <img src="docs/media/screen_custom_spotify.png" width="340" alt="Spotify and Custom App Screen"> | Dynamic MQTT / REST push API with Spotify green icon, smooth scrolling track ticker, and bottom progress bar. |
 
 ---
@@ -118,6 +119,17 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - **Carousel Pinning**: Auto-rotation automatically locks in place while the timer is actively running, preventing the display from rotating away.
   - **Tactile Web Portal Remote**: Interactive chronometer control deck in the Web Portal with quick duration buttons (1m, 3m, 5m, 10m, 15m), mode switcher, and live state reflection.
   - **Remote REST API**: Remote automation via `GET /api/timer` or `POST /api/timer` (`action=start|pause|toggle|reset`, `mode=stopwatch|countdown`, `duration=<sec>`).
+- **👾 Retro Ambient Screensavers:**
+  - **Zero-Heap Procedural Engines**:
+    - **Matrix Digital Rain**: Cyberpunk cascading green phosphor code streams with glowing white spark heads.
+    - **Doom Fire / Thermal Lava**: Classic PSX/Doom molten heat propagation simulation with dynamic bottom ember generation.
+    - **Pac-Man & Blinky Arcade Chase**: 80s arcade chase with animated mouth chomping, pellet dots, energizer, and reversible blue ghost vulnerability mode.
+    - **Conway's Game of Life**: Real-time cellular automata with age-based coloration (Cyan -> Emerald -> Yellow -> Magenta) and automatic stagnation / extinction re-seeding.
+    - **Dynamic Shuffle**: Cycles through all four animations every 25 seconds for an ever-evolving desk ambiance.
+  - **Two Operational Triggers**:
+    - **Carousel Screen (Screen 8)**: Seamlessly rotates as part of the scheduled sequence alongside Clock, Weather, and Tickers.
+    - **Inactivity Idle Mode**: Automatically activates screensaver after a configurable timeout (1, 2, 5, 10, 15, or 30 minutes of no button interaction) with instant zero-lag wake on any physical button press.
+  - **Dedicated REST API**: Full automation and external control via `GET /api/screensaver` and `POST /api/screensaver` (`style=0..4`, `timeout=0..60`, `action=start|stop`).
 - **🔄 Dual Over-The-Air (OTA) Updates:**
   - Direct web browser `.bin` binary upload (`/update`) with real-time percentage progress bar.
   - 1-Click cloud updates from GitHub Releases (`/api/ota/check`, `/api/ota/install`).
@@ -138,6 +150,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
 | **Left** (Timer Screen) | Long Press (>700ms) | Adjust Countdown Duration -1 minute (when stopped/paused) |
 | **Right** (Timer Screen) | Long Press (>700ms) | Adjust Countdown Duration +1 minute (when stopped/paused) |
 | **Any Button** | Click (during Timer Alarm) | Instantly silence and dismiss countdown alarm |
+| **Any Button** | Click (in Idle Screensaver) | Instantly wake device back to active rotation |
 | **Any Button** | Click (in Night Mode) | Temporarily wake display at Day Brightness for 12s |
 
 ---

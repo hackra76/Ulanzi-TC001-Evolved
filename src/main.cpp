@@ -16,6 +16,7 @@
 #include "MqttService.h"
 #include "CustomAppService.h"
 #include "TimerService.h"
+#include "ScreensaverService.h"
 
 // --- Application Modes ---
 enum AppMode {
@@ -27,6 +28,7 @@ enum AppMode {
     APP_AIRSPACE,   // Live ADS-B radar flight ticker
     APP_BATTERY,    // Battery & power telemetry
     APP_TIMER,      // Stopwatch & Countdown Timer
+    APP_SCREENSAVER,// Retro Ambient Screensavers
     APP_COUNT
 };
 
@@ -273,9 +275,10 @@ static void renderCurrentApp() {
         case APP_CRYPTO:   renderCryptoApp();   break;
         case APP_YOUTUBE:  renderYouTubeApp();  break;
         case APP_AIRSPACE: renderAirspaceApp(); break;
-        case APP_BATTERY:  renderBatteryApp();  break;
-        case APP_TIMER:    Timer_Render();      break;
-        default:           renderClockApp();    break;
+        case APP_BATTERY:     renderBatteryApp();     break;
+        case APP_TIMER:       Timer_Render();         break;
+        case APP_SCREENSAVER: Screensaver_Render();   break;
+        default:              renderClockApp();       break;
     }
 }
 
@@ -328,6 +331,7 @@ void setup() {
     Crypto_Init();
     Airspace_Init();
     Timer_Init();
+    Screensaver_Init();
 
     // Startup splash & sound
     Buzzer_Click();
@@ -373,6 +377,7 @@ void loop() {
     Airspace_Update();
     MqttService_Update();
     Timer_Update();
+    Screensaver_Update();
 
     // 3. Clock second counter tick
     if (now - s_lastSecTick >= 1000) {
@@ -459,6 +464,21 @@ void loop() {
         }
     }
 
+    // High Priority: Idle Inactivity Screensaver
+    if (Screensaver_IsActive()) {
+        if (Buttons_GetEvent(BTN_ID_OK) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_LEFT) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_RIGHT) != BTN_NONE) {
+            Buzzer_Click();
+            Screensaver_Deactivate();
+            s_lastAppSwitch = now;
+            return;
+        }
+        Screensaver_Render();
+        delay(15);
+        return;
+    }
+
     // 8. Night Mode enforcement
     bool nightActive = isNightTime() && (now >= s_nightWakeUntilMs);
     if (nightActive) {
@@ -513,6 +533,7 @@ void loop() {
 
     if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
+        Screensaver_ResetActivity();
         if (s_showingCustomApp) {
             uint8_t nextIdx = s_customAppIdx + 1;
             if (nextIdx >= customCount) {
@@ -521,8 +542,8 @@ void loop() {
                 switchToScreen(s_currentApp, true, nextIdx);
             }
         } else {
-            uint8_t mask = Network_GetCarouselMask();
-            if (mask == 0) mask = 0xFF;
+            uint16_t mask = Network_GetCarouselMask();
+            if (mask == 0) mask = 0x1FF;
             const uint8_t* order = Network_GetCarouselOrder();
             int curPos = 0;
             for (int i = 0; i < APP_COUNT; i++) {
@@ -553,6 +574,7 @@ void loop() {
         Network_SetAutoRotate(false);
     } else if (Buttons_GetEvent(BTN_ID_LEFT) == BTN_SHORT_CLICK) {
         Buzzer_Click();
+        Screensaver_ResetActivity();
         if (s_showingCustomApp) {
             if (s_customAppIdx > 0) {
                 switchToScreen(s_currentApp, true, s_customAppIdx - 1);
@@ -560,8 +582,8 @@ void loop() {
                 switchToScreen(s_currentApp, false, 0);
             }
         } else {
-            uint8_t mask = Network_GetCarouselMask();
-            if (mask == 0) mask = 0xFF;
+            uint16_t mask = Network_GetCarouselMask();
+            if (mask == 0) mask = 0x1FF;
             const uint8_t* order = Network_GetCarouselOrder();
             int curPos = 0;
             for (int i = 0; i < APP_COUNT; i++) {
@@ -592,6 +614,7 @@ void loop() {
         Network_SetAutoRotate(false);
     } else if (s_currentApp != APP_TIMER && Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
         Buzzer_Click();
+        Screensaver_ResetActivity();
         // Cycle manual brightness (pauses auto-brightness until re-enabled in web portal)
         Network_SetAutoBrightness(false);
         uint8_t cur = DisplayMatrix_GetBrightness();
@@ -600,6 +623,7 @@ void loop() {
         DisplayMatrix_SetBrightness(next);
     } else if (s_currentApp != APP_TIMER && Buttons_GetEvent(BTN_ID_OK) == BTN_LONG_PRESS) {
         Buzzer_Alert();
+        Screensaver_ResetActivity();
         s_autoRotate = !s_autoRotate;
         Network_SetAutoRotate(s_autoRotate);
     }
@@ -628,7 +652,7 @@ void loop() {
                     switchToScreen(s_currentApp, true, nextIdx);
                 }
             } else {
-                uint8_t mask = Network_GetCarouselMask();
+                uint16_t mask = Network_GetCarouselMask();
                 if (mask == 0) mask = 0x01; // Default to at least Clock
                 const uint8_t* order = Network_GetCarouselOrder();
                 int curPos = 0;
