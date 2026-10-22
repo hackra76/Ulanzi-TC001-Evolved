@@ -951,7 +951,7 @@ input:checked + .actuator-label .actuator-box::after,
         <span>COFFEE</span>
       </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> v1.8.0
+        <span class="badge-dot"></span> <span id="topFwVer">v1.9.0</span>
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1699,7 +1699,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong style="color:var(--signal-orange);">v1.8.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v1.9.0</strong>
     </div>
 
     <table class="param-table">
@@ -1737,7 +1737,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
-    <div>FIRMWARE v1.8.0 &bull; NVS ARMED</div>
+    <div id="footerFwVer">FIRMWARE v1.9.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -2355,6 +2355,15 @@ function updateTelemetry() {
   fetch('/status')
     .then(r => r.json())
     .then(d => {
+      if (d.firmware_version != null) {
+        const v = 'v' + d.firmware_version;
+        const topEl = document.getElementById('topFwVer');
+        if (topEl) topEl.innerText = v;
+        const otaEl = document.getElementById('otaRunningVer');
+        if (otaEl) otaEl.innerText = v;
+        const footEl = document.getElementById('footerFwVer');
+        if (footEl) footEl.innerText = 'FIRMWARE ' + v + ' \u2022 NVS ARMED';
+      }
       if (d.active_app != null) {
         currentAppIndex = d.active_app;
         const name = d.app_name || appNames[currentAppIndex] || ("Screen " + currentAppIndex);
