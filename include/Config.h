@@ -40,10 +40,17 @@
 
 // --- Wi-Fi & Provisioning Configuration ---
 #define WIFI_AP_SSID_PREFIX     "Ulanzi-Setup-"
-#define WIFI_CONNECT_TIMEOUT_MS 12000
+#define WIFI_CONNECT_TIMEOUT_MS 10000
+#define MAX_WIFI_PROFILES       4
 #define PREF_NAMESPACE          "ulanzi_cfg"
 #define PREF_KEY_SSID           "wifi_ssid"
 #define PREF_KEY_PASS           "wifi_pass"
+#define PREF_KEY_SSID_2         "wifi_ssid_2"
+#define PREF_KEY_PASS_2         "wifi_pass_2"
+#define PREF_KEY_SSID_3         "wifi_ssid_3"
+#define PREF_KEY_PASS_3         "wifi_pass_3"
+#define PREF_KEY_SSID_4         "wifi_ssid_4"
+#define PREF_KEY_PASS_4         "wifi_pass_4"
 
 // --- Carousel & YouTube Analytics ---
 #define PREF_KEY_AUTO_ROTATE    "auto_rot"
@@ -125,7 +132,7 @@
 
 // --- Firmware Metadata & OTA ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
-#define FW_VERSION          "1.9.0"
+#define FW_VERSION          "2.0.0"
 #define GITHUB_REPO         "hackra76/Ulanzi-TC001-Evolved"
 
 

@@ -42,10 +42,15 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
   - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.9.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.0.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - **Integrácia podpory vývojára**: Interaktívny plávajúci widget Buy Me a Coffee a akčné tlačidlá v hlavičke a pätičke portálu.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
   - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI) a bleskovým ukladaním cez AJAX.
+- **📶 Pamäť viacerých Wi-Fi sietí & Inteligentný roaming:**
+  - Ukladá až 4 profily bezdrôtových sietí do NVS pamäte (Profil 01 Primárna, Profil 02 Sekundárna, Profil 03 Hotspot, Profil 04 Záložná).
+  - Rýchly 2,4 GHz RF skener pri štarte (~1,5s) automaticky rozpozná dostupné uložené siete a pripojí sa k sieti s najsilnejším signálom RSSI (plynulé prenášanie medzi domovom, kanceláriou a mobilným hotspotom).
+  - Automatické opätovné pripojenie na pozadí pri strate signálu s postupným prepínaním uložených profilov pred aktiváciou SoftAP.
+  - Kompletná REST API podpora cez `GET /api/wifi` a priradenie slotov na jeden klik vo webovom portáli (Panel 04).
 - **📺 Živý stream displeja & Virtuálna matica:**
   - Zrkadlenie 32×8 NeoPixel displeja v reálnom čase priamo vo webovom portáli s automatickou obnovou každých 1,5s.
   - Export snímky displeja do BMP na jeden klik (`/api/display/screenshot`).

@@ -30,6 +30,10 @@ bool Network_HasSavedCredentials();
 void Network_StartAP();
 void Network_ConnectStation();
 void Network_SaveCredentials(const String& ssid, const String& pass);
+void Network_SaveProfile(uint8_t slot, const String& ssid, const String& pass);
+void Network_DeleteProfile(uint8_t slot);
+String Network_GetProfileSSID(uint8_t slot);
+bool Network_HasProfilePass(uint8_t slot);
 void Network_ForgetCredentials();
 
 // Settings & Preferences

@@ -18,6 +18,21 @@ static DNSServer s_dnsServer;
 static NetworkState s_netState = NET_STATE_IDLE;
 static String s_ssid = "";
 static String s_pass = "";
+
+struct WifiProfile {
+    String ssid;
+    String pass;
+};
+static WifiProfile s_wifiProfiles[MAX_WIFI_PROFILES];
+static int s_activeProfileIdx = 0;
+
+static const char* const s_wifiSsidKeys[MAX_WIFI_PROFILES] = {
+    PREF_KEY_SSID, PREF_KEY_SSID_2, PREF_KEY_SSID_3, PREF_KEY_SSID_4
+};
+static const char* const s_wifiPassKeys[MAX_WIFI_PROFILES] = {
+    PREF_KEY_PASS, PREF_KEY_PASS_2, PREF_KEY_PASS_3, PREF_KEY_PASS_4
+};
+
 static String s_apSSID = "";
 static IPAddress s_apIP(192, 168, 4, 1);
 static IPAddress s_apNetmask(255, 255, 255, 0);
@@ -951,7 +966,7 @@ input:checked + .actuator-label .actuator-box::after,
         <span>COFFEE</span>
       </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> <span id="topFwVer">v1.9.0</span>
+        <span class="badge-dot"></span> <span id="topFwVer">v2.0.0</span>
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1656,30 +1671,90 @@ input:checked + .actuator-label .actuator-box::after,
 
     <!-- PANEL 04: NETWORK & SYSTEM -->
     <div class="control-panel-section" id="panel-network">
-      <div class="section-legend" data-i18n="grp_network">Wi-Fi RF Link Configuration</div>
+      <div class="section-legend" data-i18n="grp_network">Wi-Fi RF Link &amp; Multi-Network Memory</div>
+      <div style="font-size:11px; color:var(--ink-secondary); line-height:1.4; margin-bottom:12px;" data-i18n="desc_wifi_roam">
+        Stores up to 4 Wi-Fi networks. Automatically detects and connects to whichever saved network is within RF range with the highest signal strength (ideal for home / office roaming).
+      </div>
+
+      <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button type="button" class="tactile-btn btn-sm" onclick="scanNetworks()" data-i18n="btn_scan">&#x21BB; Scan Nearby Networks</button>
+        <select id="scanSelect" style="display:none; flex:1; min-width:200px;" onchange="selectNetwork(this.value)">
+          <option value="" data-i18n="opt_scan_detect">-- Detected Networks --</option>
+        </select>
+        <span id="scanSlotButtons" style="display:none; gap:4px;">
+          <button type="button" class="tactile-btn btn-sm" onclick="fillSlotFromScan(1)" title="Assign to Slot 1">&#x2192; Slot 1</button>
+          <button type="button" class="tactile-btn btn-sm" onclick="fillSlotFromScan(2)" title="Assign to Slot 2">&#x2192; Slot 2</button>
+          <button type="button" class="tactile-btn btn-sm" onclick="fillSlotFromScan(3)" title="Assign to Slot 3">&#x2192; Slot 3</button>
+          <button type="button" class="tactile-btn btn-sm" onclick="fillSlotFromScan(4)" title="Assign to Slot 4">&#x2192; Slot 4</button>
+        </span>
+      </div>
+
       <table class="param-table">
+        <!-- PROFILE 1 -->
         <tr>
           <td class="label-cell">
-            <div class="param-name" data-i18n="lbl_ssid">Network Name (SSID)</div>
-            <div class="param-desc">2.4 GHz 802.11b/g/n wireless access point</div>
+            <div class="param-name"><span data-i18n="lbl_slot_1">Profile 01 (Primary)</span> <span id="wifi_badge_1" style="font-size:9px; margin-left:4px;"></span></div>
+            <div class="param-desc" data-i18n="desc_slot_1">Primary Wi-Fi access point (e.g. Home)</div>
           </td>
           <td>
-            <input type="text" id="ssid" name="ssid" value="" placeholder="Enter Wi-Fi SSID" required autocomplete="off">
-            <div style="display:flex; gap:8px; margin-top:6px;">
-              <button type="button" class="tactile-btn btn-sm" onclick="scanNetworks()" data-i18n="btn_scan">&#x21BB; Scan Nearby Networks</button>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <input type="text" id="ssid" name="ssid" value="" placeholder="Network 1 SSID" autocomplete="off">
+              <input type="password" id="password" name="password" placeholder="Password (leave empty if unchanged)" data-i18n-ph="ph_pass">
             </div>
-            <select id="scanSelect" style="display:none; margin-top:6px;" onchange="selectNetwork(this.value)">
-              <option value="" data-i18n="opt_scan_detect">-- Detected Networks --</option>
-            </select>
           </td>
         </tr>
+
+        <!-- PROFILE 2 -->
         <tr>
           <td class="label-cell">
-            <div class="param-name" data-i18n="lbl_pass">Wi-Fi Password</div>
-            <div class="param-desc">WPA2/WPA3 Pre-Shared Key</div>
+            <div class="param-name"><span data-i18n="lbl_slot_2">Profile 02 (Secondary)</span> <span id="wifi_badge_2" style="font-size:9px; margin-left:4px;"></span></div>
+            <div class="param-desc" data-i18n="desc_slot_2">Second location (e.g. Office / Work / Cottage)</div>
           </td>
           <td>
-            <input type="password" id="password" name="password" placeholder="Leave empty if unchanged" data-i18n-ph="ph_pass">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="ssid_2" name="ssid_2" value="" placeholder="Network 2 SSID (e.g. Office)" autocomplete="off" style="flex:1;">
+                <button type="button" class="tactile-btn btn-sm" onclick="clearWifiSlot(2)" style="color:var(--signal-orange);" title="Clear Slot 2">&#x2715;</button>
+              </div>
+              <input type="password" id="password_2" name="password_2" placeholder="Password (leave empty if unchanged)" data-i18n-ph="ph_pass">
+              <input type="hidden" id="del_wifi_2" name="del_wifi_2" value="0">
+            </div>
+          </td>
+        </tr>
+
+        <!-- PROFILE 3 -->
+        <tr>
+          <td class="label-cell">
+            <div class="param-name"><span data-i18n="lbl_slot_3">Profile 03 (Hotspot)</span> <span id="wifi_badge_3" style="font-size:9px; margin-left:4px;"></span></div>
+            <div class="param-desc" data-i18n="desc_slot_3">Mobile or travel hotspot (e.g. Smartphone)</div>
+          </td>
+          <td>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="ssid_3" name="ssid_3" value="" placeholder="Network 3 SSID (e.g. Hotspot)" autocomplete="off" style="flex:1;">
+                <button type="button" class="tactile-btn btn-sm" onclick="clearWifiSlot(3)" style="color:var(--signal-orange);" title="Clear Slot 3">&#x2715;</button>
+              </div>
+              <input type="password" id="password_3" name="password_3" placeholder="Password (leave empty if unchanged)" data-i18n-ph="ph_pass">
+              <input type="hidden" id="del_wifi_3" name="del_wifi_3" value="0">
+            </div>
+          </td>
+        </tr>
+
+        <!-- PROFILE 4 -->
+        <tr>
+          <td class="label-cell">
+            <div class="param-name"><span data-i18n="lbl_slot_4">Profile 04 (Auxiliary)</span> <span id="wifi_badge_4" style="font-size:9px; margin-left:4px;"></span></div>
+            <div class="param-desc" data-i18n="desc_slot_4">Backup or guest network</div>
+          </td>
+          <td>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="ssid_4" name="ssid_4" value="" placeholder="Network 4 SSID (Optional)" autocomplete="off" style="flex:1;">
+                <button type="button" class="tactile-btn btn-sm" onclick="clearWifiSlot(4)" style="color:var(--signal-orange);" title="Clear Slot 4">&#x2715;</button>
+              </div>
+              <input type="password" id="password_4" name="password_4" placeholder="Password (leave empty if unchanged)" data-i18n-ph="ph_pass">
+              <input type="hidden" id="del_wifi_4" name="del_wifi_4" value="0">
+            </div>
           </td>
         </tr>
       </table>
@@ -1699,7 +1774,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v1.9.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.0.0</strong>
     </div>
 
     <table class="param-table">
@@ -1737,7 +1812,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
-    <div id="footerFwVer">FIRMWARE v1.9.0 &bull; NVS ARMED</div>
+    <div id="footerFwVer">FIRMWARE v2.0.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -1860,7 +1935,16 @@ const I18N = {
     lbl_mqtt_pass: "Authentication",
     lbl_mqtt_pre: "Topic Prefix",
     box_custom_push: "\U0001F4A1 <strong>Push Spotify &amp; Custom Screens:</strong><br>MQTT: Publish JSON to <code>ulanzi-tc001/custom/spotify</code> or <code>ulanzi-tc001/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> or <code>POST /api/notify</code><br>Payload: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
-    grp_network: "Wi-Fi RF Link Configuration",
+    grp_network: "Wi-Fi RF Link & Multi-Network Memory",
+    desc_wifi_roam: "Stores up to 4 Wi-Fi networks. Automatically detects and connects to whichever saved network is within RF range with the highest signal strength (ideal for home / office roaming).",
+    lbl_slot_1: "Profile 01 (Primary)",
+    desc_slot_1: "Primary Wi-Fi access point (e.g. Home)",
+    lbl_slot_2: "Profile 02 (Secondary)",
+    desc_slot_2: "Second location (e.g. Office / Work / Cottage)",
+    lbl_slot_3: "Profile 03 (Hotspot)",
+    desc_slot_3: "Mobile or travel hotspot (e.g. Smartphone)",
+    lbl_slot_4: "Profile 04 (Auxiliary)",
+    desc_slot_4: "Backup or guest network",
     lbl_ssid: "Network Name (SSID)",
     btn_scan: "\u21BB Scan Nearby Networks",
     opt_scan_detect: "-- Detected Networks --",
@@ -1992,7 +2076,16 @@ const I18N = {
     lbl_mqtt_pass: "Autentifik\u00E1cia",
     lbl_mqtt_pre: "Prefix t\u00E9my (Topic Prefix)",
     box_custom_push: "\U0001F4A1 <strong>Odosielanie Spotify a vlastn\u00FDch obrazoviek:</strong><br>MQTT: Publikujte JSON na <code>ulanzi-tc001/custom/spotify</code> alebo <code>ulanzi-tc001/notify</code><br>HTTP REST: <code>POST /api/custom?name=spotify</code> alebo <code>POST /api/notify</code><br>Form\u00E1t: <code>{\"text\":\"Song - Artist\",\"icon\":\"spotify\",\"progress\":45,\"duration\":8}</code>",
-    grp_network: "Wi-Fi RF Spojenie",
+    grp_network: "Wi-Fi RF Spojenie & Pam\u00E4\u0165 siet\u00ED",
+    desc_wifi_roam: "Uklad\u00E1 a\u017E 4 Wi-Fi siete. Automaticky presk\u00FAma okolie a pripoj\u00ED sa k dostupnej ulo\u017Eenej sieti s najsilnej\u0161\u00EDm sign\u00E1lom (ide\u00E1lne na pren\u00E1\u0161anie domov / pr\u00E1ca).",
+    lbl_slot_1: "Profil 01 (Prim\u00E1rna)",
+    desc_slot_1: "Hlavn\u00E1 bezdr\u00F4tov\u00E1 sie\u0165 (napr. Domov)",
+    lbl_slot_2: "Profil 02 (Sekund\u00E1rna)",
+    desc_slot_2: "Druh\u00E9 miesto (napr. Pr\u00E1ca / Kancel\u00E1ria / Chata)",
+    lbl_slot_3: "Profil 03 (Hotspot)",
+    desc_slot_3: "Mobiln\u00FD pr\u00EDstupov\u00FD bod (napr. Smartf\u00F3n)",
+    lbl_slot_4: "Profil 04 (Z\u00E1lo\u017En\u00E1)",
+    desc_slot_4: "Z\u00E1lo\u017En\u00E1 alebo hos\u0165ovsk\u00E1 sie\u0165",
     lbl_ssid: "N\u00E1zov Wi-Fi siete (SSID)",
     btn_scan: "\u21BB Vyh\u013Eada\u0165 okolit\u00E9 siete",
     opt_scan_detect: "-- N\u00E1jden\u00E9 siete --",
@@ -2063,6 +2156,8 @@ function scanNetworks() {
         opt.textContent = net.ssid + ' (' + net.rssi + ' dBm' + (net.secure ? ' \uD83D\uDD12' : '') + ')';
         sel.appendChild(opt);
       });
+      const btns = document.getElementById('scanSlotButtons');
+      if (btns) btns.style.display = 'inline-flex';
     })
     .catch(() => {
       sel.innerHTML = '<option value="">' + (currentLang === 'sk' ? 'Vyh\u013Ead\u00E1vanie zlyhalo' : 'Scan failed') + '</option>';
@@ -2070,7 +2165,38 @@ function scanNetworks() {
 }
 
 function selectNetwork(val) {
-  if (val) document.getElementById('ssid').value = val;
+  if (!val) return;
+  const s1 = document.getElementById('ssid');
+  const s2 = document.getElementById('ssid_2');
+  const s3 = document.getElementById('ssid_3');
+  const s4 = document.getElementById('ssid_4');
+  if (s1 && !s1.value) s1.value = val;
+  else if (s2 && !s2.value) s2.value = val;
+  else if (s3 && !s3.value) s3.value = val;
+  else if (s4 && !s4.value) s4.value = val;
+  else if (s1) s1.value = val;
+}
+
+function fillSlotFromScan(slot) {
+  const sel = document.getElementById('scanSelect');
+  if (!sel || !sel.value) return;
+  const inputId = (slot === 1) ? 'ssid' : ('ssid_' + slot);
+  const el = document.getElementById(inputId);
+  if (el) el.value = sel.value;
+}
+
+function clearWifiSlot(slot) {
+  const ssidEl = document.getElementById('ssid_' + slot);
+  const passEl = document.getElementById('password_' + slot);
+  const delEl  = document.getElementById('del_wifi_' + slot);
+  if (ssidEl) ssidEl.value = '';
+  if (passEl) passEl.value = '';
+  if (delEl) delEl.value = '1';
+  const badge = document.getElementById('wifi_badge_' + slot);
+  if (badge) {
+    badge.innerText = '[CLEARED]';
+    badge.style.color = 'var(--signal-orange)';
+  }
 }
 
 function applyCityPreset(val) {
@@ -2202,8 +2328,33 @@ function updateVirtualMatrix() {
 let configLoaded = false;
 function populateConfig(d) {
   if (!d) return;
+  if (d.wifi_profiles && Array.isArray(d.wifi_profiles)) {
+    d.wifi_profiles.forEach(p => {
+      const slot = p.slot;
+      const ssidEl = (slot === 1) ? document.getElementById('ssid') : document.getElementById('ssid_' + slot);
+      const passEl = (slot === 1) ? document.getElementById('password') : document.getElementById('password_' + slot);
+      if (ssidEl && !configLoaded) ssidEl.value = p.ssid || '';
+      if (passEl && p.has_pass) {
+        passEl.placeholder = '•••••••• (' + (currentLang === 'sk' ? 'Ulo\u017Een\u00E9' : 'Saved') + ')';
+      }
+      const badge = document.getElementById('wifi_badge_' + slot);
+      if (badge) {
+        if (p.active) {
+          badge.innerText = '[CONNECTED]';
+          badge.style.color = 'var(--phosphor-green)';
+        } else if (p.ssid && p.ssid.length > 0) {
+          badge.innerText = '[STANDBY]';
+          badge.style.color = 'var(--lab-ochre)';
+        } else {
+          badge.innerText = '[EMPTY]';
+          badge.style.color = 'var(--ink-muted)';
+        }
+      }
+    });
+  } else if (!configLoaded && d.ssid != null) {
+    const el = document.getElementById('ssid'); if (el) el.value = d.ssid;
+  }
   if (!configLoaded) {
-    if (d.ssid != null) { const el = document.getElementById('ssid'); if (el) el.value = d.ssid; }
     if (d.rotate_sec != null) { const el = document.getElementById('rotate'); if (el) el.value = d.rotate_sec; }
     if (d.auto_rotate != null) {
       const el = document.getElementById('auto_rotate');
@@ -2593,16 +2744,30 @@ static void handleScan() {
 static void handleSave() {
     bool wifiChanged = false;
 
-    // 1. Process Wi-Fi credentials
-    if (s_server.hasArg("ssid")) {
-        String newSsid = s_server.arg("ssid");
-        String newPass = s_server.arg("password");
-        newSsid.trim();
-        newPass.trim();
+    // 1. Process Wi-Fi credentials (Multi-Profile Memory)
+    for (uint8_t slot = 0; slot < MAX_WIFI_PROFILES; slot++) {
+        String ssidKey = (slot == 0) ? "ssid" : ("ssid_" + String(slot + 1));
+        String passKey = (slot == 0) ? "password" : ("password_" + String(slot + 1));
+        String delKey  = "del_wifi_" + String(slot + 1);
 
-        if (newSsid.length() > 0 && (newSsid != s_ssid || newPass.length() > 0)) {
-            Network_SaveCredentials(newSsid, (newPass.length() > 0) ? newPass : s_pass);
+        if (s_server.hasArg(delKey) && s_server.arg(delKey) == "1") {
+            Network_DeleteProfile(slot);
             wifiChanged = true;
+        } else if (s_server.hasArg(ssidKey)) {
+            String newSsid = s_server.arg(ssidKey);
+            String newPass = s_server.hasArg(passKey) ? s_server.arg(passKey) : "";
+            newSsid.trim();
+            newPass.trim();
+
+            if (newSsid.length() > 0) {
+                if (newSsid != s_wifiProfiles[slot].ssid || newPass.length() > 0) {
+                    Network_SaveProfile(slot, newSsid, (newPass.length() > 0) ? newPass : s_wifiProfiles[slot].pass);
+                    wifiChanged = true;
+                }
+            } else if (s_server.hasArg(passKey) && s_wifiProfiles[slot].ssid.length() > 0) {
+                Network_DeleteProfile(slot);
+                wifiChanged = true;
+            }
         }
     }
 
@@ -2774,6 +2939,15 @@ static void handleStatus() {
     doc["ap_ip"] = Network_GetAPIP();
     doc["ssid"] = Network_GetSSID();
     doc["rssi"] = Network_GetRSSI();
+
+    JsonArray wifiArr = doc["wifi_profiles"].to<JsonArray>();
+    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+        JsonObject p = wifiArr.add<JsonObject>();
+        p["slot"] = i + 1;
+        p["ssid"] = s_wifiProfiles[i].ssid;
+        p["has_pass"] = (s_wifiProfiles[i].pass.length() > 0);
+        p["active"] = (s_netState == NET_STATE_CONNECTED && s_wifiProfiles[i].ssid.length() > 0 && s_wifiProfiles[i].ssid == WiFi.SSID());
+    }
     doc["rotate_sec"] = s_rotateSec;
     doc["auto_rotate"] = s_autoRotate;
     doc["carousel_mask"] = s_carouselMask;
@@ -2863,8 +3037,12 @@ void Network_Init() {
     s_apSSID = String(buf);
 
     s_prefs.begin(PREF_NAMESPACE, false);
-    s_ssid = s_prefs.getString(PREF_KEY_SSID, "");
-    s_pass = s_prefs.getString(PREF_KEY_PASS, "");
+    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+        s_wifiProfiles[i].ssid = s_prefs.getString(s_wifiSsidKeys[i], "");
+        s_wifiProfiles[i].pass = s_prefs.getString(s_wifiPassKeys[i], "");
+    }
+    s_ssid = s_wifiProfiles[0].ssid;
+    s_pass = s_wifiProfiles[0].pass;
     s_autoRotate = s_prefs.getBool(PREF_KEY_AUTO_ROTATE, true);
     s_activeApp = (uint8_t)s_prefs.getUChar(PREF_KEY_ACTIVE_APP, 0);
     if (s_activeApp >= 9) s_activeApp = 0;
@@ -2937,6 +3115,24 @@ void Network_Init() {
     s_server.on("/save", HTTP_POST, handleSave);
     s_server.on("/scan", HTTP_GET, handleScan);
     s_server.on("/status", HTTP_GET, handleStatus);
+    s_server.on("/api/wifi", HTTP_GET, []() {
+        JsonDocument doc;
+        doc["connected"] = (WiFi.status() == WL_CONNECTED);
+        doc["active_ssid"] = (WiFi.status() == WL_CONNECTED) ? WiFi.SSID() : "";
+        doc["ip"] = Network_GetLocalIP();
+        doc["rssi"] = Network_GetRSSI();
+        JsonArray arr = doc["profiles"].to<JsonArray>();
+        for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+            JsonObject p = arr.add<JsonObject>();
+            p["slot"] = i + 1;
+            p["ssid"] = s_wifiProfiles[i].ssid;
+            p["has_pass"] = (s_wifiProfiles[i].pass.length() > 0);
+            p["connected"] = (WiFi.status() == WL_CONNECTED && s_wifiProfiles[i].ssid.length() > 0 && s_wifiProfiles[i].ssid == WiFi.SSID());
+        }
+        String out;
+        serializeJson(doc, out);
+        s_server.send(200, "application/json", out);
+    });
 
     s_server.on("/api/display", HTTP_GET, []() {
         String json;
@@ -3158,7 +3354,7 @@ void Network_Init() {
         }
     });
 
-    if (s_ssid.length() > 0) {
+    if (Network_HasSavedCredentials()) {
         Network_ConnectStation();
     } else {
         Network_StartAP();
@@ -3166,16 +3362,74 @@ void Network_Init() {
 }
 
 void Network_ConnectStation() {
-    Serial.printf("[WiFi] Connecting to saved SSID '%s'...\n", s_ssid.c_str());
+    int savedCount = 0;
+    int firstValid = -1;
+    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+        if (s_wifiProfiles[i].ssid.length() > 0) {
+            savedCount++;
+            if (firstValid < 0) firstValid = i;
+        }
+    }
+
+    if (savedCount == 0) {
+        Serial.println("[WiFi] No saved credentials found. Starting AP...");
+        Network_StartAP();
+        return;
+    }
+
+    int targetSlot = firstValid;
+
+    // If multiple profiles exist, perform an intelligent fast RF scan to find which network is in range
+    if (savedCount > 1) {
+        Serial.printf("[WiFi] %d saved profiles found. Scanning for available networks...\n", savedCount);
+        WiFi.mode(WIFI_STA);
+        WiFi.disconnect(true);
+        delay(50);
+        int16_t n = WiFi.scanNetworks(false, false, false, 250);
+        int bestProfile = -1;
+        int bestRssi = -1000;
+        if (n > 0) {
+            for (int i = 0; i < n; i++) {
+                String foundSsid = WiFi.SSID(i);
+                for (int p = 0; p < MAX_WIFI_PROFILES; p++) {
+                    if (s_wifiProfiles[p].ssid.length() > 0 && s_wifiProfiles[p].ssid == foundSsid) {
+                        int rssi = WiFi.RSSI(i);
+                        Serial.printf("[WiFi] Scan matched saved profile %d '%s' (RSSI: %d dBm)\n",
+                                      p + 1, foundSsid.c_str(), rssi);
+                        if (rssi > bestRssi) {
+                            bestRssi = rssi;
+                            bestProfile = p;
+                        }
+                    }
+                }
+            }
+            WiFi.scanDelete();
+        }
+        if (bestProfile >= 0) {
+            targetSlot = bestProfile;
+            Serial.printf("[WiFi] Selected best in-range profile %d: '%s' (%d dBm)\n",
+                          targetSlot + 1, s_wifiProfiles[targetSlot].ssid.c_str(), bestRssi);
+        } else {
+            Serial.printf("[WiFi] None of the %d saved networks detected in scan. Trying profile %d ('%s')...\n",
+                          savedCount, targetSlot + 1, s_wifiProfiles[targetSlot].ssid.c_str());
+        }
+    } else {
+        Serial.printf("[WiFi] Single saved profile %d: '%s'\n", targetSlot + 1, s_wifiProfiles[targetSlot].ssid.c_str());
+    }
+
+    s_activeProfileIdx = targetSlot;
+    s_ssid = s_wifiProfiles[targetSlot].ssid;
+    s_pass = s_wifiProfiles[targetSlot].pass;
     s_netState = NET_STATE_CONNECTING;
     s_connectStartMs = millis();
 
-    if (WiFi.getMode() == WIFI_STA) {
-        WiFi.disconnect(true);
+    if (WiFi.getMode() != WIFI_STA) {
+        WiFi.mode(WIFI_STA);
     }
-    WiFi.mode(WIFI_STA);
+    WiFi.disconnect(true);
     WiFi.begin(s_ssid.c_str(), s_pass.c_str());
     s_server.begin();
+    Serial.printf("[WiFi] Connecting to profile %d ('%s')...\n", s_activeProfileIdx + 1, s_ssid.c_str());
 }
 
 void Network_StartAP() {
@@ -3217,11 +3471,30 @@ void Network_Poll() {
         s_server.handleClient();
         if (WiFi.status() == WL_CONNECTED) {
             s_netState = NET_STATE_CONNECTED;
-            Serial.printf("[WiFi] Connected! IP: %s, RSSI: %d dBm\n",
-                          WiFi.localIP().toString().c_str(), WiFi.RSSI());
+            Serial.printf("[WiFi] Connected to '%s'! IP: %s, RSSI: %d dBm\n",
+                          WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI());
         } else if (now - s_connectStartMs >= WIFI_CONNECT_TIMEOUT_MS) {
-            Serial.printf("[WiFi] Connection timeout. Falling back to AP mode.\n");
-            Network_StartAP();
+            // Find next saved profile that hasn't been tried yet
+            int nextSlot = -1;
+            for (int p = s_activeProfileIdx + 1; p < MAX_WIFI_PROFILES; p++) {
+                if (s_wifiProfiles[p].ssid.length() > 0) {
+                    nextSlot = p;
+                    break;
+                }
+            }
+            if (nextSlot >= 0) {
+                s_activeProfileIdx = nextSlot;
+                s_ssid = s_wifiProfiles[nextSlot].ssid;
+                s_pass = s_wifiProfiles[nextSlot].pass;
+                s_connectStartMs = now;
+                Serial.printf("[WiFi] Timeout on previous profile. Trying profile %d ('%s')...\n",
+                              nextSlot + 1, s_ssid.c_str());
+                WiFi.disconnect(true);
+                WiFi.begin(s_ssid.c_str(), s_pass.c_str());
+            } else {
+                Serial.printf("[WiFi] Connection timeout on all saved profiles. Starting AP mode.\n");
+                Network_StartAP();
+            }
         }
         return;
     }
@@ -3272,23 +3545,57 @@ int8_t Network_GetRSSI() {
 }
 
 bool Network_HasSavedCredentials() {
-    return (s_ssid.length() > 0);
+    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+        if (s_wifiProfiles[i].ssid.length() > 0) return true;
+    }
+    return false;
+}
+
+void Network_SaveProfile(uint8_t slot, const String& ssid, const String& pass) {
+    if (slot >= MAX_WIFI_PROFILES) return;
+    s_wifiProfiles[slot].ssid = ssid;
+    s_wifiProfiles[slot].pass = pass;
+    s_prefs.putString(s_wifiSsidKeys[slot], ssid);
+    s_prefs.putString(s_wifiPassKeys[slot], pass);
+    if (slot == 0) {
+        s_ssid = ssid;
+        s_pass = pass;
+    }
+    Serial.printf("[WiFi] Saved profile %u: '%s'\n", (unsigned)(slot + 1), ssid.c_str());
+}
+
+void Network_DeleteProfile(uint8_t slot) {
+    if (slot >= MAX_WIFI_PROFILES) return;
+    s_wifiProfiles[slot].ssid = "";
+    s_wifiProfiles[slot].pass = "";
+    s_prefs.remove(s_wifiSsidKeys[slot]);
+    s_prefs.remove(s_wifiPassKeys[slot]);
+    if (slot == 0) {
+        s_ssid = "";
+        s_pass = "";
+    }
+    Serial.printf("[WiFi] Deleted profile %u from NVS\n", (unsigned)(slot + 1));
+}
+
+String Network_GetProfileSSID(uint8_t slot) {
+    if (slot >= MAX_WIFI_PROFILES) return "";
+    return s_wifiProfiles[slot].ssid;
+}
+
+bool Network_HasProfilePass(uint8_t slot) {
+    if (slot >= MAX_WIFI_PROFILES) return false;
+    return (s_wifiProfiles[slot].pass.length() > 0);
 }
 
 void Network_SaveCredentials(const String& ssid, const String& pass) {
-    s_ssid = ssid;
-    s_pass = pass;
-    s_prefs.putString(PREF_KEY_SSID, s_ssid);
-    s_prefs.putString(PREF_KEY_PASS, s_pass);
-    Serial.printf("[WiFi] Saved credentials for SSID '%s' to NVS\n", s_ssid.c_str());
+    Network_SaveProfile(0, ssid, pass);
 }
 
 void Network_ForgetCredentials() {
-    s_ssid = "";
-    s_pass = "";
-    s_prefs.remove(PREF_KEY_SSID);
-    s_prefs.remove(PREF_KEY_PASS);
-    Serial.printf("[WiFi] Cleared Wi-Fi credentials from NVS\n");
+    for (uint8_t i = 0; i < MAX_WIFI_PROFILES; i++) {
+        Network_DeleteProfile(i);
+    }
+    Serial.printf("[WiFi] Cleared all Wi-Fi credentials from NVS\n");
     Network_StartAP();
 }
 

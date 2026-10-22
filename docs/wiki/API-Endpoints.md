@@ -18,7 +18,7 @@ The onboard web server exposes several REST endpoints for status monitoring, con
   "transition_fx": 1,
   "active_app": 0,
   "app_name": "Clock",
-  "firmware_version": "1.9.0",
+  "firmware_version": "2.0.0",
   "temperature_in": 22.4,
   "humidity_in": 46.2,
   "battery_volts": 4.12,
@@ -181,3 +181,21 @@ The onboard web server exposes several REST endpoints for status monitoring, con
 - `POST /update`: Multipart binary file upload (`firmware.bin`)
 - `GET /api/ota/check`: Checks latest tag and download URL from GitHub Releases
 - `POST /api/ota/install`: Triggers background download and streaming flash from a provided asset URL
+
+## Multi-Network Wi-Fi API
+- **URL**: `GET /api/wifi`
+- **Response**: `application/json`
+```json
+{
+  "connected": true,
+  "active_ssid": "MyHomeNetwork",
+  "ip": "192.168.0.4",
+  "rssi": -45,
+  "profiles": [
+    {"slot": 1, "ssid": "MyHomeNetwork", "has_pass": true, "connected": true},
+    {"slot": 2, "ssid": "Office_WiFi", "has_pass": true, "connected": false},
+    {"slot": 3, "ssid": "iPhone_Hotspot", "has_pass": true, "connected": false},
+    {"slot": 4, "ssid": "", "has_pass": false, "connected": false}
+  ]
+}
+```

@@ -9,7 +9,7 @@ It features a precision **Tactile Field Instrument** industrial design system (i
 ## Top Navigation & Language Switcher
 
 - **Buy Me a Coffee Widget & Header Badge**: Direct integration with the developer's Buy Me a Coffee page (`hackra`) via an interactive floating widget and header/footer action badges.
-- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.9.0 • GitHub`) linking directly to the project GitHub repository.
+- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v2.0.0 • GitHub`) linking directly to the project GitHub repository.
 - **Multilingual Support (EN / SK)**: Switch between English and Slovak with a single click. The choice is saved immediately in client-side `localStorage` and synchronized with device NVS (`ui_lang`).
 
 ---
@@ -104,10 +104,12 @@ It features a precision **Tactile Field Instrument** industrial design system (i
 ---
 
 ## ⚙️ Group 4: Network & System
-
-- **Wi-Fi Network Name (SSID)**: Target 2.4 GHz wireless network name.
-- **Scan Nearby Networks**: Performs a non-blocking 802.11 b/g/n scan with RSSI and lock indicators.
-- **Wi-Fi Password**: WPA/WPA2 passphrase.
+ 
+- **Multi-Network Wi-Fi Memory (Auto-Roaming)**: Stores up to 4 wireless network profiles in NVS (Profile 01 Primary, Profile 02 Secondary, Profile 03 Hotspot, Profile 04 Auxiliary).
+- **Intelligent RF Scanning & Auto-Switching**: When multiple networks are saved, the clock scans available 2.4 GHz SSIDs and automatically connects to whichever saved network is present with the highest signal strength (ideal for seamlessly moving the device between home, office, and mobile hotspots).
+- **Sequential Fallback**: If a saved network is hidden or missed by the beacon scan, the device steps through each saved profile before falling back to SoftAP setup mode.
+- **Scan Nearby Networks**: Performs a 2.4 GHz 802.11 b/g/n scan with RSSI and encryption indicators, with one-click slot assignment (`→ Slot 1`, `→ Slot 2`, `→ Slot 3`, `→ Slot 4`).
+- **Live Status Badges**: Displays real-time connection state for each profile (`[CONNECTED]`, `[STANDBY]`, `[EMPTY]`) and one-click slot clearing (`✕`).
 - **Save & Apply Settings**: AJAX asynchronous submission with toast notification and real-time live preview update.
 
 ---
