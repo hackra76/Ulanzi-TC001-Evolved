@@ -503,14 +503,18 @@ void loop() {
     }
 
     // 9. Standard App Navigation & Button Events
+    ButtonEvent evOk = Buttons_GetEvent(BTN_ID_OK);
+    ButtonEvent evLeft = Buttons_GetEvent(BTN_ID_LEFT);
+    ButtonEvent evRight = Buttons_GetEvent(BTN_ID_RIGHT);
     uint8_t customCount = CustomApp_GetActiveCount();
 
     // Dedicated button actions when viewing Timer App
     if (s_currentApp == APP_TIMER && !s_showingCustomApp) {
-        if (Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
+        if (evOk == BTN_SHORT_CLICK) {
             Timer_Toggle();
             Buzzer_Click();
-        } else if (Buttons_GetEvent(BTN_ID_OK) == BTN_LONG_PRESS) {
+            evOk = BTN_NONE;
+        } else if (evOk == BTN_LONG_PRESS) {
             if (Timer_GetState() == TIMER_STATE_RUNNING || Timer_GetState() == TIMER_STATE_PAUSED) {
                 Timer_Reset();
                 Buzzer_Alert();
@@ -518,20 +522,23 @@ void loop() {
                 Timer_SetMode(Timer_GetMode() == TIMER_MODE_COUNTDOWN ? TIMER_MODE_STOPWATCH : TIMER_MODE_COUNTDOWN);
                 Buzzer_Alert();
             }
-        } else if (Buttons_GetEvent(BTN_ID_LEFT) == BTN_LONG_PRESS) {
+            evOk = BTN_NONE;
+        } else if (evLeft == BTN_LONG_PRESS) {
             if (Timer_GetMode() == TIMER_MODE_COUNTDOWN && Timer_GetState() != TIMER_STATE_RUNNING) {
                 Timer_AdjustDuration(-60);
                 Buzzer_Click();
             }
-        } else if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_LONG_PRESS) {
+            evLeft = BTN_NONE;
+        } else if (evRight == BTN_LONG_PRESS) {
             if (Timer_GetMode() == TIMER_MODE_COUNTDOWN && Timer_GetState() != TIMER_STATE_RUNNING) {
                 Timer_AdjustDuration(60);
                 Buzzer_Click();
             }
+            evRight = BTN_NONE;
         }
     }
 
-    if (Buttons_GetEvent(BTN_ID_RIGHT) == BTN_SHORT_CLICK) {
+    if (evRight == BTN_SHORT_CLICK) {
         Buzzer_Click();
         Screensaver_ResetActivity();
         if (s_showingCustomApp) {
@@ -572,7 +579,7 @@ void loop() {
         s_lastAppSwitch = now;
         s_autoRotate = false;
         Network_SetAutoRotate(false);
-    } else if (Buttons_GetEvent(BTN_ID_LEFT) == BTN_SHORT_CLICK) {
+    } else if (evLeft == BTN_SHORT_CLICK) {
         Buzzer_Click();
         Screensaver_ResetActivity();
         if (s_showingCustomApp) {
@@ -612,16 +619,28 @@ void loop() {
         s_lastAppSwitch = now;
         s_autoRotate = false;
         Network_SetAutoRotate(false);
-    } else if (s_currentApp != APP_TIMER && Buttons_GetEvent(BTN_ID_OK) == BTN_SHORT_CLICK) {
+    } else if (s_currentApp != APP_TIMER && evOk == BTN_SHORT_CLICK) {
         Buzzer_Click();
         Screensaver_ResetActivity();
-        // Cycle manual brightness (pauses auto-brightness until re-enabled in web portal)
-        Network_SetAutoBrightness(false);
-        uint8_t cur = DisplayMatrix_GetBrightness();
-        uint8_t next = (cur <= 15) ? 35 : (cur <= 50 ? 80 : 10);
-        Network_SetDayBrightness(next);
-        DisplayMatrix_SetBrightness(next);
-    } else if (s_currentApp != APP_TIMER && Buttons_GetEvent(BTN_ID_OK) == BTN_LONG_PRESS) {
+        if (s_currentApp == APP_SCREENSAVER) {
+            ScreensaverStyle nextStyle = (ScreensaverStyle)(((int)Screensaver_GetStyle() + 1) % SCREENSAVER_STYLE_COUNT);
+            Screensaver_SetStyle(nextStyle);
+        } else if (s_currentApp == APP_BATTERY) {
+            uint8_t nextMode = (Network_GetBatteryMode() == 0) ? 1 : 0;
+            Network_SetBatteryMode(nextMode);
+            renderBatteryApp();
+        } else if (s_currentApp == APP_CRYPTO) {
+            Crypto_CycleAsset();
+            renderCryptoApp();
+        } else {
+            // Cycle manual brightness (pauses auto-brightness until re-enabled in web portal)
+            Network_SetAutoBrightness(false);
+            uint8_t cur = DisplayMatrix_GetBrightness();
+            uint8_t next = (cur <= 15) ? 35 : (cur <= 50 ? 80 : 10);
+            Network_SetDayBrightness(next);
+            DisplayMatrix_SetBrightness(next);
+        }
+    } else if (s_currentApp != APP_TIMER && evOk == BTN_LONG_PRESS) {
         Buzzer_Alert();
         Screensaver_ResetActivity();
         s_autoRotate = !s_autoRotate;

@@ -12,3 +12,4 @@ const uint16_t* Crypto_GetIcon();
 uint16_t Crypto_GetColor();
 
 void Crypto_SetSymbol(const String& symbol);
+void Crypto_CycleAsset();

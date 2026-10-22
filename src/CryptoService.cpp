@@ -5,6 +5,7 @@
 #include <ArduinoJson.h>
 #include "Config.h"
 #include "Icons.h"
+#include "NetworkManager.h"
 
 static String s_symbol = DEFAULT_CRYPTO_SYM;
 static float s_price = 68500.0f; // Default demo BTC price
@@ -34,11 +35,32 @@ void Crypto_Init() {
 
 void Crypto_SetSymbol(const String& symbol) {
     if (symbol.length() > 0) {
-        s_symbol = symbol;
-        s_symbol.toUpperCase();
-        s_symbol.trim();
-        s_forceFetch = true;
+        String upper = symbol;
+        upper.toUpperCase();
+        upper.trim();
+        if (upper != s_symbol) {
+            s_symbol = upper;
+            snprintf(s_formattedPrice, sizeof(s_formattedPrice), "...");
+            s_forceFetch = true;
+        }
     }
+}
+
+void Crypto_CycleAsset() {
+    static const char* const kAssets[] = {
+        "BTC", "ETH", "SOL", "BNB", "AAPL", "TSLA", "NVDA", "SPX", "GOLD", "EUR", "USD"
+    };
+    static const size_t kAssetCount = sizeof(kAssets) / sizeof(kAssets[0]);
+
+    int curIdx = -1;
+    for (size_t i = 0; i < kAssetCount; i++) {
+        if (s_symbol.equalsIgnoreCase(kAssets[i])) {
+            curIdx = (int)i;
+            break;
+        }
+    }
+    int nextIdx = (curIdx + 1) % kAssetCount;
+    Network_SetCryptoSymbol(kAssets[nextIdx]);
 }
 
 void Crypto_ForceFetch() {
@@ -76,23 +98,33 @@ static String getYahooTicker(const String& sym) {
 }
 
 const uint16_t* Crypto_GetIcon() {
+    if (s_symbol == "BTC") return ICON_BTC;
     if (s_symbol == "ETH") return ICON_ETH;
+    if (s_symbol == "SOL") return ICON_SOL;
+    if (s_symbol == "BNB") return ICON_BNB;
     if (s_symbol == "AAPL") return ICON_APPLE;
+    if (s_symbol == "TSLA") return ICON_TESLA;
+    if (s_symbol == "NVDA") return ICON_NVIDIA;
+    if (s_symbol == "SPX" || s_symbol == "^GSPC") return ICON_SPX;
     if (s_symbol == "GOLD" || s_symbol == "GC=F") return ICON_GOLD;
     if (s_symbol == "EUR" || s_symbol == "EURUSD" || s_symbol == "EURUSD=X") return ICON_EUR;
     if (s_symbol == "USD" || s_symbol == "USDEUR" || s_symbol == "USDEUR=X") return ICON_USD;
-    if (s_symbol == "SPX" || s_symbol == "^GSPC" || s_symbol == "TSLA" || s_symbol == "NVDA") return ICON_CHART;
-    return ICON_BTC;
+    return ICON_CHART;
 }
 
 uint16_t Crypto_GetColor() {
+    if (s_symbol == "BTC") return C_ORANGE;
     if (s_symbol == "ETH") return C_CYAN;
+    if (s_symbol == "SOL") return C_MAGENTA;
+    if (s_symbol == "BNB") return C_YELLOW;
     if (s_symbol == "AAPL") return C_WHITE;
+    if (s_symbol == "TSLA") return C_RED;
+    if (s_symbol == "NVDA") return C_GREEN;
+    if (s_symbol == "SPX" || s_symbol == "^GSPC") return C_CYAN;
     if (s_symbol == "GOLD" || s_symbol == "GC=F") return C_YELLOW;
     if (s_symbol == "EUR" || s_symbol == "EURUSD" || s_symbol == "EURUSD=X") return C_CYAN;
     if (s_symbol == "USD" || s_symbol == "USDEUR" || s_symbol == "USDEUR=X") return C_GREEN;
-    if (s_symbol == "SPX" || s_symbol == "^GSPC") return C_GREEN;
-    return C_YELLOW;
+    return C_GREEN;
 }
 
 void Crypto_Update() {

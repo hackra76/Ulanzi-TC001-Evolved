@@ -256,6 +256,66 @@ static const uint16_t ICON_EUR[64] = {
     0,       C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  0
 };
 
+// 8x8 Solana Icon (SOL - Three iconic parallel gradient bars)
+static const uint16_t ICON_SOL[64] = {
+    0, 0,         0,         0,         0,         0,         0, 0,
+    0, C_CYAN,    C_CYAN,    C_CYAN,    C_CYAN,    0,         0, 0,
+    0, 0,         C_CYAN,    C_CYAN,    C_CYAN,    C_CYAN,    0, 0,
+    0, 0,         C_MAGENTA, C_MAGENTA, C_MAGENTA, C_MAGENTA, 0, 0,
+    0, C_MAGENTA, C_MAGENTA, C_MAGENTA, C_MAGENTA, 0,         0, 0,
+    0, C_GREEN,   C_GREEN,   C_GREEN,   C_GREEN,   0,         0, 0,
+    0, 0,         C_GREEN,   C_GREEN,   C_GREEN,   C_GREEN,   0, 0,
+    0, 0,         0,         0,         0,         0,         0, 0
+};
+
+// 8x8 Binance Coin Icon (BNB - Golden geometric diamond)
+static const uint16_t ICON_BNB[64] = {
+    0,        0,        0,        C_YELLOW, C_YELLOW, 0,        0,        0,
+    0,        0,        C_YELLOW, 0,        0,        C_YELLOW, 0,        0,
+    0,        C_YELLOW, 0,        C_YELLOW, C_YELLOW, 0,        C_YELLOW, 0,
+    C_YELLOW, 0,        C_YELLOW, 0,        0,        C_YELLOW, 0,        C_YELLOW,
+    C_YELLOW, 0,        C_YELLOW, 0,        0,        C_YELLOW, 0,        C_YELLOW,
+    0,        C_YELLOW, 0,        C_YELLOW, C_YELLOW, 0,        C_YELLOW, 0,
+    0,        0,        C_YELLOW, 0,        0,        C_YELLOW, 0,        0,
+    0,        0,        0,        C_YELLOW, C_YELLOW, 0,        0,        0
+};
+
+// 8x8 Tesla Logo (TSLA - Red Electric T)
+static const uint16_t ICON_TESLA[64] = {
+    0,     C_RED, C_RED, C_RED, C_RED, C_RED, C_RED, 0,
+    0,     0,     0,     0,     0,     0,     0,     0,
+    C_RED, C_RED, C_RED, C_RED, C_RED, C_RED, C_RED, C_RED,
+    0,     C_RED, C_RED, C_RED, C_RED, C_RED, C_RED, 0,
+    0,     0,     C_RED, C_RED, C_RED, C_RED, 0,     0,
+    0,     0,     0,     C_RED, C_RED, 0,     0,     0,
+    0,     0,     0,     C_RED, C_RED, 0,     0,     0,
+    0,     0,     0,     C_RED, C_RED, 0,     0,     0
+};
+
+// 8x8 Nvidia Logo (NVDA - Green Eye / Claw)
+static const uint16_t ICON_NVIDIA[64] = {
+    0,       0,       C_GREEN, C_GREEN, C_GREEN, C_GREEN, 0,       0,
+    0,       C_GREEN, C_GREEN, 0,       0,       0,       0,       0,
+    C_GREEN, C_GREEN, 0,       C_GREEN, C_GREEN, C_GREEN, 0,       0,
+    C_GREEN, 0,       C_GREEN, C_WHITE, C_WHITE, 0,       C_GREEN, 0,
+    C_GREEN, 0,       C_GREEN, C_WHITE, C_WHITE, 0,       C_GREEN, 0,
+    C_GREEN, C_GREEN, 0,       C_GREEN, C_GREEN, C_GREEN, 0,       0,
+    0,       C_GREEN, C_GREEN, 0,       0,       0,       0,       0,
+    0,       0,       C_GREEN, C_GREEN, C_GREEN, C_GREEN, 0,       0
+};
+
+// 8x8 S&P 500 Index Icon (SPX - Blue badge with SP)
+static const uint16_t ICON_SPX[64] = {
+    0,       C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  0,
+    C_BLUE,  C_WHITE, C_WHITE, 0,       C_CYAN,  C_CYAN,  0,       C_BLUE,
+    C_BLUE,  C_WHITE, 0,       0,       C_CYAN,  0,       C_CYAN,  C_BLUE,
+    C_BLUE,  0,       C_WHITE, 0,       C_CYAN,  C_CYAN,  0,       C_BLUE,
+    C_BLUE,  0,       0,       C_WHITE, C_CYAN,  0,       0,       C_BLUE,
+    C_BLUE,  C_WHITE, C_WHITE, 0,       C_CYAN,  0,       0,       C_BLUE,
+    C_BLUE,  0,       0,       0,       0,       0,       0,       C_BLUE,
+    0,       C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  C_BLUE,  0
+};
+
 // 8x8 Stock Market Trend / Chart
 static const uint16_t ICON_CHART[64] = {
     0,       0,       0,       0,       0,       C_GREEN, C_GREEN, C_GREEN,
@@ -420,6 +480,12 @@ inline const uint16_t* Icons_GetByName(const String& name) {
     if (lower == "bell" || lower == "alert" || lower == "notify") return ICON_BELL;
     if (lower == "check" || lower == "ok") return ICON_CHECK;
     if (lower == "cross" || lower == "cancel" || lower == "error") return ICON_CROSS;
+    if (lower == "apple" || lower == "aapl") return ICON_APPLE;
+    if (lower == "sol" || lower == "solana") return ICON_SOL;
+    if (lower == "bnb" || lower == "binance") return ICON_BNB;
+    if (lower == "tsla" || lower == "tesla") return ICON_TESLA;
+    if (lower == "nvda" || lower == "nvidia") return ICON_NVIDIA;
+    if (lower == "spx" || lower == "s&p" || lower == "sp500") return ICON_SPX;
     if (lower == "stopwatch") return ICON_STOPWATCH;
     if (lower == "timer" || lower == "hourglass") return ICON_HOURGLASS;
     if (lower == "pacman" || lower == "screensaver") return ICON_PACMAN;

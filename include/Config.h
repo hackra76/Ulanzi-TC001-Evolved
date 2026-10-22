@@ -125,7 +125,7 @@
 
 // --- Firmware Metadata & OTA ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
-#define FW_VERSION          "1.8.0"
+#define FW_VERSION          "1.9.0"
 #define GITHUB_REPO         "hackra76/Ulanzi-TC001-Evolved"
 
 

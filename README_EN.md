@@ -42,7 +42,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
   - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v1.8.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v1.9.0 • GitHub`) linking directly to the latest releases and source code.
   - **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
   - Non-blocking Wi-Fi credential scanner with signal strength indicators and AJAX instant save.
@@ -146,10 +146,12 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
 |---|---|---|
 | **Left** (GPIO 26) | Short Click | Switch to Previous Screen along custom order (pauses carousel) |
 | **Right** (GPIO 14) | Short Click | Switch to Next Screen along custom order (pauses carousel) |
-| **OK / Center** (GPIO 27) | Short Click | Cycle Manual Brightness (Low / Med / High) *(when not on Timer screen)* |
-| **OK / Center** (GPIO 27) | Long Press (>700ms) | Toggle Auto-Rotation Carousel On/Off *(when not on Timer screen)* |
+| **OK / Center** (Screensaver Screen) | Short Click | Cycle Screensaver Styles (Matrix Rain, Fire, Pac-Man, Life, Shuffle) |
+| **OK / Center** (Battery Screen) | Short Click | Toggle Telemetry Display between Voltage (V) and Percentage (%) |
+| **OK / Center** (Crypto Screen) | Short Click | Cycle Market Asset Presets (BTC, ETH, SOL, BNB, AAPL, TSLA, NVDA, SPX, GOLD, EUR, USD) |
 | **OK / Center** (Timer Screen) | Short Click | Start / Pause (Toggle) Stopwatch or Countdown Timer |
-| **OK / Center** (Timer Screen) | Long Press (>700ms) | Reset Timer (if running/paused) / Switch between Stopwatch & Countdown (if stopped) |
+| **OK / Center** (Other Screens) | Short Click | Cycle Manual Brightness (10% → 35% → 80%) |
+| **OK / Center** (Global Long Press) | Long Press (>700ms) | Toggle Auto-Rotation Carousel On/Off (on Timer screen: reset / toggle mode) |
 | **Left** (Timer Screen) | Long Press (>700ms) | Adjust Countdown Duration -1 minute (when stopped/paused) |
 | **Right** (Timer Screen) | Long Press (>700ms) | Adjust Countdown Duration +1 minute (when stopped/paused) |
 | **Any Button** | Click (during Timer Alarm) | Instantly silence and dismiss countdown alarm |

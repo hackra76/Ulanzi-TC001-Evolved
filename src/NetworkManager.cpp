@@ -2166,9 +2166,12 @@ function switchScreen(dir) {
   fetch('/api/screen?set=' + currentAppIndex)
     .then(r => r.json())
     .then(d => {
+      if (d.active_app != null) currentAppIndex = d.active_app;
       const name = d.app_name || appNames[currentAppIndex];
-      document.getElementById('screenNameBadge').innerText = name;
-      document.getElementById('teleScreenName').innerText = name;
+      const b = document.getElementById('screenNameBadge');
+      if (b) b.innerText = name;
+      const t = document.getElementById('teleScreenName');
+      if (t) t.innerText = name;
       updateVirtualMatrix();
     });
 }
@@ -2352,6 +2355,14 @@ function updateTelemetry() {
   fetch('/status')
     .then(r => r.json())
     .then(d => {
+      if (d.active_app != null) {
+        currentAppIndex = d.active_app;
+        const name = d.app_name || appNames[currentAppIndex] || ("Screen " + currentAppIndex);
+        const b = document.getElementById('screenNameBadge');
+        if (b) b.innerText = name;
+        const t = document.getElementById('teleScreenName');
+        if (t) t.innerText = name;
+      }
       if (d.battery_volts != null) {
         populateConfig(d);
         document.getElementById('teleBatteryVolts').innerText = d.battery_volts.toFixed(2);
@@ -2759,6 +2770,12 @@ static void handleStatus() {
     doc["carousel_mask"] = s_carouselMask;
     doc["transition_fx"] = s_transitionFx;
     doc["active_app"] = s_activeApp;
+    static const char* kScreenNamesList[] = {
+        "Clock", "Indoor Environment", "Outdoor Weather",
+        "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power",
+        "Stopwatch & Timer", "Ambient Screensaver"
+    };
+    doc["app_name"] = kScreenNamesList[s_activeApp % 9];
     doc["firmware_version"] = FW_VERSION;
 
     doc["car_ord"] = Network_GetCarouselOrderString();
@@ -3287,7 +3304,7 @@ uint8_t Network_GetActiveApp() {
 }
 
 void Network_SetActiveApp(uint8_t app) {
-    if (app < 7) {
+    if (app < 9) {
         s_activeApp = app;
         s_prefs.putUChar(PREF_KEY_ACTIVE_APP, s_activeApp);
         Serial.printf("[Settings] Active screen set to %u\n", s_activeApp);

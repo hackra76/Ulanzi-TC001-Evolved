@@ -42,7 +42,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
   - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.8.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v1.9.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - **Integrácia podpory vývojára**: Interaktívny plávajúci widget Buy Me a Coffee a akčné tlačidlá v hlavičke a pätičke portálu.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
   - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI) a bleskovým ukladaním cez AJAX.
@@ -146,10 +146,12 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
 |---|---|---|
 | **Vľavo** (GPIO 26) | Krátke stlačenie | Prepnutie na predchádzajúcu obrazovku podľa vlastného poradia (pozastaví rotáciu) |
 | **Vpravo** (GPIO 14) | Krátke stlačenie | Prepnutie na nasledujúcu obrazovku podľa vlastného poradia (pozastaví rotáciu) |
-| **OK / Stred** (GPIO 27) | Krátke stlačenie | Cyklická zmena manuálneho jasu (Nízky / Stredný / Vysoký) *(mimo obrazovky časovača)* |
-| **OK / Stred** (GPIO 27) | Dlhé stlačenie (>700ms) | Zapnutie / vypnutie automatického kolotoča obrazoviek *(mimo obrazovky časovača)* |
+| **OK / Stred** (Obrazovka šetriča) | Krátke stlačenie | Cyklické prepínanie retro štýlov šetriča (Matrix, Oheň, Pac-Man, Život, Shuffle) |
+| **OK / Stred** (Obrazovka batérie) | Krátke stlačenie | Prepnutie zobrazenia telemetrie batérie medzi Napätím (V) a Percentami (%) |
+| **OK / Stred** (Obrazovka trhov) | Krátke stlačenie | Cyklické prepínanie predvolieb aktív (BTC, ETH, SOL, BNB, AAPL, TSLA, NVDA, SPX, ZLATO, EUR, USD) |
 | **OK / Stred** (Obrazovka časovača) | Krátke stlačenie | Spustenie / Pozastavenie (Toggle) stopiek alebo odpočítavania |
-| **OK / Stred** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Vynulovanie (Reset pri behu/pozastavení) / Prepnutie režimu Stopky/Odpočítavanie (pri zastavení) |
+| **OK / Stred** (Ostatné obrazovky) | Krátke stlačenie | Cyklická zmena manuálneho jasu (10% → 35% → 80%) |
+| **OK / Stred** (Globálne dlhé stlačenie) | Dlhé stlačenie (>700ms) | Zapnutie / vypnutie automatického kolotoča obrazoviek (na časovači: reset / prepnutie režimu) |
 | **Vľavo** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Skrátenie času odpočítavania o -1 minútu (pri zastavenom stave) |
 | **Vpravo** (Obrazovka časovača) | Dlhé stlačenie (>700ms) | Predĺženie času odpočítavania o +1 minútu (pri zastavenom stave) |
 | **Ľubovoľné tlačidlo** | Stlačenie pri zvonení alarmu | Okamžité stíšenie a vypnutie alarmu odpočítavania |

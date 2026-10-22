@@ -9,7 +9,7 @@ It features a precision **Tactile Field Instrument** industrial design system (i
 ## Top Navigation & Language Switcher
 
 - **Buy Me a Coffee Widget & Header Badge**: Direct integration with the developer's Buy Me a Coffee page (`hackra`) via an interactive floating widget and header/footer action badges.
-- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.8.0 • GitHub`) linking directly to the project GitHub repository.
+- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v1.9.0 • GitHub`) linking directly to the project GitHub repository.
 - **Multilingual Support (EN / SK)**: Switch between English and Slovak with a single click. The choice is saved immediately in client-side `localStorage` and synchronized with device NVS (`ui_lang`).
 
 ---

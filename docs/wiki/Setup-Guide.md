@@ -19,6 +19,11 @@
 ## Manual Navigation
 - Press **Right Button** to switch to the next screen along your custom carousel order.
 - Press **Left Button** to switch to the previous screen along your custom carousel order.
-- Press **OK Button** to cycle manual brightness levels (Low / Med / High).
-- Long-press **OK Button** (>700ms) to toggle auto-rotation carousel on or off.
+- Press **OK Button**:
+  - **Screensaver Screen**: Cycle retro screensaver styles (Matrix Rain, Fire, Pac-Man, Game of Life, Shuffle).
+  - **Battery Screen**: Cycle display telemetry between Voltage (V) and Percentage (%).
+  - **Crypto / Financial Screen**: Cycle through market asset presets (BTC, ETH, SOL, BNB, AAPL, TSLA, NVDA, SPX, GOLD, EUR, USD).
+  - **Stopwatch & Timer Screen**: Start / Pause / Resume timer.
+  - **Other Screens (Clock, Weather, Airspace, YouTube)**: Cycle manual brightness levels (10% / 35% / 80%).
+- Long-press **OK Button** (>700ms): Toggle auto-rotation carousel on or off (on Timer screen: reset / change mode).
 - In **Night Mode**, pressing any button temporarily wakes the display for 12 seconds at Day Brightness.
