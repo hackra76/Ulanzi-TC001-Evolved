@@ -378,26 +378,43 @@ void DisplayMatrix_DrawCalendarIcon(int16_t x, int16_t y, int dayOfMonth) {
     if (dayOfMonth < 1) dayOfMonth = 1;
     if (dayOfMonth > 31) dayOfMonth = 31;
 
-    static const uint16_t CAL_BASE[64] = {
-        0,       C_RED,   C_WHITE, C_RED,   C_RED,   C_WHITE, C_RED,   0,
-        C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,
-        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
-        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
-        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
-        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
-        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
-        0,       C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0
+    // 9x8 Dynamic Calendar Icon Base (width 9, height 8)
+    // Row 0: Dual mounting rings at cols 2 and 6
+    // Row 1: Solid red calendar header bar (cols 0..8)
+    // Rows 2..6: White calendar paper body (cols 0..8)
+    // Row 7: Rounded bottom white border (cols 1..7)
+    static const uint16_t CAL_BASE_9X8[72] = {
+        0,       C_RED,   C_WHITE, C_RED,   C_RED,   C_RED,   C_WHITE, C_RED,   0,
+        C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,   C_RED,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE,
+        0,       C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, C_WHITE, 0
     };
-    DisplayMatrix_DrawIcon(x, y, CAL_BASE);
+    for (int r = 0; r < 8; r++) {
+        for (int c = 0; c < 9; c++) {
+            uint16_t col = CAL_BASE_9X8[r * 9 + c];
+            if (col != 0) {
+                s_matrix.drawPixel(x + c, y + r, col);
+            }
+        }
+    }
 
     if (dayOfMonth < 10) {
+        // Centered single digit at cols 3..5 with symmetrical 3px white margins (cols 0..2 and 6..8)
         for (int r = 0; r < 5; r++) {
             uint8_t row = pgm_read_byte(&s_font3x5[dayOfMonth][r]);
-            if (row & 4) s_matrix.drawPixel(x + 2, y + 2 + r, C_BLACK);
-            if (row & 2) s_matrix.drawPixel(x + 3, y + 2 + r, C_BLACK);
-            if (row & 1) s_matrix.drawPixel(x + 4, y + 2 + r, C_BLACK);
+            if (row & 4) s_matrix.drawPixel(x + 3, y + 2 + r, C_BLACK);
+            if (row & 2) s_matrix.drawPixel(x + 4, y + 2 + r, C_BLACK);
+            if (row & 1) s_matrix.drawPixel(x + 5, y + 2 + r, C_BLACK);
         }
     } else {
+        // Two-digit date with guaranteed 1px white separation at column 4
+        // Tens digit at cols 1..3 (col 0 is 1px left white margin)
+        // Column 4 is white separation gap (digits never collide)
+        // Units digit at cols 5..7 (col 8 is 1px right white margin)
         int tens = dayOfMonth / 10;
         int units = dayOfMonth % 10;
         for (int r = 0; r < 5; r++) {
@@ -407,9 +424,9 @@ void DisplayMatrix_DrawCalendarIcon(int16_t x, int16_t y, int dayOfMonth) {
             if (rowT & 1) s_matrix.drawPixel(x + 3, y + 2 + r, C_BLACK);
 
             uint8_t rowU = pgm_read_byte(&s_font3x5[units][r]);
-            if (rowU & 4) s_matrix.drawPixel(x + 4, y + 2 + r, C_BLACK);
-            if (rowU & 2) s_matrix.drawPixel(x + 5, y + 2 + r, C_BLACK);
-            if (rowU & 1) s_matrix.drawPixel(x + 6, y + 2 + r, C_BLACK);
+            if (rowU & 4) s_matrix.drawPixel(x + 5, y + 2 + r, C_BLACK);
+            if (rowU & 2) s_matrix.drawPixel(x + 6, y + 2 + r, C_BLACK);
+            if (rowU & 1) s_matrix.drawPixel(x + 7, y + 2 + r, C_BLACK);
         }
     }
 }

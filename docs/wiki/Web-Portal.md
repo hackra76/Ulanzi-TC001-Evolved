@@ -9,7 +9,7 @@ It features a precision **Tactile Field Instrument** industrial design system (i
 ## Top Navigation & Language Switcher
 
 - **Buy Me a Coffee Widget & Header Badge**: Direct integration with the developer's Buy Me a Coffee page (`hackra`) via an interactive floating widget and header/footer action badges.
-- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v2.0.0 • GitHub`) linking directly to the project GitHub repository.
+- **GitHub Repository Version Badge**: Displays the current firmware release version (e.g. `v2.1.0 • GitHub`) linking directly to the project GitHub repository.
 - **Multilingual Support (EN / SK)**: Switch between English and Slovak with a single click. The choice is saved immediately in client-side `localStorage` and synchronized with device NVS (`ui_lang`).
 
 ---
@@ -29,7 +29,7 @@ It features a precision **Tactile Field Instrument** industrial design system (i
 - **Show Seconds**: When enabled, the clock icon is automatically hidden to allow full-width centered `HH:MM:SS` with colons and weekday bars to fit cleanly without crowding or clipping.
 - **Unified Typography**: Compact 3×5 bitmap font across all screens with 1px top margin and clear vertical separation from progress and weekday bars.
 - **Date Format**: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
-- **Clock Icon Style**: Dynamic calendar with day of month (1–31), Heart, Clock Face, or None.
+- **Clock Icon Style**: Dynamic 9×8 calendar with day of month (1–31) featuring dedicated 1px separation gap and symmetrical borders, Heart, Clock Face, or None.
 - **Text Alignment**: Left-aligned with icon (Awtrix default) or Centered.
 
 ### 7 Weekday Bars Under Time

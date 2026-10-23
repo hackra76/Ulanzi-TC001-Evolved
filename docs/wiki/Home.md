@@ -1,6 +1,19 @@
 # Welcome to Ulanzi TC001 Evolved Wiki
 
+[![YouTube Short](https://img.shields.io/badge/YouTube_Short-Watch_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
+
 **Ulanzi TC001 Evolved** is a modular, high-performance firmware for the Ulanzi TC001 Smart Pixel Desktop Clock. It transforms the clock with a modern, resilient ESP32 architecture featuring live display streaming, Awtrix-style layout customization, live overhead airspace radar, stock/crypto markets, and custom carousel reordering.
+
+---
+
+## 🎬 Video Showcase
+
+<div align="center">
+  <a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share" target="_blank">
+    <img src="https://img.youtube.com/vi/nju1VtkFuw0/maxresdefault.jpg" width="600" alt="Watch Ulanzi TC001 Evolved on YouTube Shorts">
+  </a>
+  <p>▶️ <b><a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share">Watch on YouTube Shorts: Why Everyone is Hacking This $40 Smart Clock</a></b></p>
+</div>
 
 ---
 
@@ -22,7 +35,7 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 
 | Screen & App | Matrix Live Preview | Summary |
 |---|:---:|---|
-| **Screen 0: Clock & Calendar** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_0_clock.png" width="320" alt="Clock"> | Dynamic calendar card, 3×5 time, and 7 weekday bars. |
+| **Screen 0: Clock & Calendar** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_0_clock.png" width="320" alt="Clock"> | Dynamic 9×8 calendar card with dedicated 1px separation gap, 3×5 time, and 7 weekday bars. |
 | **Screen 1: Indoor Environment** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_1_indoor.png" width="320" alt="Indoor"> | Sensirion SHT30 precision temperature & humidity telemetry. |
 | **Screen 2: Outdoor Weather** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_2_outdoor.png" width="320" alt="Weather"> | Live Open-Meteo forecasts with WMO condition icons. |
 | **Screen 3: Financial Markets** | <img src="https://raw.githubusercontent.com/hackra76/Ulanzi-TC001-Evolved/main/docs/media/screen_3_crypto.png" width="320" alt="Markets"> | Bitcoin, Ethereum, Solana, Apple, Tesla, S&P 500, Gold tickers. |
@@ -37,7 +50,7 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 
 1. **Zero-Configuration SoftAP Captive Portal**: Built-in DNS server automatically redirects mobile and desktop clients to the dark-mode configuration portal on `192.168.4.1`.
 2. **Real-Time Virtual Matrix Stream**: Live 32×8 canvas mirror in the Web Portal, one-click BMP screenshot capture, and terminal ASCII art output.
-3. **Awtrix-Style Clock & Layout**: Time/Combined/Date modes, 7 weekday bars with ISO/US start and custom colors, multiple date formats, dynamic calendar icon, and seconds display with auto-hidden icon for clean spacing.
+3. **Awtrix-Style Clock & Layout**: Time/Combined/Date modes, 7 weekday bars with ISO/US start and custom colors, multiple date formats, dynamic 9×8 calendar icon with dedicated 1px separation gap, and seconds display with auto-hidden icon for clean spacing.
 4. **Live Airspace Radar (ADS-B)**: Real-time overhead flight tracking via OpenSky Network cycling active aircraft callsigns within ~50km of local coordinates.
 5. **Energy & Battery Telemetry**: Glowing neon lightning bolt icon with selectable Percentage, Voltage, or Alternating display modes.
 6. **Financial Markets, Stocks & Crypto**: Live feeds for Bitcoin, Ethereum, Solana, BNB, Apple, Tesla, Nvidia, S&P 500, Gold, EUR/USD, and custom tickers.

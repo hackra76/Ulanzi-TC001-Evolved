@@ -4,12 +4,24 @@
 [![ESP32](https://img.shields.io/badge/ESP32-WROOM--32-blue?logo=espressif)](https://www.espressif.com/)
 [![License](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
+[![YouTube Short](https://img.shields.io/badge/YouTube_Short-Pozrie%C5%A5_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
 
 Pokročilý firmvér novej generácie pre originálne inteligentné stolové pixelové hodiny **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** (vyrábané spoločnosťou Shenzhen Ulanzi Technology Co., Ltd.) bežiaci na mikrokontroléri ESP32 s **8×32 WS2812B RGB LED maticou**, senzorom Sensirion SHT30, adaptívnym jasom (LDR), sledovaním finančných trhov, akcií a kryptomien, živým leteckým radarom (ADS-B), predpoveďou počasia, YouTube štatistikami, prispôsobiteľným Awtrix rozložením hodín a duálnym OTA systémom aktualizácií.
 
 🌐 **Jazyky:** [English (Predvolený)](README.md) • [English Zrkadlo](README_EN.md) • [Slovenčina](README_SK.md)
 
 <a href="https://buymeacoffee.com/hackra" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 48px !important;width: 174px !important;" ></a>
+
+---
+
+## 🎬 Video ukážka
+
+<div align="center">
+  <a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share" target="_blank">
+    <img src="https://img.youtube.com/vi/nju1VtkFuw0/maxresdefault.jpg" width="600" alt="Pozrieť Ulanzi TC001 Evolved na YouTube Shorts">
+  </a>
+  <p>▶️ <b><a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share">Pozrieť na YouTube Shorts: Why Everyone is Hacking This $40 Smart Clock</a></b></p>
+</div>
 
 ---
 
@@ -42,7 +54,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
   - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.0.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.1.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - **Integrácia podpory vývojára**: Interaktívny plávajúci widget Buy Me a Coffee a akčné tlačidlá v hlavičke a pätičke portálu.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
   - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI) a bleskovým ukladaním cez AJAX.
@@ -64,7 +76,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
     - Samostatný výber farby pre víkendy (11 možností) s automatickým kontrastom neaktívnych víkendových dní.
     - Začiatok týždňa v pondelok (ISO 8601) alebo v nedeľu.
   - Formáty dátumu: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
-  - Štýly ikon hodín: Dynamický kalendár (číslo dňa 1–31), Srdiečko, Ciferník alebo Plná šírka bez ikony.
+  - Štýly ikon hodín: Dynamický 9×8 kalendár (zobrazuje deň 1–31 s dedikovanou 1px medzerou a symetrickým orámovaním, čím úplne eliminuje zlievanie dvojciferných dátumov ako 22/23), Srdiečko, Ciferník alebo Plná šírka bez ikony.
   - Zobrazenie sekúnd: Plná šírka s vycentrovaným časom `HH:MM:SS` a dvojbodkami; pri zapnutých sekundách sa ikona automaticky skryje pre dokonalú čitateľnosť.
   - Zjednotené kompaktné 3×5 písmo na všetkých obrazovkách (Hodiny, Počasie, Trhy, Radar, Batéria, Vlastné aplikácie) s 1px horným okrajom a čistým oddelením od pásikov dní a progress barov.
 - **✈️ Živý letecký radar (ADS-B):**

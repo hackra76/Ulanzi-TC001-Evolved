@@ -136,7 +136,7 @@ static void renderClockApp() {
         }
 
         int16_t textW = DisplayMatrix_GetSmallTextWidth(buf);
-        int16_t startX = (Network_GetTextAlign() == 1) ? (8 + (24 - textW) / 2) : 9;
+        int16_t startX = (Network_GetTextAlign() == 1) ? (9 + (23 - textW) / 2) : 10;
         DisplayMatrix_DrawSmallText(startX, 1, buf, C_CYAN);
     } else {
         // Show Time screen

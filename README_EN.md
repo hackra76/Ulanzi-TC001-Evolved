@@ -4,12 +4,24 @@
 [![ESP32](https://img.shields.io/badge/ESP32-WROOM--32-blue?logo=espressif)](https://www.espressif.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
+[![YouTube Short](https://img.shields.io/badge/YouTube_Short-Watch_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
 
 Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** (manufactured by Shenzhen Ulanzi Technology Co., Ltd.) running on ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 sensor, ambient intelligence, live crypto tickers, financial markets & stocks, live overhead airspace radar, outdoor weather, YouTube statistics, Awtrix-style layout customization, and dual OTA update system.
 
 🌐 **Languages:** [English (Default)](README.md) • [English Mirror](README_EN.md) • [Slovenčina](README_SK.md)
 
 <a href="https://buymeacoffee.com/hackra" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 48px !important;width: 174px !important;" ></a>
+
+---
+
+## 🎬 Video Showcase
+
+<div align="center">
+  <a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share" target="_blank">
+    <img src="https://img.youtube.com/vi/nju1VtkFuw0/maxresdefault.jpg" width="600" alt="Watch Ulanzi TC001 Evolved on YouTube Shorts">
+  </a>
+  <p>▶️ <b><a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share">Watch on YouTube Shorts: Why Everyone is Hacking This $40 Smart Clock</a></b></p>
+</div>
 
 ---
 
@@ -42,7 +54,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
   - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v2.0.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v2.1.0 • GitHub`) linking directly to the latest releases and source code.
   - **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
   - Non-blocking Wi-Fi credential scanner with signal strength indicators and AJAX instant save.
@@ -64,7 +76,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
     - Dedicated Weekend Day color selector (11 options) with automatic proportional inactive weekend dimming.
     - Monday (ISO 8601) or Sunday week start.
   - Date formats: `DD.MM.`, `DD MMM`, `MM/DD`, `DAY DD`.
-  - Clock icons: Dynamic calendar (shows day 1–31), Heart, Clock face, or Full-Width.
+  - Clock icons: Dynamic 9×8 calendar (shows day 1–31 with dedicated 1px separation gap and symmetrical borders, eliminating digit collision on double-digit dates like 22/23), Heart, Clock face, or Full-Width.
   - Seconds Display: Full-width centered `HH:MM:SS` with dividers; automatically hides icon when seconds are enabled for clean spacing.
   - Unified compact 3×5 typography system across all display screens (Clock, Weather, Tickers, Radar, Battery, Custom Apps) with 1px top margin and clean vertical separation from bars.
 - **✈️ Live Airspace Radar (ADS-B):**

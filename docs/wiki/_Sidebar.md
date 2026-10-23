@@ -11,6 +11,6 @@
 
 ### 📦 Releases & Links
 
-- **[Latest v2.0.0 Release](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases/tag/v2.0.0)**
+- **[Latest v2.1.0 Release](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases/tag/v2.1.0)**
 - **[Source Repository](https://github.com/hackra76/Ulanzi-TC001-Evolved)**
 - **[Report an Issue](https://github.com/hackra76/Ulanzi-TC001-Evolved/issues)**
