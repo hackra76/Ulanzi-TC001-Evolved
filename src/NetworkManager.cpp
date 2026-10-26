@@ -2891,7 +2891,7 @@ static void handleSave() {
         String key = s_server.arg("yt_key");
         ch.trim();
         key.trim();
-        if (key == "********") {
+        if (key == "********" || key.length() == 0) {
             key = s_ytApiKey;
         }
         Network_SaveYouTubeConfig(ch, key);

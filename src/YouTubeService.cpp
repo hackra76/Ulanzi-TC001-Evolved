@@ -7,9 +7,9 @@
 
 static String s_channel = "";
 static String s_apiKey = "";
-static uint64_t s_subs = 125000; // Demo fallback (125K)
+static uint64_t s_subs = 844; // Fallback (844)
 static bool s_hasData = true;
-static char s_formattedSubs[16] = "125K";
+static char s_formattedSubs[16] = "844";
 static uint32_t s_lastFetchMs = 0;
 static bool s_forceFetch = false;
 
@@ -124,6 +124,9 @@ void YouTube_Update() {
             }
         } else {
             Serial.printf("[YouTube] HTTP GET failed, code: %d\n", httpCode);
+            if (httpCode == 403) {
+                Serial.println("[YouTube] ERROR 403: Google Cloud YouTube Data API quota exceeded (quotaExceeded).");
+            }
         }
         https.end();
     }
