@@ -54,7 +54,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
   - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.1.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.2.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - **Integrácia podpory vývojára**: Interaktívny plávajúci widget Buy Me a Coffee a akčné tlačidlá v hlavičke a pätičke portálu.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
   - Neinvazívny skener okolitých Wi-Fi sietí s ukazovateľom sily signálu (RSSI) a bleskovým ukladaním cez AJAX.
@@ -69,6 +69,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Textová ASCII art reprezentácia displeja (`/api/display/text`).
   - Tlačidlá na manuálne prepínanie obrazoviek priamo z prehliadača.
 - **⏰ Awtrix-Style Hodiny & Dátum:**
+  - **Kontinuálna NTP synchronizácia & Automatický prechod na letný/zimný čas**: Priebežná neblokujúca synchronizácia s POSIX engine časových pásiem ESP-IDF (`CET-1CEST,M3.5.0,M10.5.0/3`). Automaticky a okamžite aplikuje zmenu letného a zimného času (prechod v SR a Európe) bez nutnosti reštartu a eliminuje časový drift kryštálu.
   - 3 režimy zobrazenia: Iba čas, Kombinovaný čas a dátum (striedanie 5s/3s) alebo Iba dátum.
   - **7 pásikov dní v týždni s farebným odlíšením víkendov**:
     - 11 farieb pre aktívny deň (Tyrkysová, Oranžová, Zelená, Žltá, Červená, Biela, Purpurová, Elektrická modrá, Limetková, Zlatá, Ružová).

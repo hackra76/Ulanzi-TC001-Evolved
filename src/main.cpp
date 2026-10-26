@@ -43,6 +43,7 @@ static uint8_t s_customAppIdx = 0;
 // Clock seconds counter (synced with NTP or fallback increment)
 static uint32_t s_seconds = 12 * 3600 + 34 * 60; // 12:34:00 default
 static uint32_t s_lastSecTick = 0;
+static bool s_ntpConfigured = false;
 static bool s_ntpSynced = false;
 
 // Wi-Fi Onboarding & Splash Ticker State
@@ -54,11 +55,15 @@ static uint8_t s_ipSplashPasses = 0;
 static uint32_t s_nightWakeUntilMs = 0;
 
 static void checkNtpSync() {
-    if (Network_IsConnected() && !s_ntpSynced) {
+    if (Network_IsConnected() && !s_ntpConfigured) {
         configTzTime("CET-1CEST,M3.5.0,M10.5.0/3", "pool.ntp.org", "time.google.com");
-        struct tm timeinfo;
-        if (getLocalTime(&timeinfo, 100)) {
-            s_seconds = timeinfo.tm_hour * 3600 + timeinfo.tm_min * 60 + timeinfo.tm_sec;
+        s_ntpConfigured = true;
+    }
+
+    struct tm timeinfo;
+    if (getLocalTime(&timeinfo, 0)) {
+        s_seconds = timeinfo.tm_hour * 3600 + timeinfo.tm_min * 60 + timeinfo.tm_sec;
+        if (!s_ntpSynced) {
             s_ntpSynced = true;
             Serial.printf("[NTP] Synchronized time: %02d:%02d:%02d\n",
                           timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
@@ -101,7 +106,7 @@ static void renderClockApp() {
     int mon = 9;  // 0-based: 9 = Oct
     int wday = 3; // Wednesday
     struct tm timeinfo;
-    if (getLocalTime(&timeinfo, 10)) {
+    if (getLocalTime(&timeinfo, 0)) {
         day = timeinfo.tm_mday;
         mon = timeinfo.tm_mon;
         wday = timeinfo.tm_wday;

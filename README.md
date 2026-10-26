@@ -54,7 +54,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
   - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v2.1.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v2.2.0 • GitHub`) linking directly to the latest releases and source code.
   - **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
   - Non-blocking Wi-Fi credential scanner with signal strength indicators and AJAX instant save.
@@ -69,6 +69,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Terminal ASCII art representation (`/api/display/text`).
   - Web-based Next/Previous screen testing buttons.
 - **⏰ Awtrix-Style Clock & Date Layout:**
+  - **Continuous Real-Time NTP & Automatic DST Synchronization**: Continuous non-blocking sync with ESP-IDF's POSIX timezone engine (`CET-1CEST,M3.5.0,M10.5.0/3`). Automatically applies daylight saving time transitions (summer/winter time in Slovakia & Europe) without requiring reboots and eliminates crystal clock drift.
   - 3 Display Modes: Time Only, Combined Time & Date (alternating 5s/3s), or Date Only.
   - **7 Weekday Bars with Weekend Customization**:
     - 11 Active Day colors (Cyan, Orange, Green, Yellow, Red, White, Magenta, Electric Blue, Lime, Amber Gold, Pink).
