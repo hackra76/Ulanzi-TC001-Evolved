@@ -132,6 +132,8 @@ static uint32_t s_connectStartMs = 0;
 static uint32_t s_lastWifiCheckMs = 0;
 static bool s_pendingReconnect = false;
 static uint32_t s_reconnectTriggerMs = 0;
+static bool s_pendingReboot = false;
+static uint32_t s_rebootTriggerMs = 0;
 
 static const char PAGE_PORTAL[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -966,7 +968,7 @@ input:checked + .actuator-label .actuator-box::after,
         <span>COFFEE</span>
       </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> <span id="topFwVer">v2.2.0</span>
+        <span class="badge-dot"></span> <span id="topFwVer">v2.3.0</span>
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1774,7 +1776,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.2.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.3.0</strong>
     </div>
 
     <table class="param-table">
@@ -1812,7 +1814,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
-    <div id="footerFwVer">FIRMWARE v2.2.0 &bull; NVS ARMED</div>
+    <div id="footerFwVer">FIRMWARE v2.3.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -3335,6 +3337,18 @@ void Network_Init() {
         s_server.send(200, "application/json", "{\"status\":\"notified\"}");
     });
 
+    // Remote Hardware Reboot REST API
+    auto handleRebootApi = []() {
+        s_server.sendHeader("Connection", "close");
+        s_server.send(200, "application/json", "{\"status\":\"rebooting\",\"message\":\"ESP32 rebooting now...\"}");
+        s_pendingReboot = true;
+        s_rebootTriggerMs = millis() + 500;
+    };
+    s_server.on("/api/reboot", HTTP_POST, handleRebootApi);
+    s_server.on("/api/reboot", HTTP_GET, handleRebootApi);
+    s_server.on("/reboot", HTTP_POST, handleRebootApi);
+    s_server.on("/reboot", HTTP_GET, handleRebootApi);
+
     // Initialize Over-The-Air Update System
     OTA_Init(s_server);
 
@@ -3453,6 +3467,13 @@ void Network_Poll() {
 
     // Service OTA Reboot Timer
     OTA_Poll();
+
+    if (s_pendingReboot && (now >= s_rebootTriggerMs)) {
+        s_pendingReboot = false;
+        Serial.println("[System] Remote reboot requested via REST API. Restarting ESP32...");
+        ESP.restart();
+        return;
+    }
 
     if (s_pendingReconnect && (now >= s_reconnectTriggerMs)) {
         s_pendingReconnect = false;

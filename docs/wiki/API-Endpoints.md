@@ -182,6 +182,17 @@ The onboard web server exposes several REST endpoints for status monitoring, con
 - `GET /api/ota/check`: Checks latest tag and download URL from GitHub Releases
 - `POST /api/ota/install`: Triggers background download and streaming flash from a provided asset URL
 
+## Remote Hardware Reboot API
+- **URL**: `POST /api/reboot` or `POST /reboot` (also supports `GET`)
+- **Response**: `application/json`
+```json
+{
+  "status": "rebooting",
+  "message": "ESP32 rebooting now..."
+}
+```
+*Initiates a graceful hardware restart 500 ms after flushing the HTTP 200 response.*
+
 ## Multi-Network Wi-Fi API
 - **URL**: `GET /api/wifi`
 - **Response**: `application/json`
