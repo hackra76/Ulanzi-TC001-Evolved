@@ -455,6 +455,21 @@ void loop() {
         return;
     }
 
+    // High Priority: Interactive Canvas Drawing from Companion App / REST
+    if (DisplayMatrix_IsCanvasActive()) {
+        DisplayMatrix_RenderCanvas();
+        if (Buttons_GetEvent(BTN_ID_OK) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_LEFT) != BTN_NONE ||
+            Buttons_GetEvent(BTN_ID_RIGHT) != BTN_NONE) {
+            Buzzer_Click();
+            DisplayMatrix_DismissCanvas();
+            s_lastAppSwitch = now;
+            return;
+        }
+        delay(25);
+        return;
+    }
+
     // High Priority: Timer Alarm Notification (rings buzzer & flashes screen)
     if (Timer_GetState() == TIMER_STATE_EXPIRED) {
         if (s_currentApp != APP_TIMER) {

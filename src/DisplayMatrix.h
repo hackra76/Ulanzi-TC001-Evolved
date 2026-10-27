@@ -43,3 +43,9 @@ void DisplayMatrix_CaptureCurrentFrame();
 void DisplayMatrix_CaptureTargetFrame();
 void DisplayMatrix_RunTransition(uint8_t effectType);
 
+
+// Interactive Canvas Studio API (Companion App / REST)
+void DisplayMatrix_SetCanvas(const uint16_t pixels[MATRIX_HEIGHT][MATRIX_WIDTH], uint16_t durationSec);
+bool DisplayMatrix_IsCanvasActive();
+void DisplayMatrix_DismissCanvas();
+void DisplayMatrix_RenderCanvas();

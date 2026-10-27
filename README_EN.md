@@ -111,7 +111,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
   - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v2.3.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v2.4.0 • GitHub`) linking directly to the latest releases and source code.
   - **Remote Hardware Reboot REST API**: Graceful remote restart via `POST /api/reboot` and `POST /reboot` with automated connection handshake for the Companion App and home automation.
   - **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.

@@ -714,3 +714,46 @@ void DisplayMatrix_RunTransition(uint8_t effectType) {
 }
 
 
+
+// Interactive Canvas Studio buffer
+static uint16_t s_canvasPixels[MATRIX_HEIGHT][MATRIX_WIDTH];
+static bool s_canvasActive = false;
+static uint32_t s_canvasStartMs = 0;
+static uint32_t s_canvasDurationMs = 60000;
+
+void DisplayMatrix_SetCanvas(const uint16_t pixels[MATRIX_HEIGHT][MATRIX_WIDTH], uint16_t durationSec) {
+    for (int y = 0; y < MATRIX_HEIGHT; y++) {
+        for (int x = 0; x < MATRIX_WIDTH; x++) {
+            s_canvasPixels[y][x] = pixels[y][x];
+        }
+    }
+    s_canvasDurationMs = (durationSec > 0 ? durationSec : 60) * 1000UL;
+    s_canvasStartMs = millis();
+    s_canvasActive = true;
+}
+
+bool DisplayMatrix_IsCanvasActive() {
+    if (!s_canvasActive) return false;
+    if (millis() - s_canvasStartMs >= s_canvasDurationMs) {
+        s_canvasActive = false;
+        return false;
+    }
+    return true;
+}
+
+void DisplayMatrix_DismissCanvas() {
+    s_canvasActive = false;
+}
+
+void DisplayMatrix_RenderCanvas() {
+    DisplayMatrix_Clear();
+    for (int y = 0; y < MATRIX_HEIGHT; y++) {
+        for (int x = 0; x < MATRIX_WIDTH; x++) {
+            uint16_t c = s_canvasPixels[y][x];
+            if (c != 0) {
+                s_matrix.drawPixel(x, y, c);
+            }
+        }
+    }
+    DisplayMatrix_Show();
+}

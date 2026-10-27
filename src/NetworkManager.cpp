@@ -6,6 +6,7 @@
 #include "Sensors.h"
 #include "OtaManager.h"
 #include "DisplayMatrix.h"
+#include "Buzzer.h"
 #include "MqttService.h"
 #include "CustomAppService.h"
 #include "TimerService.h"
@@ -968,7 +969,7 @@ input:checked + .actuator-label .actuator-box::after,
         <span>COFFEE</span>
       </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> <span id="topFwVer">v2.3.0</span>
+        <span class="badge-dot"></span> <span id="topFwVer">v2.4.0</span>
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1776,7 +1777,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.3.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.4.0</strong>
     </div>
 
     <table class="param-table">
@@ -1814,7 +1815,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
-    <div id="footerFwVer">FIRMWARE v2.3.0 &bull; NVS ARMED</div>
+    <div id="footerFwVer">FIRMWARE v2.4.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -3029,6 +3030,84 @@ static void handleStatus() {
     s_server.send(200, "application/json", out);
 }
 
+
+static uint16_t parseHexColor565(const char* str) {
+    if (!str) return 0;
+    if (str[0] == '#') str++;
+    uint32_t rgb = strtoul(str, nullptr, 16);
+    return DisplayMatrix_Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+}
+
+static uint16_t parseColorVariant(JsonVariantConst v) {
+    if (v.is<const char*>()) {
+        return parseHexColor565(v.as<const char*>());
+    } else if (v.is<uint32_t>()) {
+        uint32_t rgb = v.as<uint32_t>();
+        return DisplayMatrix_Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+    } else if (v.is<JsonArrayConst>()) {
+        JsonArrayConst a = v.as<JsonArrayConst>();
+        if (a.size() >= 3) {
+            return DisplayMatrix_Color(a[0] | 0, a[1] | 0, a[2] | 0);
+        }
+    }
+    return 0;
+}
+
+static void handleApiDisplayPost() {
+    String body = s_server.arg("plain");
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, body);
+    if (err) {
+        s_server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+        return;
+    }
+
+    uint16_t durationSec = doc["duration"] | 60;
+    uint16_t canvas[MATRIX_HEIGHT][MATRIX_WIDTH];
+    memset(canvas, 0, sizeof(canvas));
+
+    if (doc["pixels"].is<JsonArrayConst>()) {
+        JsonArrayConst rows = doc["pixels"].as<JsonArrayConst>();
+        if (rows.size() == MATRIX_HEIGHT && rows[0].is<JsonArrayConst>()) {
+            // 2D 8x32 array
+            for (size_t y = 0; y < MATRIX_HEIGHT && y < rows.size(); y++) {
+                JsonArrayConst cols = rows[y].as<JsonArrayConst>();
+                for (size_t x = 0; x < MATRIX_WIDTH && x < cols.size(); x++) {
+                    canvas[y][x] = parseColorVariant(cols[x]);
+                }
+            }
+        } else if (rows.size() == MATRIX_WIDTH * MATRIX_HEIGHT) {
+            // Flat 1D 256 array
+            for (size_t i = 0; i < MATRIX_WIDTH * MATRIX_HEIGHT; i++) {
+                int y = i / MATRIX_WIDTH;
+                int x = i % MATRIX_WIDTH;
+                canvas[y][x] = parseColorVariant(rows[i]);
+            }
+        }
+    } else if (doc["draw"].is<JsonArrayConst>()) {
+        JsonArrayConst cmds = doc["draw"].as<JsonArrayConst>();
+        for (JsonVariantConst cmd : cmds) {
+            if (cmd["dp"].is<JsonArrayConst>()) {
+                JsonArrayConst dp = cmd["dp"].as<JsonArrayConst>();
+                if (dp.size() >= 3) {
+                    int x = dp[0].as<int>();
+                    int y = dp[1].as<int>();
+                    if (x >= 0 && x < MATRIX_WIDTH && y >= 0 && y < MATRIX_HEIGHT) {
+                        canvas[y][x] = parseColorVariant(dp[2]);
+                    }
+                }
+            }
+        }
+    } else {
+        s_server.send(400, "application/json", "{\"error\":\"Missing pixels or draw array\"}");
+        return;
+    }
+
+    DisplayMatrix_SetCanvas(canvas, durationSec);
+    Buzzer_Click();
+    s_server.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Canvas rendered on matrix\"}");
+}
+
 void Network_Init() {
     uint32_t chipId = 0;
     for (int i = 0; i < 17; i = i + 8) {
@@ -3136,11 +3215,15 @@ void Network_Init() {
         s_server.send(200, "application/json", out);
     });
 
+
     s_server.on("/api/display", HTTP_GET, []() {
         String json;
         DisplayMatrix_GetJson(json);
         s_server.send(200, "application/json", json);
     });
+
+    s_server.on("/api/display", HTTP_POST, handleApiDisplayPost);
+    s_server.on("/api/draw", HTTP_POST, handleApiDisplayPost);
 
     s_server.on("/api/display/screenshot", HTTP_GET, []() {
         s_server.sendHeader("Content-Disposition", "inline; filename=\"tc001_screenshot.bmp\"");

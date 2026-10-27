@@ -18,7 +18,7 @@ The onboard web server exposes several lightweight REST endpoints for status mon
   "transition_fx": 1,
   "active_app": 0,
   "app_name": "Clock",
-  "firmware_version": "2.2.0",
+  "firmware_version": "2.4.0",
   "temperature_in": 22.4,
   "humidity_in": 46.2,
   "battery_volts": 4.12,
@@ -54,6 +54,24 @@ The onboard web server exposes several lightweight REST endpoints for status mon
 - **URL**: `GET /api/display/text`
   - **Response**: `text/plain`
   - Returns an ASCII art character representation of the active display buffer (`#` for lit pixels, `.` for off).
+
+
+## Interactive Canvas Matrix Endpoint
+- **URL**: `POST /api/display` or `POST /api/draw`
+- **Content-Type**: `application/json`
+- **Request Body**:
+```json
+{
+  "pixels": [
+    ["#FF0055", "#00E5FF", ... 32 hex colors],
+    ... 8 rows
+  ],
+  "duration": 60
+}
+```
+*Note: Also accepts flat 256 color arrays or Awtrix `draw` commands `{"draw": [{"dp": [x, y, color]}]}`.*
+- **Response**: `{"status": "ok", "message": "Canvas rendered on matrix"}`
+- **Dismissal**: Stays active for `duration` seconds, or dismisses instantly when user presses any physical hardware button (`OK`, `LEFT`, `RIGHT`) returning to normal carousel.
 
 ## Screen Control Endpoint
 - **URL**: `GET /api/screen?set=<app_index>&auto=<0|1>`
