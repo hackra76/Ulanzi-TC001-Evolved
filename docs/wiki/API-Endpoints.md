@@ -1,6 +1,6 @@
 # REST API & Captive Endpoints
 
-The onboard web server exposes several REST endpoints for status monitoring, configuration, live display streaming, and OTA updating.
+The onboard web server exposes several lightweight REST endpoints for status monitoring, configuration, live display streaming, and OTA updating. These endpoints are consumed natively by both the **[Ulanzi TC001 Companion Android App](Android-Companion-App)** and the Web Configuration Portal, as well as Home Assistant and external automation scripts.
 
 ## Status Endpoint
 - **URL**: `GET /status`

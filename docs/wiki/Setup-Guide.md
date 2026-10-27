@@ -27,3 +27,11 @@
   - **Other Screens (Clock, Weather, Airspace, YouTube)**: Cycle manual brightness levels (10% / 35% / 80%).
 - Long-press **OK Button** (>700ms): Toggle auto-rotation carousel on or off (on Timer screen: reset / change mode).
 - In **Night Mode**, pressing any button temporarily wakes the display for 12 seconds at Day Brightness.
+
+## 📱 Android Companion App Pairing
+For a native handheld experience, you can control and configure your clock directly from your Android phone using the **[Ulanzi TC001 Companion App](Android-Companion-App)**:
+1. Download and install the latest signed production APK from **[Companion Releases](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)**.
+2. Ensure your phone is connected to the same 2.4 GHz Wi-Fi network as the clock.
+3. Open the app — it automatically discovers your clock via mDNS (`ulanzi-tc001.local`) and connects instantly.
+4. Enjoy real-time 32×8 LED matrix mirroring, interactive finger pixel art studio, Android notification forwarding relay, Spotify / YouTube Music playback broadcasting, remote chronometer/Pomodoro controls, and 100% hardware configuration parity.
+

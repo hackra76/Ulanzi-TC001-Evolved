@@ -1,6 +1,7 @@
 ### 📖 Documentation
 
 - **[[Home]]**
+- **[[Android Companion App|Android-Companion-App]]**
 - **[[Setup Guide|Setup-Guide]]**
 - **[[Web Configuration Portal|Web-Portal]]**
 - **[[Dual OTA Updates|OTA-Updates]]**
@@ -12,5 +13,7 @@
 ### 📦 Releases & Links
 
 - **[Latest v2.2.0 Release](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases/tag/v2.2.0)**
+- **[Android Companion App (GitHub)](https://github.com/hackra76/Ulanzi-TC001-Companion)**
+- **[Download Companion APK (v1.0.4)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)**
 - **[Source Repository](https://github.com/hackra76/Ulanzi-TC001-Evolved)**
 - **[Report an Issue](https://github.com/hackra76/Ulanzi-TC001-Evolved/issues)**

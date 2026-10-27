@@ -4,9 +4,11 @@
 [![ESP32](https://img.shields.io/badge/ESP32-WROOM--32-blue?logo=espressif)](https://www.espressif.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
+[![Android Companion](https://img.shields.io/badge/Android_Companion-v1.0.4-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion)
+[![Companion Releases](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Companion?label=APK%20Download&color=blue&logo=github)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
 [![YouTube Short](https://img.shields.io/badge/YouTube_Short-Watch_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
 
-Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** (manufactured by Shenzhen Ulanzi Technology Co., Ltd.) running on ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 sensor, ambient intelligence, live crypto tickers, financial markets & stocks, live overhead airspace radar, outdoor weather, YouTube statistics, Awtrix-style layout customization, and dual OTA update system.
+Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** (manufactured by Shenzhen Ulanzi Technology Co., Ltd.) running on ESP32 with an **8×32 WS2812B RGB LED matrix**, Sensirion SHT30 sensor, ambient intelligence, live crypto tickers, financial markets & stocks, live overhead airspace radar, outdoor weather, YouTube statistics, Awtrix-style layout customization, dual OTA update system, and official native **[Android Companion App](https://github.com/hackra76/Ulanzi-TC001-Companion)**.
 
 🌐 **Languages:** [English (Default)](README.md) • [English Mirror](README_EN.md) • [Slovenčina](README_SK.md)
 
@@ -22,6 +24,52 @@ Next-generation firmware for the original **[Ulanzi TC001 Smart Pixel Desktop Cl
   </a>
   <p>▶️ <b><a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share">Watch on YouTube Shorts: Why Everyone is Hacking This $40 Smart Clock</a></b></p>
 </div>
+
+---
+
+## 📱 Official Android Companion App (Ulanzi TC001 Companion)
+
+Take full wireless control of your clock right from your pocket with the dedicated **[Ulanzi TC001 Companion Android App](https://github.com/hackra76/Ulanzi-TC001-Companion)** (built with Kotlin, Jetpack Compose, and Material 3 design).
+
+[![Companion App GitHub](https://img.shields.io/badge/GitHub-hackra76%2FUlanzi--TC001--Companion-black?logo=github)](https://github.com/hackra76/Ulanzi-TC001-Companion)
+[![Download APK](https://img.shields.io/badge/Direct_APK-Download_Latest_(v1.0.4)-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
+[![Wiki Documentation](https://img.shields.io/badge/Wiki-Android_Companion_Guide-blue?logo=gitbook)](https://github.com/hackra76/Ulanzi-TC001-Evolved/wiki/Android-Companion-App)
+
+### 🌟 Key Companion App Capabilities:
+
+1. **🎨 Interactive 32×8 Pixel Canvas Studio:**
+   - Real-time 32×8 LED matrix stream mirror directly inside the app.
+   - Interactive touch canvas: draw pixel art directly with your finger using **Pen**, **Eraser**, and **Flood-Fill Bucket**.
+   - 13 vibrant retro neon colors + 7 instant presets (Love, Pac-Man, Space Invaders, VU Equalizer, Rainbow, Fire Flame, Neon Shades).
+   - **Clone Clock Matrix**: Read current matrix pixels into your canvas with a single tap.
+   - **1-Tap Push**: Send drawings directly to the clock display with custom duration options.
+2. **🎵 Now Playing Media Sync & Spotify Broadcaster:**
+   - Background `MediaSessionManager` automatically detects active music playback (Spotify, YouTube Music, Podcasts, SoundCloud).
+   - Extracts live track metadata (title, artist, album, duration, playback position) with brand-adaptive theming (Spotify Green `#1ED760`, YouTube Red, Cyan).
+   - Synchronizes directly to the clock via `/api/custom?name=spotify` with scrolling marquee and 1-pixel bottom progress bar.
+   - In-app playback controls: Play, Pause, Skip Next, Skip Previous, and Instant Push.
+3. **🚨 Push Alerts & Intelligent Notification Forwarding Relay:**
+   - Intercepts incoming Android notifications (incoming calls, SMS, WhatsApp, Telegram, calendar reminders, app alerts) via `NotificationListenerService`.
+   - Intelligent debouncing (2.5s window) prevents notification floods.
+   - Contextual 8×8 pixel icons (bell, mail, clock, spotify, heart, warning) with configurable piezo chime sound (0–3) and display duration (2–20s) pushed instantly via `/api/notify`.
+4. **⏱️ Remote Hardware Stopwatch & Countdown Timer:**
+   - Remote control for the clock's onboard chronometer via `/api/timer`.
+   - Quick presets for 1m, 3m, 5m, 10m, 15m, and 25m Pomodoro sessions.
+   - Start, pause, toggle, and reset controls with live digital readout simulation.
+5. **👾 Retro Screensaver Controller:**
+   - Trigger and stop all 5 procedural ambient screensavers (Matrix Rain, Starfield, Doom Fire, Retro Clock, Plasma Flow).
+   - Configure idle timeout (1 to 30 minutes) via `/api/screensaver`.
+6. **🎛️ Complete Hardware EEPROM Configuration Deck (100% Web Parity):**
+   - **Display & Brightness**: LDR auto-brightness toggle, Day Brightness (0–100%), Night Brightness (0–100%), Night Mode quiet hours schedule.
+   - **Clock & Date Layout**: Clock display mode, Date format, 7 weekday bars with ISO/US start day and 11-color palette selectors.
+   - **Reorderable Carousel**: 9-screen rotation sequence bitmask and auto-rotate interval (3–120s).
+   - **Multi-Profile Wi-Fi Memory**: Manage 4 stored network profiles with live connection badges, 1-tap connect, and RF Wi-Fi scanner.
+   - **Data Feeds & Telemetry**: Weather city/coordinates, Financial market crypto/stock tickers, YouTube channel ID, battery telemetry mode (% / V / alternating), and remote reboot.
+7. **📡 Zero-Configuration Discovery & Instant Auto-Reconnect:**
+   - Automatic mDNS discovery (`ulanzi-tc001.local`) and parallel subnet IP scanning.
+   - Jetpack DataStore persistent memory automatically reconnects to your clock upon app launch.
+
+👉 **Download & Install:** Grab the latest release APK directly from **[Ulanzi TC001 Companion Releases](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)**.
 
 ---
 
@@ -48,6 +96,15 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
 
 ## ✨ Features
 
+- **📱 Native Android Companion App Ecosystem:**
+  - Dedicated modern Android app built with **Jetpack Compose**, **Material 3**, and target **Android 15/14/16** ([hackra76/Ulanzi-TC001-Companion](https://github.com/hackra76/Ulanzi-TC001-Companion)).
+  - **Interactive 32×8 Pixel Canvas Studio**: Draw pixel art on your phone with Pen, Eraser, Bucket fill, 13 retro colors, 7 presets, clone matrix, and instant push to clock.
+  - **Spotify & Now Playing Live Broadcaster**: Intercepts active media sessions, extracts metadata & album colors, and streams progress bars via `/api/custom`.
+  - **Intelligent Phone Notification Relay**: Background alert interception with duplicate debouncing, 8×8 contextual pixel icons, and acoustic piezo chimes via `/api/notify`.
+  - **Remote Chronometer & Pomodoro**: Remote trigger and live digital readout for stopwatch and countdown timers.
+  - **Screensaver Remote**: Ambient animation switcher (5 styles) with idle timeout controls.
+  - **Hardware EEPROM Configuration Deck**: 100% web parity for brightness, quiet hours, 9-screen carousel order, multi-network Wi-Fi profiles, coordinates, tickers, and reboot.
+  - **Zero-Config Discovery & Reconnect**: Instant mDNS auto-detection (`ulanzi-tc001.local`) and persistent DataStore auto-reconnection.
 - **🎛️ Tactile Field Instrument Web Portal (Industrial Design):**
   - Engineered with a modern **Tactile Field Instrument** industrial design system (Braun / Teenage Engineering / Swiss Grid aesthetic).
   - High-density telemetry deck: real-time Wi-Fi RSSI gauge, flash memory meter, and uptime clock in monospace data headers.

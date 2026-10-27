@@ -4,9 +4,11 @@
 [![ESP32](https://img.shields.io/badge/ESP32-WROOM--32-blue?logo=espressif)](https://www.espressif.com/)
 [![License](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
+[![Android Aplikácia](https://img.shields.io/badge/Android_Aplik%C3%A1cia-v1.0.4-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion)
+[![Stiahnuť APK](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Companion?label=Stiahnu%C5%A5%20APK&color=blue&logo=github)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
 [![YouTube Short](https://img.shields.io/badge/YouTube_Short-Pozrie%C5%A5_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
 
-Pokročilý firmvér novej generácie pre originálne inteligentné stolové pixelové hodiny **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** (vyrábané spoločnosťou Shenzhen Ulanzi Technology Co., Ltd.) bežiaci na mikrokontroléri ESP32 s **8×32 WS2812B RGB LED maticou**, senzorom Sensirion SHT30, adaptívnym jasom (LDR), sledovaním finančných trhov, akcií a kryptomien, živým leteckým radarom (ADS-B), predpoveďou počasia, YouTube štatistikami, prispôsobiteľným Awtrix rozložením hodín a duálnym OTA systémom aktualizácií.
+Pokročilý firmvér novej generácie pre originálne inteligentné stolové pixelové hodiny **[Ulanzi TC001 Smart Pixel Desktop Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e)** (vyrábané spoločnosťou Shenzhen Ulanzi Technology Co., Ltd.) bežiaci na mikrokontroléri ESP32 s **8×32 WS2812B RGB LED maticou**, senzorom Sensirion SHT30, adaptívnym jasom (LDR), sledovaním finančných trhov, akcií a kryptomien, živým leteckým radarom (ADS-B), predpoveďou počasia, YouTube štatistikami, prispôsobiteľným Awtrix rozložením hodín, duálnym OTA systémom aktualizácií a oficiálnou natívnou **[Android Companion aplikáciou](https://github.com/hackra76/Ulanzi-TC001-Companion)**.
 
 🌐 **Jazyky:** [English (Predvolený)](README.md) • [English Zrkadlo](README_EN.md) • [Slovenčina](README_SK.md)
 
@@ -22,6 +24,52 @@ Pokročilý firmvér novej generácie pre originálne inteligentné stolové pix
   </a>
   <p>▶️ <b><a href="https://youtube.com/shorts/nju1VtkFuw0?feature=share">Pozrieť na YouTube Shorts: Why Everyone is Hacking This $40 Smart Clock</a></b></p>
 </div>
+
+---
+
+## 📱 Oficiálna Android Companion aplikácia (Ulanzi TC001 Companion)
+
+Ovládajte hodiny pohodlne a bezdrôtovo priamo zo svojho smartfónu s dedikovanou natívnou aplikáciou **[Ulanzi TC001 Companion](https://github.com/hackra76/Ulanzi-TC001-Companion)** postavenou na najmodernejších technológiách (Kotlin, Jetpack Compose, Material 3 a Android 15/14).
+
+[![Companion App GitHub](https://img.shields.io/badge/GitHub-hackra76%2FUlanzi--TC001--Companion-black?logo=github)](https://github.com/hackra76/Ulanzi-TC001-Companion)
+[![Stiahnuť APK](https://img.shields.io/badge/Priame_APK-Stiahnu%C5%A5_najnov%C5%A1ie_(v1.0.4)-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
+[![Wiki Dokumentácia](https://img.shields.io/badge/Wiki-Sprievodca_Android_aplik%C3%A1ciou-blue?logo=gitbook)](https://github.com/hackra76/Ulanzi-TC001-Evolved/wiki/Android-Companion-App)
+
+### 🌟 Kľúčové možnosti aplikácie:
+
+1. **🎨 Interaktívne 32×8 Pixel Canvas štúdio:**
+   - Živé zrkadlenie 32×8 LED matice v reálnom čase priamo na displeji telefónu.
+   - Dotykové kresliace plátno: kreslenie pixelartu prstom s nástrojmi **Pero**, **Guma** a **Plechovka farby (Flood-fill)**.
+   - 13 žiarivých neónových farieb + 7 okamžitých retro predvolieb (Srdce/Love, Pac-Man, Space Invaders, VU Equalizer, Dúha, Oheň, Slnečné okuliare).
+   - **Klonovanie matice**: 1 kliknutím prenesie aktuálny obraz z hodín priamo do kresliaceho plátna v telefóne.
+   - **Odoslanie na hodiny 1 klikom**: Okamžité odoslanie vytvoreného pixelartu na displej hodín s voliteľnou dobou zobrazenia.
+2. **🎵 Prehrávané médiá & Živé vysielanie Spotify:**
+   - Služba na pozadí (`MediaSessionManager`) automaticky deteguje aktívne prehrávanie hudby (Spotify, YouTube Music, podcasty, SoundCloud atď.).
+   - Získava informácie o skladbe (názov, interpret, album, dĺžka, pozícia) s dynamickým prispôsobením farieb (Spotify zelená `#1ED760`, YouTube červená, tyrkysová).
+   - Automaticky vysiela dáta na hodiny cez `/api/custom?name=spotify` s plynulým rolovaním a spodným 1-pixelovým ukazovateľom priebehu (progress bar).
+   - Vstavané ovládacie prvky prehrávania: Prehrať, Pozastaviť, Nasledujúca, Predchádzajúca a Okamžité odoslanie.
+3. **🚨 Inteligentné preposielanie notifikácií zo smartfónu:**
+   - Zachytáva prichádzajúce systémové upozornenia a správy (hovory, SMS, WhatsApp, Telegram, kalendár atď.) prostredníctvom `NotificationListenerService`.
+   - Inteligentné filtrovanie a deduplikácia (časové okno 2.5s) zabraňuje zahlteniu displeja.
+   - Kontextové 8×8 pixelové ikony (zvonček, obálka, budík, spotify, srdce, výstraha) so zvukovým tónom bzučiaka (0–3) a nastaviteľným trvaním (2–20s) okamžite odosielané cez `/api/notify`.
+4. **⏱️ Diaľkové ovládanie hardvérových stopiek a časovača:**
+   - Plná kontrola nad vstavaným chronometrom hodín cez `/api/timer`.
+   - Rýchle predvoľby pre 1m, 3m, 5m, 10m, 15m a 25m Pomodoro intervaly.
+   - Štart, pauza, prepínanie a reset s digitálnou simuláciou displeja priamo v aplikácii.
+5. **👾 Ovládanie ambientných šetričov obrazovky:**
+   - Spúšťanie a zastavenie 5 procedurálnych šetričov (Matrix digitálny dážď, Hviezdne pole, Doom oheň, Retro hodiny, Plazmové vlny).
+   - Nastavenie času nečinnosti pre automatické spustenie (1 až 30 minút) cez `/api/screensaver`.
+6. **🎛️ Kompletná konfigurácia hardvéru a EEPROM (100% parita s webovým portálom):**
+   - **Displej a Jas**: Automatický jas cez LDR senzor, Denný jas (0–100%), Nočný jas (0–100%), harmonogram nočného režimu.
+   - **Rozloženie hodín a dátumu**: Režim zobrazenia hodín, formát dátumu, 7 pásikov dní v týždni s voľbou začiatku týždňa (pondelok/nedeľa) a 11 farbami.
+   - **Prispôsobenie rotácie obrazoviek**: Bitová maska zapnutých obrazoviek a interval rotácie (3–120s).
+   - **Správa pamäte Wi-Fi sietí**: Správa 4 uložených profilov so stavovými indikátormi, pripojením 1 klikom a integrovaným Wi-Fi RF skenerom.
+   - **Dátové služby a telemetria**: Súradnice pre počasie, krypto a akciové symboly, YouTube ID, formát batérie (% / V / striedanie) a vzdialený reštart zariadenia.
+7. **📡 Okamžité automatické vyhľadanie v sieti a znovupripojenie:**
+   - Automatická detekcia cez mDNS (`ulanzi-tc001.local`) a paralelný skener podsiete.
+   - Trvalá pamäť cez Jetpack DataStore zabezpečuje okamžité automatické pripojenie k hodinám pri každom spustení aplikácie.
+
+👉 **Stiahnutie a inštalácia:** Stiahnite si najnovší inštalačný súbor `.apk` priamo z **[Vydaní Ulanzi TC001 Companion na GitHube](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)**.
 
 ---
 
@@ -48,6 +96,15 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
 
 ## ✨ Kľúčové funkcie
 
+- **📱 Natívny ekosystém Android Companion aplikácie:**
+  - Dedikovaná moderná Android aplikácia postavená na technológiách **Jetpack Compose**, **Material 3** a cieliacich na **Android 15/14/16** ([hackra76/Ulanzi-TC001-Companion](https://github.com/hackra76/Ulanzi-TC001-Companion)).
+  - **Interaktívne 32×8 Pixel Canvas štúdio**: Kreslenie pixelartu v telefóne s nástrojmi Pero, Guma, Plechovka, 13 retro farbami, 7 predvoľbami, klonovaním matice a okamžitým odoslaním na hodiny.
+  - **Spotify & Prehrávané médiá**: Odchytávanie prehrávania hudby v systéme, získavanie metaúdajov a vysielanie priebehu cez `/api/custom`.
+  - **Inteligentné preposielanie notifikácií**: Zachytávanie upozornení z telefónu s deduplikáciou, 8×8 ikonami a zvukovou signalizáciou bzučiaka cez `/api/notify`.
+  - **Diaľkový chronometer & Pomodoro**: Diaľkové spúšťanie a digitálna simulácia stopiek a odpočítavania na displeji mobilu.
+  - **Diaľkové ovládanie šetričov**: Prepínanie procedurálnych šetričov (5 štýlov) s nastavením doby nečinnosti.
+  - **Kompletná hardvérová konfigurácia (EEPROM)**: 100% parita s webovým rozhraním pre jas, nočný režim, poradie 9 obrazoviek rotácie, správu Wi-Fi profilov, súradnice, burzové symboly a reštart.
+  - **Automatická detekcia a opätovné pripojenie**: Okamžitá detekcia cez mDNS (`ulanzi-tc001.local`) a trvalé znovupripojenie vďaka Jetpack DataStore.
 - **🎛️ Priemyselný Webový portál (Tactile Field Instrument):**
   - Postavený na princípoch priemyselného dizajnu **Tactile Field Instrument** (estetika Braun / Teenage Engineering / Švajčiarska mriežka).
   - Telemetrická lišta s vysokou hustotou dát: živý Wi-Fi RSSI signál, stav flash pamäte a čas behu zariadenia v monospace hlavičkách.

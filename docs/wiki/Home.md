@@ -1,8 +1,10 @@
 # Welcome to Ulanzi TC001 Evolved Wiki
 
 [![YouTube Short](https://img.shields.io/badge/YouTube_Short-Watch_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
+[![Android Companion](https://img.shields.io/badge/Android_Companion-v1.0.4-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion)
+[![Companion Releases](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Companion?label=APK%20Download&color=blue&logo=github)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
 
-**Ulanzi TC001 Evolved** is a modular, high-performance firmware for the Ulanzi TC001 Smart Pixel Desktop Clock. It transforms the clock with a modern, resilient ESP32 architecture featuring live display streaming, Awtrix-style layout customization, live overhead airspace radar, stock/crypto markets, and custom carousel reordering.
+**Ulanzi TC001 Evolved** is a modular, high-performance firmware for the Ulanzi TC001 Smart Pixel Desktop Clock. It transforms the clock with a modern, resilient ESP32 architecture featuring live display streaming, Awtrix-style layout customization, live overhead airspace radar, stock/crypto markets, custom carousel reordering, and official native **[Android Companion App](Android-Companion-App)**.
 
 ---
 
@@ -19,6 +21,7 @@
 
 ## 📚 Table of Contents
 
+- [Android Companion App Guide](Android-Companion-App)
 - [Quick Setup & Wi-Fi Provisioning](Setup-Guide)
 - [Web Configuration Portal](Web-Portal)
 - [Dual OTA Update System](OTA-Updates)
@@ -62,6 +65,7 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 12. **Custom App Push API & Spotify**: Push dynamic screens via MQTT or HTTP REST with 8×8 icons, progress bars, and high-priority push notifications with buzzer chime.
 13. **Dual OTA Engine**: Web browser binary upload plus automated 1-click cloud updates from GitHub Releases with live percentage display on matrix.
 14. **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges seamlessly embedded in the Web Configuration Portal.
+15. **Native Android Companion App**: Official Material 3 Android app with interactive 32×8 Pixel Canvas Studio, background Spotify media broadcaster, intelligent phone notification forwarding relay, Pomodoro timer remote, screensaver switcher, and complete hardware EEPROM configuration parity ([Android Companion Guide](Android-Companion-App)).
 
 ---
 
