@@ -433,6 +433,9 @@ void loop() {
     }
 
     // 7. Handle post-connect IP announcement ticker
+    if (Network_IsConnected()) {
+        s_skipAP = false;
+    }
     if (Network_IsConnected() && !s_ipSplashDone) {
         String ipTicker = "Connected! IP: " + Network_GetLocalIP() + "   ";
         bool passComplete = DisplayMatrix_ScrollTicker(ipTicker.c_str(), C_GREEN, ICON_WIFI, 40);

@@ -41,6 +41,7 @@
 // --- Wi-Fi & Provisioning Configuration ---
 #define WIFI_AP_SSID_PREFIX     "Ulanzi-Setup-"
 #define WIFI_CONNECT_TIMEOUT_MS 10000
+#define WIFI_AP_RETRY_INTERVAL_MS 30000
 #define MAX_WIFI_PROFILES       4
 #define PREF_NAMESPACE          "ulanzi_cfg"
 #define PREF_KEY_SSID           "wifi_ssid"
@@ -132,7 +133,7 @@
 
 // --- Firmware Metadata & OTA ---
 #define FW_NAME             "Ulanzi TC001 Evolved"
-#define FW_VERSION          "2.4.0"
+#define FW_VERSION          "2.5.0"
 #define GITHUB_REPO         "hackra76/Ulanzi-TC001-Evolved"
 
 

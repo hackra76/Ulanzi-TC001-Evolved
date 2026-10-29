@@ -18,7 +18,7 @@ The onboard web server exposes several lightweight REST endpoints for status mon
   "transition_fx": 1,
   "active_app": 0,
   "app_name": "Clock",
-  "firmware_version": "2.4.0",
+  "firmware_version": "2.5.0",
   "temperature_in": 22.4,
   "humidity_in": 46.2,
   "battery_volts": 4.12,

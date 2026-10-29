@@ -135,6 +135,10 @@ static bool s_pendingReconnect = false;
 static uint32_t s_reconnectTriggerMs = 0;
 static bool s_pendingReboot = false;
 static uint32_t s_rebootTriggerMs = 0;
+static uint32_t s_lastApRetryMs = 0;
+static bool s_apConnectingSta = false;
+static uint32_t s_apConnectStartMs = 0;
+static int s_apRetryProfileIdx = 0;
 
 static const char PAGE_PORTAL[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -969,7 +973,7 @@ input:checked + .actuator-label .actuator-box::after,
         <span>COFFEE</span>
       </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> <span id="topFwVer">v2.4.0</span>
+        <span class="badge-dot"></span> <span id="topFwVer">v2.5.0</span>
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1777,7 +1781,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.4.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.5.0</strong>
     </div>
 
     <table class="param-table">
@@ -1815,7 +1819,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
-    <div id="footerFwVer">FIRMWARE v2.4.0 &bull; NVS ARMED</div>
+    <div id="footerFwVer">FIRMWARE v2.5.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -3479,6 +3483,7 @@ void Network_ConnectStation() {
     // If multiple profiles exist, perform an intelligent fast RF scan to find which network is in range
     if (savedCount > 1) {
         Serial.printf("[WiFi] %d saved profiles found. Scanning for available networks...\n", savedCount);
+        WiFi.softAPdisconnect(true);
         WiFi.mode(WIFI_STA);
         WiFi.disconnect(true);
         delay(50);
@@ -3519,8 +3524,10 @@ void Network_ConnectStation() {
     s_pass = s_wifiProfiles[targetSlot].pass;
     s_netState = NET_STATE_CONNECTING;
     s_connectStartMs = millis();
+    s_apConnectingSta = false;
 
     if (WiFi.getMode() != WIFI_STA) {
+        WiFi.softAPdisconnect(true);
         WiFi.mode(WIFI_STA);
     }
     WiFi.disconnect(true);
@@ -3534,7 +3541,8 @@ void Network_StartAP() {
     if (WiFi.getMode() == WIFI_STA) {
         WiFi.disconnect(true);
     }
-    WiFi.mode(WIFI_AP);
+    wifi_mode_t targetMode = Network_HasSavedCredentials() ? WIFI_AP_STA : WIFI_AP;
+    WiFi.mode(targetMode);
     WiFi.softAPConfig(s_apIP, s_apIP, s_apNetmask);
     WiFi.softAP(s_apSSID.c_str());
 
@@ -3543,6 +3551,8 @@ void Network_StartAP() {
 
     s_server.begin();
     s_netState = NET_STATE_AP_PORTAL;
+    s_lastApRetryMs = millis();
+    s_apConnectingSta = false;
 }
 
 void Network_Poll() {
@@ -3567,6 +3577,76 @@ void Network_Poll() {
 
     if (s_netState == NET_STATE_AP_PORTAL) {
         s_dnsServer.processNextRequest();
+
+        // If saved credentials exist, periodically attempt background reconnection to Wi-Fi
+        if (Network_HasSavedCredentials()) {
+            if (s_apConnectingSta) {
+                if (WiFi.status() == WL_CONNECTED) {
+                    s_dnsServer.stop();
+                    WiFi.softAPdisconnect(true);
+                    WiFi.mode(WIFI_STA);
+                    s_netState = NET_STATE_CONNECTED;
+                    s_activeProfileIdx = s_apRetryProfileIdx;
+                    s_ssid = WiFi.SSID();
+                    s_pass = s_wifiProfiles[s_apRetryProfileIdx].pass;
+                    s_apConnectingSta = false;
+                    s_lastWifiCheckMs = now;
+                    Serial.printf("[WiFi] Successfully reconnected from AP mode to '%s'! IP: %s, RSSI: %d dBm\n",
+                                  WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI());
+                    return;
+                } else if (now - s_apConnectStartMs >= WIFI_CONNECT_TIMEOUT_MS) {
+                    // Timeout on this profile, check if next saved profile exists
+                    int nextSlot = -1;
+                    for (int p = s_apRetryProfileIdx + 1; p < MAX_WIFI_PROFILES; p++) {
+                        if (s_wifiProfiles[p].ssid.length() > 0) {
+                            nextSlot = p;
+                            break;
+                        }
+                    }
+                    if (nextSlot >= 0) {
+                        s_apRetryProfileIdx = nextSlot;
+                        s_apConnectStartMs = now;
+                        Serial.printf("[WiFi] AP retry timeout on previous profile. Trying profile %d ('%s')...\n",
+                                      nextSlot + 1, s_wifiProfiles[nextSlot].ssid.c_str());
+                        WiFi.disconnect(false);
+                        WiFi.begin(s_wifiProfiles[nextSlot].ssid.c_str(), s_wifiProfiles[nextSlot].pass.c_str());
+                    } else {
+                        Serial.println("[WiFi] AP background retry timeout on all saved profiles. Will retry again in 30s.");
+                        WiFi.disconnect(false);
+                        s_apConnectingSta = false;
+                        s_lastApRetryMs = now;
+                    }
+                }
+            } else {
+                // Not currently connecting station. Check if it is time to retry.
+                // Do not disrupt if a client is actively connected to the SoftAP web portal
+                bool hasClients = (WiFi.softAPgetStationNum() > 0);
+                if (hasClients) {
+                    s_lastApRetryMs = now; // postpone retry while client is actively connected to AP
+                } else if (now - s_lastApRetryMs >= WIFI_AP_RETRY_INTERVAL_MS) {
+                    s_lastApRetryMs = now;
+                    int firstSlot = -1;
+                    for (int p = 0; p < MAX_WIFI_PROFILES; p++) {
+                        if (s_wifiProfiles[p].ssid.length() > 0) {
+                            firstSlot = p;
+                            break;
+                        }
+                    }
+                    if (firstSlot >= 0) {
+                        s_apRetryProfileIdx = firstSlot;
+                        s_apConnectingSta = true;
+                        s_apConnectStartMs = now;
+                        if (WiFi.getMode() != WIFI_AP_STA) {
+                            WiFi.mode(WIFI_AP_STA);
+                        }
+                        Serial.printf("[WiFi] Attempting background reconnection to saved Wi-Fi '%s' (profile %d)...\n",
+                                      s_wifiProfiles[firstSlot].ssid.c_str(), firstSlot + 1);
+                        WiFi.disconnect(false);
+                        WiFi.begin(s_wifiProfiles[firstSlot].ssid.c_str(), s_wifiProfiles[firstSlot].pass.c_str());
+                    }
+                }
+            }
+        }
         s_server.handleClient();
         return;
     }
