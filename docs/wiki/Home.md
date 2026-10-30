@@ -61,11 +61,14 @@ The Ulanzi TC001 8×32 WS2812B matrix renders unified 3×5 typography and vibran
 8. **Screen Transition Effects**: Choice of 8 smooth animations (Instant Cut, Slide Left, Slide Right, Slide Up, Slide Down, Crossfade / Dissolve, Curtain Split Wipe, and Random) with zero brightness loss and native double-buffer rendering.
 9. **Precision Stopwatch & Countdown Timer**: Dual-mode chronometer (tenths of seconds in stopwatch, real-time bottom progress bar in countdown, auto-rotation freeze lock during runs, and 2.4 kHz audible buzzer alarm).
 10. **Retro Ambient Screensavers**: Procedural zero-heap animations (Matrix Digital Rain, Doom Fire / Thermal Lava, Pac-Man & Blinky Arcade Chase, and Conway's Game of Life) with carousel rotation and inactivity idle auto-trigger.
-11. **Home Assistant MQTT Auto-Discovery**: Automatic discovery of 12 synchronized entities (sensors, matrix power/brightness light, switches, buttons, and screen selector).
+11. **Home Assistant MQTT Auto-Discovery**: Automatic discovery of 15 synchronized entities (including Wi-Fi RSSI and Free Memory diagnostics) (sensors, matrix power/brightness light, switches, buttons, and screen selector).
 12. **Custom App Push API & Spotify**: Push dynamic screens via MQTT or HTTP REST with 8×8 icons, progress bars, and high-priority push notifications with buzzer chime.
 13. **Dual OTA Engine**: Web browser binary upload plus automated 1-click cloud updates from GitHub Releases with live percentage display on matrix.
 14. **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges seamlessly embedded in the Web Configuration Portal.
 15. **Native Android Companion App**: Official Material 3 Android app with interactive 32×8 Pixel Canvas Studio, background Spotify media broadcaster, intelligent phone notification forwarding relay, Pomodoro timer remote, screensaver switcher, and complete hardware EEPROM configuration parity ([Android Companion Guide](Android-Companion-App)).
+16. **Asynchronous Dual-Core Background Architecture**: Pinned FreeRTOS worker task on Core 0 (PRO_CPU) executing all HTTP/TLS queries, guaranteeing 60+ FPS matrix rendering and zero UI latency on Core 1 (APP_CPU).
+17. **Melodic Audio Sequencer & RTTTL Player**: Non-blocking tone engine with 5 audio presets, custom frequency tones, full RTTTL ringtone player, REST and MQTT audio control, and interactive Web Portal testbench with real-time AUDIO indicator diode.
+18. **Stabilized Battery & LDR Sensing**: 8x battery ADC oversampling with EMA filtering to eliminate Wi-Fi burst voltage noise, and 0.8-unit deadband LDR hysteresis with 1 step / 40ms slew-rate limiter.
 
 ---
 

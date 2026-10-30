@@ -111,7 +111,7 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
   - Tactile physical-feel controls: milled mechanical switchgear, knurled thumb sliders, recessed bezel cards, and live 32×8 NeoPixel stream mirror.
   - **Categorized into 4 Logical Decks**: **Display & Clock Engine**, **Screens & Carousel Navigation**, **Data Services & Integrations**, and **Network & System**.
   - **Multilingual Support**: Instant toggle between **English** and **Slovak** (`[EN | SK]`), persisted in client storage and device NVS (`ui_lang`).
-  - **Direct GitHub Repo Link**: Header version badge (`v2.5.0 • GitHub`) linking directly to the latest releases and source code.
+  - **Direct GitHub Repo Link**: Header version badge (`v2.6.0 • GitHub`) linking directly to the latest releases and source code.
   - **Remote Hardware Reboot REST API**: Graceful remote restart via `POST /api/reboot` and `POST /reboot` with automated connection handshake for the Companion App and home automation.
   - **Developer Support Integration**: Interactive Buy Me a Coffee floating widget and header/footer action badges.
   - Automatic fallback to SoftAP (`Ulanzi-Setup-XXXX`) with captive portal redirection on `192.168.4.1`.
@@ -180,10 +180,19 @@ The 8×32 WS2812B NeoPixel RGB LED matrix renders information with high visual c
     - **Curtain (Center Split Wipe)**: Theatrical opening wipe from the center outward.
     - **Random**: Automatically selects a dynamic effect on each screen transition.
   - Direct hardware buffer manipulation eliminates flicker and preserves full LED brightness without double-attenuation.
-- **🏠 Home Assistant MQTT Auto-Discovery:**
-  - Native zero-configuration integration: automatically creates 12 synchronized entities in Home Assistant when connected to your broker.
-  - Sensors: SHT30 Temperature (`°C`), Humidity (`%`), Battery (`%`), Battery Voltage (`V`), Ambient Light, Active Screen.
-  - Controls: Display Matrix Light (Power & Brightness slider 0–255), Auto-Brightness Switch, Carousel Auto-Rotate Switch, Screen Select Dropdown, Buzzer Chime Button, Restart Button.
+- **⚡ Asynchronous Dual-Core Background Architecture:**
+  - Dedicated FreeRTOS worker task pinned to **Core 0 (PRO_CPU)** handles all blocking HTTP/TLS network requests for Weather, Crypto, YouTube, and Live Airspace.
+  - Completely frees **Core 1 (APP_CPU)** for uninterrupted 60+ FPS LED matrix rendering, smooth screen transitions, and instant button handling without network stalls.
+- **🎵 Melodic Tone Sequencer & Retro RTTTL Player:**
+  - Non-blocking hardware tone sequencer with 5 built-in melodic audio presets: `Click`, `Alert`, `Success`, `Notification`, and `Alarm`.
+  - Integrated **Ring Tone Text Transfer Language (RTTTL)** parser for playing custom retro 8-bit melodies.
+  - Full REST API (`POST /api/buzzer`, `POST /api/sound`) and MQTT control topics (`<prefix>/buzzer/set`, `<prefix>/sound/set`).
+  - Interactive **Acoustic Signal & Buzzer Testbench** in the Web Portal with a real-time **AUDIO** status indicator diode.
+- **🏠 Home Assistant MQTT Auto-Discovery (15 Entities):**
+  - Native zero-configuration integration: automatically creates 15 synchronized entities in Home Assistant when connected to your broker.
+  - Sensors: SHT30 Temperature (`°C`), Humidity (`%`), Battery (`%`), Battery Voltage (`V`), Ambient Light, Active Screen, Wi-Fi Signal RSSI (`dBm`), Free Heap Memory (`B`).
+  - Controls: Display Matrix Light (Power & Brightness slider 0–255), Auto-Brightness Switch, Carousel Auto-Rotate Switch, Night Mode Switch, Screen Select Dropdown, Buzzer Chime Button, Restart Button.
+  - Audio Control via MQTT: Send named presets, frequencies, or RTTTL strings directly to `<prefix>/buzzer/set` or `<prefix>/sound/set`.
   - Live connection status and broker credentials configurable directly in the Web Portal.
 - **🎵 Custom App Push API & Spotify Integration:**
   - **Dynamic Screens**: Push custom apps via MQTT (`<prefix>/custom/<name>`) or HTTP REST (`POST /api/custom?name=<name>`).

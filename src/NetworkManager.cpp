@@ -988,7 +988,7 @@ input:checked + .actuator-label .actuator-box::after,
         <span>COFFEE</span>
       </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> <span id="topFwVer">v2.5.0</span>
+        <span class="badge-dot"></span> <span id="topFwVer">v2.6.0</span>
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1821,7 +1821,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.5.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.6.0</strong>
     </div>
 
     <table class="param-table">
@@ -1859,7 +1859,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
-    <div id="footerFwVer">FIRMWARE v2.5.0 &bull; NVS ARMED</div>
+    <div id="footerFwVer">FIRMWARE v2.6.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 

@@ -111,7 +111,7 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
   - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.5.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.6.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
   - **REST API pre vzdialený reštart hardvéru**: Plynulý reštart cez `POST /api/reboot` a `POST /reboot` s automatickým obnovením spojenia pre mobilnú aplikáciu a domácu automatizáciu.
   - **Integrácia podpory vývojára**: Interaktívny plávajúci widget Buy Me a Coffee a akčné tlačidlá v hlavičke a pätičke portálu.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.
@@ -180,10 +180,19 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
     - **Opona (Curtain Split Wipe)**: Rozdelenie a odhalenie novej obrazovky od stredu k okrajom.
     - **Náhodný (Random)**: Automatický náhodný výber prechodového efektu pri každej zmene.
   - Priamy zápis do vyrovnávacej pamäte eliminuje preblikávanie a zachováva plný jas bez straty intenzity.
-- **🏠 Home Assistant MQTT Auto-Discovery:**
-  - Natívna integrácia bez manuálnej konfigurácie: automaticky vytvorí 12 synchronizovaných entít v Home Assistante po pripojení k MQTT brokeru.
-  - Senzory: SHT30 Teplota (`°C`), Vlhkosť (`%`), Batéria (`%`), Napätie batérie (`V`), Osvetlenie, Aktívna obrazovka.
-  - Ovládacie prvky: Svetlo matice (Zapnutie/Vypnutie a posuvník jasu 0–255), Prepínač automatického jasu, Prepínač automatického kolotoča, Výber obrazovky, Tlačidlo pípania bzučiaka, Tlačidlo reštartu.
+- **⚡ Asynchrónna dvojjadrová architektúra (Core 0 Background Worker):**
+  - Vyhradená FreeRTOS úloha bežiaca na **Core 0 (PRO_CPU)** obsluhuje všetky sieťové a TLS požiadavky (Počasie, Krypto, YouTube a Airspace).
+  - Úplne odbremeňuje **Core 1 (APP_CPU)** pre plynulé vykresľovanie matice 60+ FPS, jemné animácie a okamžitú odozvu tlačidiel bez trhania.
+- **🎵 Melodický sekvencér bzučiaka a prehrávač RTTTL:**
+  - Neblokujúci sekvencér tónov s 5 vstavanými zvukovými predvoľbami: `Click`, `Alert`, `Success`, `Notification` a `Alarm`.
+  - Integrovaný štandardný **RTTTL parser** pre prehrávanie retro 8-bitových melódií.
+  - Plné REST API (`POST /api/buzzer`, `POST /api/sound`) a MQTT riadenie (`<prefix>/buzzer/set`, `<prefix>/sound/set`).
+  - Interaktívny **akustický testovač bzučiaka** vo webovom rozhraní s diódou **AUDIO** indikujúcou prehrávanie v reálnom čase.
+- **🏠 Home Assistant MQTT Auto-Discovery (15 entít):**
+  - Natívna integrácia bez manuálnej konfigurácie: automaticky vytvorí 15 synchronizovaných entít v Home Assistante po pripojení k MQTT brokeru.
+  - Senzory: SHT30 Teplota (`°C`), Vlhkosť (`%`), Batéria (`%`), Napätie batérie (`V`), Osvetlenie, Aktívna obrazovka, Sila Wi-Fi signálu (`dBm`), Voľná pamäť RAM (`B`).
+  - Ovládacie prvky: Svetlo matice (Zapnutie/Vypnutie a posuvník jasu 0–255), Prepínač automatického jasu, Prepínač automatického kolotoča, Nočný režim, Výber obrazovky, Tlačidlo pípania bzučiaka, Tlačidlo reštartu.
+  - Ovládanie zvuku cez MQTT: Odosielanie predvolieb, frekvencií alebo RTTTL melódií na `<prefix>/buzzer/set` alebo `<prefix>/sound/set`.
   - Živý stav pripojenia a konfiguračné polia brokera priamo vo webovom portáli.
 - **🎵 Custom App Push API & Spotify Integrácia:**
   - **Dynamické obrazovky**: Odosielanie vlastných obrazoviek cez MQTT (`<prefix>/custom/<nazov>`) alebo HTTP REST (`POST /api/custom?name=<nazov>`).
