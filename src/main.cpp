@@ -540,17 +540,46 @@ void loop() {
 
   // High Priority: Idle Inactivity Screensaver
   if (Screensaver_IsActive()) {
-    if (Buttons_GetEvent(BTN_ID_OK) != BTN_NONE ||
-        Buttons_GetEvent(BTN_ID_LEFT) != BTN_NONE ||
-        Buttons_GetEvent(BTN_ID_RIGHT) != BTN_NONE) {
-      Buzzer_Click();
+    // 1. If timeout was set to 0 (disabled), wake immediately
+    if (Screensaver_GetTimeoutMin() == 0) {
       Screensaver_Deactivate();
+      if (s_currentApp == APP_SCREENSAVER) {
+        switchToScreen(APP_CLOCK, false, 0);
+      }
       s_lastAppSwitch = now;
       return;
     }
-    Screensaver_Render();
-    delay(15);
-    return;
+
+    // 2. If active screen changed via Web Portal / API / App, wake immediately
+    if (Network_GetActiveApp() != (uint8_t)s_currentApp &&
+        Network_GetActiveApp() != (uint8_t)APP_SCREENSAVER) {
+      Screensaver_Deactivate();
+      switchToScreen((AppMode)Network_GetActiveApp(), false, 0);
+      s_lastAppSwitch = now;
+      return;
+    }
+
+    // 3. If carousel (auto-rotate) is enabled and rotate interval elapsed, advance carousel
+    uint32_t rotateMs = (uint32_t)Network_GetRotateDelaySec() * 1000UL;
+    if (Network_GetAutoRotate() && (now - s_lastAppSwitch >= rotateMs)) {
+      Screensaver_Deactivate();
+      s_lastAppSwitch = now;
+      // Let normal loop below pick and switch to next carousel screen
+    } else if (Buttons_GetEvent(BTN_ID_OK) != BTN_NONE ||
+               Buttons_GetEvent(BTN_ID_LEFT) != BTN_NONE ||
+               Buttons_GetEvent(BTN_ID_RIGHT) != BTN_NONE) {
+      Buzzer_Click();
+      Screensaver_Deactivate();
+      if (s_currentApp == APP_SCREENSAVER) {
+        switchToScreen(APP_CLOCK, false, 0);
+      }
+      s_lastAppSwitch = now;
+      return;
+    } else {
+      Screensaver_Render();
+      delay(15);
+      return;
+    }
   }
 
   // 8. Night Mode enforcement

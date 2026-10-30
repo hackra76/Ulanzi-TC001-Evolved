@@ -1513,6 +1513,19 @@ input:checked + .actuator-label .actuator-box::after,
             </select>
           </td>
         </tr>
+        <tr>
+          <td class="label-cell">
+            <div class="param-name" data-i18n="lbl_ss_control">Manual Screensaver Control</div>
+            <div class="param-desc" data-i18n="desc_ss_control">Test visual effects or immediately wake up the clock</div>
+          </td>
+          <td>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="tactile-btn btn-sm" onclick="controlScreensaver('start')" data-i18n="btn_ss_start">&#x25B6; Start Screensaver</button>
+              <button type="button" class="tactile-btn btn-sm" onclick="controlScreensaver('stop')" style="color:var(--signal-orange);" data-i18n="btn_ss_stop">&#x25A0; Exit / Wake Clock</button>
+            </div>
+            <div id="ss_status" style="font-size:10px; color:var(--ink-secondary); margin-top:4px;"></div>
+          </td>
+        </tr>
       </table>
     </div>
 
@@ -1966,6 +1979,10 @@ const I18N = {
     opt_ss_4: "Dynamic Shuffle (Cycle All Styles)",
     lbl_ss_timeout: "Inactivity Auto-Activation Timeout",
     opt_ss_to_0: "Disabled (Carousel Only)",
+    lbl_ss_control: "Manual Screensaver Control",
+    desc_ss_control: "Test visual effects or immediately wake up the clock",
+    btn_ss_start: "\u25B6 Start Screensaver",
+    btn_ss_stop: "\u25A0 Exit / Wake Clock",
     grp_timer: "Stopwatch & Countdown Timer Remote",
     grp_buzzer: "Acoustic Signal & Buzzer Testbench",
     btn_buzzer_stop: "Stop",
@@ -2118,6 +2135,10 @@ const I18N = {
     opt_ss_4: "Dynamick\u00E9 striedanie \u0161t\u00FDlov",
     lbl_ss_timeout: "\u010Cas ne\u010Dinnosti pre automatick\u00E9 zapnutie",
     opt_ss_to_0: "Vypnut\u00E9 (iba v koloto\u010Di)",
+    lbl_ss_control: "Manu\u00E1lne ovl\u00E1danie \u0161etri\u010Da",
+    desc_ss_control: "Otestujte vizu\u00E1lne efekty alebo okam\u017Eite prebu\u010Fte hodiny",
+    btn_ss_start: "\u25B6 Spusti\u0165 \u0161etri\u010D",
+    btn_ss_stop: "\u25A0 Ukon\u010Di\u0165 / Prebudi\u0165 hodiny",
     grp_timer: "Ovl\u00E1da\u010D stopiek a odpo\u010D\u00EDtavania",
     grp_buzzer: "Akustick\u00FD sign\u00E1l a testova\u010D bzu\u010Diaka",
     btn_buzzer_stop: "Zastavi\u0165",
@@ -2407,6 +2428,23 @@ function uploadBackupFile() {
     });
   };
   reader.readAsText(file);
+}
+
+function controlScreensaver(action) {
+  const style = document.getElementById('ss_style').value;
+  const timeout = document.getElementById('ss_time').value;
+  fetch('/api/screensaver?action=' + action + '&style=' + style + '&timeout=' + timeout)
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('ss_status');
+      if (el) {
+        el.textContent = action === 'start' ?
+          (currentLang === 'sk' ? '\u2713 \u0160etri\u010D spusten\u00FD' : '\u2713 Screensaver started') :
+          (currentLang === 'sk' ? '\u2713 \u0160etri\u010D ukon\u010Den\u00FD, hodiny prebuden\u00E9' : '\u2713 Screensaver stopped, clock awake');
+        setTimeout(() => { el.textContent = ''; }, 3000);
+      }
+      updateVirtualMatrix();
+    });
 }
 
 let currentAppIndex = 0;
@@ -2934,7 +2972,12 @@ static void handleSave() {
   }
 
   // 2. Process Carousel & Screen Navigation
-  Network_SetAutoRotate(s_server.hasArg("auto_rotate"));
+  Screensaver_ResetActivity();
+  bool autoRot = s_server.hasArg("auto_rotate");
+  Network_SetAutoRotate(autoRot);
+  if (autoRot) {
+    Screensaver_Deactivate();
+  }
   if (s_server.hasArg("car_ord")) {
     Network_SetCarouselOrderString(s_server.arg("car_ord"));
   }
@@ -2958,6 +3001,9 @@ static void handleSave() {
     int app = s_server.arg("active_app").toInt();
     if (app >= 0 && app < 9) {
       Network_SetActiveApp((uint8_t)app);
+      if (app != 8) {
+        Screensaver_Deactivate();
+      }
     }
   }
 
@@ -2971,6 +3017,12 @@ static void handleSave() {
     int to = s_server.arg("ss_time").toInt();
     if (to >= 0 && to <= 60) {
       Screensaver_SetTimeoutMin((uint8_t)to);
+      if (to == 0) {
+        Screensaver_Deactivate();
+        if (Network_GetActiveApp() == 8) {
+          Network_SetActiveApp(0);
+        }
+      }
     }
   }
   if (s_server.hasArg("rotate")) {
@@ -3436,13 +3488,23 @@ void Network_Init() {
   });
 
   s_server.on("/api/screen", HTTP_GET, []() {
+    Screensaver_ResetActivity();
     if (s_server.hasArg("auto")) {
-      Network_SetAutoRotate(s_server.arg("auto").toInt() != 0);
+      bool autoRot = (s_server.arg("auto").toInt() != 0);
+      Network_SetAutoRotate(autoRot);
+      if (autoRot) {
+        Screensaver_Deactivate();
+      }
     }
     if (s_server.hasArg("set")) {
       int app = s_server.arg("set").toInt();
       if (app >= 0 && app < 9) {
         Network_SetActiveApp((uint8_t)app);
+        if (app != 8) {
+          Screensaver_Deactivate();
+        } else {
+          Screensaver_Activate();
+        }
         if (!s_server.hasArg("auto")) {
           Network_SetAutoRotate(false);
         }
@@ -3521,6 +3583,12 @@ void Network_Init() {
       int to = s_server.arg("timeout").toInt();
       if (to >= 0 && to <= 60) {
         Screensaver_SetTimeoutMin((uint8_t)to);
+        if (to == 0) {
+          Screensaver_Deactivate();
+          if (Network_GetActiveApp() == 8) {
+            Network_SetActiveApp(0);
+          }
+        }
       }
     }
     if (s_server.hasArg("action")) {
@@ -3530,6 +3598,9 @@ void Network_Init() {
         Screensaver_Activate();
       } else if (act == "stop" || act == "deactivate" || act == "wake") {
         Screensaver_Deactivate();
+        if (Network_GetActiveApp() == 8) {
+          Network_SetActiveApp(0);
+        }
       }
     }
     JsonDocument doc;
@@ -3585,6 +3656,8 @@ void Network_Init() {
       appName = doc["name"].as<const char *>();
     }
 
+    Screensaver_ResetActivity();
+    Screensaver_Deactivate();
     bool ok = CustomApp_Push(appName, doc.as<JsonVariantConst>());
     if (ok) {
       s_server.send(200, "application/json",
@@ -3625,6 +3698,8 @@ void Network_Init() {
         return;
       }
     }
+    Screensaver_ResetActivity();
+    Screensaver_Deactivate();
     CustomApp_PushNotification(doc.as<JsonVariantConst>());
     s_server.send(200, "application/json", "{\"status\":\"notified\"}");
   });
@@ -3887,6 +3962,8 @@ void Network_Init() {
     }
     if (s[PREF_KEY_MQTT_PREFIX].is<const char*>()) Network_SetMqttPrefix(s[PREF_KEY_MQTT_PREFIX].as<String>());
 
+    Screensaver_ResetActivity();
+    Screensaver_Deactivate();
     Buzzer_Click();
     s_server.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Settings restored successfully\"}");
   });

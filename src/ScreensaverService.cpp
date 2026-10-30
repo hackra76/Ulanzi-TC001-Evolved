@@ -385,6 +385,9 @@ ScreensaverStyle Screensaver_GetActiveStyle() {
 
 void Screensaver_SetTimeoutMin(uint8_t minutes) {
     s_timeoutMin = minutes;
+    if (s_timeoutMin == 0 && s_isActive) {
+        Screensaver_Deactivate();
+    }
     Preferences prefs;
     prefs.begin(PREF_NAMESPACE, false);
     prefs.putUChar(PREF_KEY_SS_TIMEOUT, s_timeoutMin);

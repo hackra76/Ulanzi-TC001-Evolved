@@ -4,7 +4,7 @@
 [![ESP32](https://img.shields.io/badge/ESP32-WROOM--32-blue?logo=espressif)](https://www.espressif.com/)
 [![License](https://img.shields.io/badge/Licencia-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Evolved?color=brightgreen)](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases)
-[![Android Aplikácia](https://img.shields.io/badge/Android_Aplik%C3%A1cia-v1.0.5-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion)
+[![Android Aplikácia](https://img.shields.io/badge/Android_Aplik%C3%A1cia-v1.0.10-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion)
 [![Stiahnuť APK](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Companion?label=Stiahnu%C5%A5%20APK&color=blue&logo=github)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
 [![YouTube Short](https://img.shields.io/badge/YouTube_Short-Pozrie%C5%A5_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
 
@@ -32,7 +32,7 @@ Pokročilý firmvér novej generácie pre originálne inteligentné stolové pix
 Ovládajte hodiny pohodlne a bezdrôtovo priamo zo svojho smartfónu s dedikovanou natívnou aplikáciou **[Ulanzi TC001 Companion](https://github.com/hackra76/Ulanzi-TC001-Companion)** postavenou na najmodernejších technológiách (Kotlin, Jetpack Compose, Material 3 a Android 15/14).
 
 [![Companion App GitHub](https://img.shields.io/badge/GitHub-hackra76%2FUlanzi--TC001--Companion-black?logo=github)](https://github.com/hackra76/Ulanzi-TC001-Companion)
-[![Stiahnuť APK](https://img.shields.io/badge/Priame_APK-Stiahnu%C5%A5_najnov%C5%A1ie_(v1.0.5)-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
+[![Stiahnuť APK](https://img.shields.io/badge/Priame_APK-Stiahnu%C5%A5_najnov%C5%A1ie_(v1.0.10)-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
 [![Wiki Dokumentácia](https://img.shields.io/badge/Wiki-Sprievodca_Android_aplik%C3%A1ciou-blue?logo=gitbook)](https://github.com/hackra76/Ulanzi-TC001-Evolved/wiki/Android-Companion-App)
 
 ### 🌟 Kľúčové možnosti aplikácie:
