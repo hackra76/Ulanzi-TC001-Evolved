@@ -105,6 +105,46 @@ bool CustomApp_Delete(const String& name) {
     return false;
 }
 
+static void playNotificationSound(JsonVariantConst soundVar, JsonVariantConst rtttlVar, int defaultSound = 0) {
+    if (rtttlVar.is<const char*>()) {
+        const char* rtttl = rtttlVar.as<const char*>();
+        if (rtttl && strlen(rtttl) > 0) {
+            Buzzer_PlayRTTTL(rtttl);
+            return;
+        }
+    }
+
+    if (soundVar.is<int>()) {
+        int snd = soundVar.as<int>();
+        switch (snd) {
+            case 1: Buzzer_Click(); break;
+            case 2: Buzzer_Alert(); break;
+            case 3: Buzzer_Success(); break;
+            case 4: Buzzer_Notification(); break;
+            case 5: Buzzer_Alarm(); break;
+            default: if (snd > 0) Buzzer_Alert(); break;
+        }
+    } else if (soundVar.is<const char*>()) {
+        String s = soundVar.as<const char*>();
+        s.toLowerCase();
+        if (s == "click") Buzzer_Click();
+        else if (s == "alert") Buzzer_Alert();
+        else if (s == "success") Buzzer_Success();
+        else if (s == "notification" || s == "chime") Buzzer_Notification();
+        else if (s == "alarm") Buzzer_Alarm();
+        else Buzzer_Alert();
+    } else if (defaultSound > 0) {
+        switch (defaultSound) {
+            case 1: Buzzer_Click(); break;
+            case 2: Buzzer_Alert(); break;
+            case 3: Buzzer_Success(); break;
+            case 4: Buzzer_Notification(); break;
+            case 5: Buzzer_Alarm(); break;
+            default: Buzzer_Alert(); break;
+        }
+    }
+}
+
 bool CustomApp_Push(const String& name, JsonVariantConst doc) {
     if (name.length() == 0) return false;
 
@@ -172,11 +212,7 @@ bool CustomApp_Push(const String& name, JsonVariantConst doc) {
     app->lastScrollMs = millis();
 
     // Optional Sound
-    if (doc["sound"].is<int>()) {
-        int snd = doc["sound"].as<int>();
-        if (snd == 1) Buzzer_Click();
-        else if (snd >= 2) Buzzer_Alert();
-    }
+    playNotificationSound(doc["sound"], doc["rtttl"]);
 
     return true;
 }
@@ -239,9 +275,7 @@ void CustomApp_PushNotification(JsonVariantConst doc) {
     s_notifStartMs = millis();
     s_notifActive = true;
 
-    int snd = doc["sound"] | 2; // Default alert for push notifications
-    if (snd == 1) Buzzer_Click();
-    else if (snd >= 2) Buzzer_Alert();
+    playNotificationSound(doc["sound"], doc["rtttl"], 2);
 }
 
 bool CustomApp_IsNotificationActive() {

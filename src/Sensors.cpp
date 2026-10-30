@@ -35,10 +35,18 @@ void Sensors_Update() {
         }
     }
 
-    // 2. Battery voltage via ADC divider
-    uint32_t adcRaw = analogRead(PIN_BATTERY_ADC);
-    float pinVolts = (adcRaw / 4095.0f) * 3.3f;
-    s_data.batteryVolts = pinVolts * BATTERY_DIVIDER;
+    // 2. Battery voltage via ADC divider with 8x oversampling & EMA filter
+    uint32_t adcSum = 0;
+    for (int i = 0; i < 8; i++) {
+        adcSum += analogRead(PIN_BATTERY_ADC);
+    }
+    float pinVolts = ((float)adcSum / 8.0f / 4095.0f) * 3.3f;
+    float currentVolts = pinVolts * BATTERY_DIVIDER;
+    if (s_data.batteryVolts < 1.0f) {
+        s_data.batteryVolts = currentVolts;
+    } else {
+        s_data.batteryVolts = (s_data.batteryVolts * 0.85f) + (currentVolts * 0.15f);
+    }
     
     // Percentage estimate (Li-ion curve: 3.30V = 0%, 4.18V = 100%)
     float pct = (s_data.batteryVolts - BATTERY_MIN_VOLTS) / (BATTERY_MAX_VOLTS - BATTERY_MIN_VOLTS) * 100.0f;

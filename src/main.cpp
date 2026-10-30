@@ -457,6 +457,7 @@ void loop() {
     // High Priority: Push Notifications override any current screen
     if (CustomApp_IsNotificationActive()) {
         CustomApp_RenderNotification();
+        s_lastAppSwitch = now;
         delay(25);
         return;
     }

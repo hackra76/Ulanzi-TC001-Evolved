@@ -3488,6 +3488,84 @@ void Network_Init() {
     s_server.send(200, "application/json", "{\"status\":\"notified\"}");
   });
 
+
+  // Buzzer & Sound REST API
+  auto handleBuzzerApi = []() {
+    s_server.sendHeader("Access-Control-Allow-Origin", "*");
+    if (s_server.hasArg("stop") || s_server.hasArg("cancel")) {
+      Buzzer_Stop();
+      s_server.send(200, "application/json", "{\"status\":\"ok\",\"action\":\"stopped\"}");
+      return;
+    }
+    if (s_server.hasArg("rtttl")) {
+      String rtttl = s_server.arg("rtttl");
+      Buzzer_PlayRTTTL(rtttl.c_str());
+      s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"rtttl\"}");
+      return;
+    }
+    if (s_server.hasArg("freq")) {
+      uint16_t freq = (uint16_t)s_server.arg("freq").toInt();
+      uint16_t dur = (uint16_t)(s_server.hasArg("duration") ? s_server.arg("duration").toInt() : 100);
+      Buzzer_Beep(freq, dur);
+      s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"beep\"}");
+      return;
+    }
+    if (s_server.hasArg("sound")) {
+      String snd = s_server.arg("sound");
+      snd.toLowerCase();
+      if (snd == "click" || snd == "1") Buzzer_Click();
+      else if (snd == "alert" || snd == "2") Buzzer_Alert();
+      else if (snd == "success" || snd == "3") Buzzer_Success();
+      else if (snd == "notification" || snd == "chime" || snd == "4") Buzzer_Notification();
+      else if (snd == "alarm" || snd == "5") Buzzer_Alarm();
+      else Buzzer_Alert();
+      s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"" + snd + "\"}");
+      return;
+    }
+    if (s_server.hasArg("plain")) {
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, s_server.arg("plain"));
+      if (!err) {
+        if (doc["stop"].is<bool>() && doc["stop"].as<bool>()) {
+          Buzzer_Stop();
+          s_server.send(200, "application/json", "{\"status\":\"ok\",\"action\":\"stopped\"}");
+          return;
+        }
+        if (doc["rtttl"].is<const char*>()) {
+          Buzzer_PlayRTTTL(doc["rtttl"].as<const char*>());
+          s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"rtttl\"}");
+          return;
+        }
+        if (doc["freq"].is<int>()) {
+          uint16_t freq = (uint16_t)doc["freq"].as<int>();
+          uint16_t dur = doc["duration"] | 100;
+          Buzzer_Beep(freq, dur);
+          s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"beep\"}");
+          return;
+        }
+        if (doc["sound"].is<const char*>() || doc["sound"].is<int>()) {
+          String snd = doc["sound"].as<String>();
+          snd.toLowerCase();
+          if (snd == "click" || snd == "1") Buzzer_Click();
+          else if (snd == "alert" || snd == "2") Buzzer_Alert();
+          else if (snd == "success" || snd == "3") Buzzer_Success();
+          else if (snd == "notification" || snd == "chime" || snd == "4") Buzzer_Notification();
+          else if (snd == "alarm" || snd == "5") Buzzer_Alarm();
+          else Buzzer_Alert();
+          s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"" + snd + "\"}");
+          return;
+        }
+      }
+    }
+    Buzzer_Alert();
+    s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"alert\"}");
+  };
+  s_server.on("/api/buzzer", HTTP_GET, handleBuzzerApi);
+  s_server.on("/api/buzzer", HTTP_POST, handleBuzzerApi);
+  s_server.on("/api/sound", HTTP_GET, handleBuzzerApi);
+  s_server.on("/api/sound", HTTP_POST, handleBuzzerApi);
+
+
   // Remote Hardware Reboot REST API
   auto handleRebootApi = []() {
     s_server.sendHeader("Connection", "close");

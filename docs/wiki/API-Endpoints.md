@@ -211,6 +211,21 @@ The onboard web server exposes several lightweight REST endpoints for status mon
 ```
 *Initiates a graceful hardware restart 500 ms after flushing the HTTP 200 response.*
 
+## Buzzer & Sound Melody API
+- **URL**: `POST /api/buzzer` or `GET /api/buzzer` (also supports `/api/sound`)
+- **Parameters / JSON Body**:
+  - `sound`: Named preset or number (`"click"` / `1`, `"alert"` / `2`, `"success"` / `3`, `"notification"` / `4`, `"alarm"` / `5`)
+  - `rtttl`: Standard Ring Tone Text Transfer Language string (e.g. `mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g`)
+  - `freq` & `duration`: Custom tone frequency in Hz and duration in ms (e.g. `freq=2400&duration=80`)
+  - `stop`: Set to `1` or `true` to immediately stop active playback.
+- **Response**: `application/json`
+```json
+{
+  "status": "ok",
+  "sound": "success"
+}
+```
+
 ## Multi-Network Wi-Fi API
 - **URL**: `GET /api/wifi`
 - **Response**: `application/json`
