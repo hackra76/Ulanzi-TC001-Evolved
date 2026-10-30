@@ -121,6 +121,18 @@ static void publishAllDiscovery() {
         publishDiscoveryEntity("switch", "night_mode", "Night Mode", payload.c_str());
     }
 
+    // 14. Wi-Fi Signal RSSI Sensor
+    {
+        String payload = "{\"name\":\"Wi-Fi Signal\",\"stat_t\":\"" + s_prefix + "/sensor/wifi_rssi\",\"unit_of_meas\":\"dBm\",\"dev_cla\":\"signal_strength\",\"stat_cla\":\"measurement\",\"ent_cat\":\"diagnostic\",\"uniq_id\":\"" + s_nodeId + "_rssi\"" + devCommon + "}";
+        publishDiscoveryEntity("sensor", "wifi_rssi", "Wi-Fi Signal", payload.c_str());
+    }
+
+    // 15. Free Memory Sensor
+    {
+        String payload = "{\"name\":\"Free Memory\",\"stat_t\":\"" + s_prefix + "/sensor/free_heap\",\"unit_of_meas\":\"B\",\"dev_cla\":\"data_size\",\"stat_cla\":\"measurement\",\"ent_cat\":\"diagnostic\",\"uniq_id\":\"" + s_nodeId + "_heap\"" + devCommon + "}";
+        publishDiscoveryEntity("sensor", "free_heap", "Free Memory", payload.c_str());
+    }
+
     s_discoveryPublished = true;
     Serial.println("[MQTT] Auto-Discovery payloads published successfully.");
 }
@@ -244,6 +256,75 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
         return;
     }
 
+    // 8b. Buzzer & Sound Control: <prefix>/buzzer/set or <prefix>/sound/set
+    if (topicStr == s_prefix + "/buzzer/set" || topicStr == s_prefix + "/sound/set") {
+        if (msgStr.equalsIgnoreCase("stop") || msgStr == "0") {
+            Buzzer_Stop();
+            return;
+        }
+        if (msgStr.equalsIgnoreCase("click") || msgStr == "1") {
+            Buzzer_Click();
+            return;
+        }
+        if (msgStr.equalsIgnoreCase("alert") || msgStr == "2") {
+            Buzzer_Alert();
+            return;
+        }
+        if (msgStr.equalsIgnoreCase("success") || msgStr == "3") {
+            Buzzer_Success();
+            return;
+        }
+        if (msgStr.equalsIgnoreCase("notification") || msgStr.equalsIgnoreCase("chime") || msgStr == "4") {
+            Buzzer_Notification();
+            return;
+        }
+        if (msgStr.equalsIgnoreCase("alarm") || msgStr == "5") {
+            Buzzer_Alarm();
+            return;
+        }
+
+        // Try JSON parsing
+        if (msgStr.startsWith("{")) {
+            JsonDocument doc;
+            DeserializationError err = deserializeJson(doc, msgStr);
+            if (!err) {
+                if (doc["stop"].is<bool>() && doc["stop"].as<bool>()) {
+                    Buzzer_Stop();
+                    return;
+                }
+                if (doc["action"].is<const char*>() && strcmp(doc["action"], "stop") == 0) {
+                    Buzzer_Stop();
+                    return;
+                }
+                if (doc["rtttl"].is<const char*>()) {
+                    Buzzer_PlayRTTTL(doc["rtttl"].as<const char*>());
+                    return;
+                }
+                if (doc["freq"].is<int>()) {
+                    uint16_t freq = (uint16_t)doc["freq"].as<int>();
+                    uint16_t dur = doc["duration"] | 100;
+                    Buzzer_Beep(freq, dur);
+                    return;
+                }
+                if (doc["sound"].is<const char*>() || doc["sound"].is<int>()) {
+                    String snd = doc["sound"].as<String>();
+                    snd.toLowerCase();
+                    if (snd == "click" || snd == "1") Buzzer_Click();
+                    else if (snd == "alert" || snd == "2") Buzzer_Alert();
+                    else if (snd == "success" || snd == "3") Buzzer_Success();
+                    else if (snd == "notification" || snd == "chime" || snd == "4") Buzzer_Notification();
+                    else if (snd == "alarm" || snd == "5") Buzzer_Alarm();
+                    else Buzzer_Alert();
+                    return;
+                }
+            }
+        } else if (msgStr.indexOf(':') != -1) {
+            Buzzer_PlayRTTTL(msgStr.c_str());
+            return;
+        }
+        return;
+    }
+
     // 9. Reboot Button
     if (topicStr == s_prefix + "/button/reboot/set") {
         Serial.println("[MQTT] Reboot requested via MQTT");
@@ -317,6 +398,8 @@ void MqttService_Update() {
                 s_mqttClient.subscribe((s_prefix + "/switch/night_mode/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/select/screen/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/button/buzzer/set").c_str());
+                s_mqttClient.subscribe((s_prefix + "/buzzer/set").c_str());
+                s_mqttClient.subscribe((s_prefix + "/sound/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/button/reboot/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/custom/+").c_str());
                 s_mqttClient.subscribe((s_prefix + "/notify").c_str());
@@ -382,6 +465,10 @@ void MqttService_PublishTelemetry() {
 
     // Light
     s_mqttClient.publish((s_prefix + "/sensor/illuminance").c_str(), String(s.ldrRaw).c_str(), true);
+
+    // Diagnostics: Wi-Fi RSSI & Free Heap
+    s_mqttClient.publish((s_prefix + "/sensor/wifi_rssi").c_str(), String(WiFi.RSSI()).c_str(), true);
+    s_mqttClient.publish((s_prefix + "/sensor/free_heap").c_str(), String(ESP.getFreeHeap()).c_str(), true);
 
     MqttService_PublishState();
 }

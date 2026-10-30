@@ -10,4 +10,5 @@ void Buzzer_Success();
 void Buzzer_Notification();
 void Buzzer_Alarm();
 void Buzzer_Stop();
+bool Buzzer_IsPlaying();
 void Buzzer_PlayRTTTL(const char* rtttl);

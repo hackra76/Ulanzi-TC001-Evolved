@@ -189,9 +189,10 @@ The onboard web server exposes several lightweight REST endpoints for status mon
 
 ## MQTT Topics & Integration
 - **Prefix**: `<prefix>/` (default: `ulanzi-tc001`)
-- **Discovery**: `homeassistant/<component>/<node_id>/<object_id>/config`
-- **Telemetry**: `<prefix>/sensor/temperature`, `<prefix>/sensor/humidity`, `<prefix>/sensor/battery_percent`, `<prefix>/sensor/battery_voltage`, `<prefix>/sensor/illuminance`, `<prefix>/sensor/active_screen`
-- **Controls**: `<prefix>/light/set`, `<prefix>/light/brightness/set`, `<prefix>/switch/auto_brightness/set`, `<prefix>/switch/auto_rotate/set`, `<prefix>/select/screen/set`, `<prefix>/button/buzzer/set`, `<prefix>/button/reboot/set`
+- **Discovery**: `homeassistant/<component>/<node_id>/<object_id>/config` (supports 15 auto-discovered entities including diagnostics)
+- **Telemetry**: `<prefix>/sensor/temperature`, `<prefix>/sensor/humidity`, `<prefix>/sensor/battery_percent`, `<prefix>/sensor/battery_voltage`, `<prefix>/sensor/illuminance`, `<prefix>/sensor/active_screen`, `<prefix>/sensor/wifi_rssi`, `<prefix>/sensor/free_heap`
+- **Controls**: `<prefix>/light/set`, `<prefix>/light/brightness/set`, `<prefix>/switch/auto_brightness/set`, `<prefix>/switch/auto_rotate/set`, `<prefix>/switch/night_mode/set`, `<prefix>/select/screen/set`, `<prefix>/buzzer/set`, `<prefix>/sound/set`, `<prefix>/button/buzzer/set`, `<prefix>/button/reboot/set`
+- **Audio Control via MQTT**: Send named presets (`"click"`, `"alert"`, `"success"`, `"notification"`, `"alarm"`, `"stop"`), numbers (`1` to `5`), RTTTL strings, or JSON objects (`{"rtttl":"..."}`, `{"freq":1000,"duration":150}`) to `<prefix>/buzzer/set` or `<prefix>/sound/set`.
 - **Custom Apps**: Subscribe to `<prefix>/custom/+` (payloads match `/api/custom`)
 - **Notifications**: Subscribe to `<prefix>/notify` (payloads match `/api/notify`)
 

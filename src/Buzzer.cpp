@@ -117,6 +117,10 @@ void Buzzer_Stop() {
   stopHardwareTone();
 }
 
+bool Buzzer_IsPlaying() {
+  return s_isPlaying;
+}
+
 void Buzzer_Poll() {
   if (!s_isPlaying)
     return;

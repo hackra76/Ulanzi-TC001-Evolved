@@ -976,6 +976,10 @@ input:checked + .actuator-label .actuator-box::after,
         <span class="diode active-green" id="diodeMatrix"></span>
         <span class="diode-label">MATRIX</span>
       </div>
+      <div class="diode-group" title="Buzzer Tone Sequencer">
+        <span class="diode" id="diodeAudio"></span>
+        <span class="diode-label">AUDIO</span>
+      </div>
     </div>
 
     <div class="header-actions">
@@ -1355,6 +1359,31 @@ input:checked + .actuator-label .actuator-box::after,
               <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(300)">5m</button>
               <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(600)">10m</button>
               <button type="button" class="tactile-btn btn-xs" onclick="setTimerSec(1500)">25m (Pomodoro)</button>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Acoustic Signal & Buzzer Testbench -->
+      <div class="section-legend" data-i18n="grp_buzzer">&#x1F50A; Acoustic Signal &amp; Buzzer Testbench</div>
+      <table class="param-table">
+        <tr>
+          <td class="label-cell">
+            <div class="param-name" data-i18n="lbl_buzzer_presets">Buzzer Presets</div>
+            <div class="param-desc" data-i18n="sub_buzzer_presets">Trigger melodic feedback or stop active playback</div>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+              <button type="button" class="tactile-btn btn-sm" onclick="apiBuzzer('click')">&#x1F509; Click</button>
+              <button type="button" class="tactile-btn btn-sm" onclick="apiBuzzer('alert')">&#x26A0; Alert</button>
+              <button type="button" class="tactile-btn btn-sm" onclick="apiBuzzer('success')">&#x2714; Success</button>
+              <button type="button" class="tactile-btn btn-sm" onclick="apiBuzzer('notification')">&#x1F514; Notification</button>
+              <button type="button" class="tactile-btn btn-sm" onclick="apiBuzzer('alarm')">&#x1F6A8; Alarm</button>
+              <button type="button" class="tactile-btn btn-sm" onclick="apiBuzzer('stop')" style="border-color:var(--signal-red); color:var(--signal-red);" data-i18n="btn_buzzer_stop">&#x25A0; Stop</button>
+            </div>
+            <div style="margin-top:10px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <input type="text" id="rtttlInput" placeholder="RTTTL String (e.g. Pacman:d=4,o=5,b=120:...)" style="flex:1; min-width:200px; font-family:var(--font-mono); font-size:11px;">
+              <button type="button" class="tactile-btn btn-sm" onclick="playCustomRTTTL()">Play RTTTL</button>
             </div>
           </td>
         </tr>
@@ -1923,6 +1952,10 @@ const I18N = {
     lbl_ss_timeout: "Inactivity Auto-Activation Timeout",
     opt_ss_to_0: "Disabled (Carousel Only)",
     grp_timer: "Stopwatch & Countdown Timer Remote",
+    grp_buzzer: "Acoustic Signal & Buzzer Testbench",
+    btn_buzzer_stop: "Stop",
+    lbl_buzzer_presets: "Buzzer Presets",
+    sub_buzzer_presets: "Trigger melodic feedback or stop active playback",
     btn_timer_toggle: "Toggle (Start/Pause)",
     btn_timer_reset: "Reset",
     lbl_timer_mode: "Mode:",
@@ -2064,6 +2097,10 @@ const I18N = {
     lbl_ss_timeout: "\u010Cas ne\u010Dinnosti pre automatick\u00E9 zapnutie",
     opt_ss_to_0: "Vypnut\u00E9 (iba v koloto\u010Di)",
     grp_timer: "Ovl\u00E1da\u010D stopiek a odpo\u010D\u00EDtavania",
+    grp_buzzer: "Akustick\u00FD sign\u00E1l a testova\u010D bzu\u010Diaka",
+    btn_buzzer_stop: "Zastavi\u0165",
+    lbl_buzzer_presets: "Predvo\u013Eby bzu\u010Diaka",
+    sub_buzzer_presets: "Spusti\u0165 mel\u00F3diu alebo zastavi\u0165 prehr\u00E1vanie",
     btn_timer_toggle: "Spusti\u0165 / Pozastavi\u0165",
     btn_timer_reset: "Vynulova\u0165",
     lbl_timer_mode: "Re\u017Eim:",
@@ -2520,6 +2557,33 @@ function updateTimerUI(d) {
   if (stateLabel) stateLabel.innerText = 'State: ' + stateStr.toUpperCase();
 }
 
+function apiBuzzer(sound) {
+  fetch('/api/buzzer?sound=' + encodeURIComponent(sound), { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (sound === 'stop') {
+        showToast('Playback Stopped');
+      } else {
+        showToast('Buzzer: ' + sound.toUpperCase());
+      }
+    })
+    .catch(() => {});
+}
+
+function playCustomRTTTL() {
+  const inp = document.getElementById('rtttlInput');
+  const val = inp ? inp.value.trim() : '';
+  if (!val) return;
+  fetch('/api/buzzer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rtttl: val })
+  })
+    .then(r => r.json())
+    .then(() => showToast('Playing RTTTL Melody'))
+    .catch(() => {});
+}
+
 function updateTelemetry() {
   fetch('/status')
     .then(r => r.json())
@@ -2562,6 +2626,10 @@ function updateTelemetry() {
       const dMqtt = document.getElementById('diodeMqtt');
       if (dMqtt) {
         dMqtt.className = d.mqtt_connected ? 'diode active-green' : 'diode';
+      }
+      const dAudio = document.getElementById('diodeAudio');
+      if (dAudio) {
+        dAudio.className = d.buzzer_playing ? 'diode active-orange' : 'diode';
       }
       const dWifi = document.getElementById('diodeWifi');
       if (dWifi) {
@@ -3033,6 +3101,9 @@ static void handleStatus() {
   doc["day_bri"] = s_dayBri;
   doc["night_bri"] = s_nightBri;
   doc["night_mode"] = s_nightMode;
+  doc["buzzer_playing"] = Buzzer_IsPlaying();
+  doc["free_heap"] = ESP.getFreeHeap();
+  doc["uptime_sec"] = millis() / 1000;
 
   // Services
   doc["weather_temp"] = Weather_GetFormattedTemp();
@@ -3556,6 +3627,15 @@ void Network_Init() {
           return;
         }
       }
+    }
+    if (s_server.method() == HTTP_GET) {
+      JsonDocument res;
+      res["status"] = "ok";
+      res["playing"] = Buzzer_IsPlaying();
+      String out;
+      serializeJson(res, out);
+      s_server.send(200, "application/json", out);
+      return;
     }
     Buzzer_Alert();
     s_server.send(200, "application/json", "{\"status\":\"ok\",\"sound\":\"alert\"}");
