@@ -1,4 +1,4 @@
-# Quick Setup & Wi-Fi Provisioning
+﻿# Quick Setup & Wi-Fi Provisioning
 
 ## First Boot & AP Mode
 1. Power on your Ulanzi TC001 clock.

@@ -988,7 +988,7 @@ input:checked + .actuator-label .actuator-box::after,
         <span>COFFEE</span>
       </a>
       <a href="https://github.com/hackra76/Ulanzi-TC001-Evolved" target="_blank" rel="noopener" class="fw-badge" title="GitHub Repository">
-        <span class="badge-dot"></span> <span id="topFwVer">v2.6.0</span>
+        <span class="badge-dot"></span> <span id="topFwVer">v2.7.0</span>
       </a>
       <div class="rocker-switch">
         <button type="button" class="rocker-option selected" id="btn-en" onclick="setLang('en')">EN</button>
@@ -1805,6 +1805,21 @@ input:checked + .actuator-label .actuator-box::after,
           </td>
         </tr>
       </table>
+
+      <!-- BACKUP & RESTORE SECTION -->
+      <div style="margin-top:16px; padding-top:12px; border-top:1px dashed var(--hairline-main);">
+        <div style="font-weight:600; font-size:12px; color:var(--ink-primary); margin-bottom:4px;" data-i18n="grp_backup">Configuration Backup &amp; Restore</div>
+        <div style="font-size:11px; color:var(--ink-secondary); line-height:1.4; margin-bottom:12px;" data-i18n="desc_backup">
+          Export all system and screen preferences to a JSON file or restore from a previous backup.
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <a href="/api/backup" download="ulanzi_tc001_backup.json" class="tactile-btn btn-sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;" data-i18n="btn_export_backup">&#x2913; Download Backup (.json)</a>
+          <span style="color:var(--hairline-bright);">|</span>
+          <input type="file" id="backup_file" accept=".json,application/json" style="padding:4px; max-width:220px;">
+          <button type="button" class="tactile-btn btn-sm" onclick="uploadBackupFile()" data-i18n="btn_restore_backup">&#x21E7; Restore Configuration</button>
+        </div>
+        <div id="backup_status" style="font-size:11px; margin-top:8px; display:none;"></div>
+      </div>
     </div>
 
     <!-- PERMANENT SAVE BAR -->
@@ -1821,7 +1836,7 @@ input:checked + .actuator-label .actuator-box::after,
   <div class="control-panel-section" id="panel-ota">
     <div class="section-legend" data-i18n="grp_ota">Field Firmware Upgrade (OTA)</div>
     <div style="font-size:11px; color:var(--ink-secondary); margin-bottom:12px;">
-      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.6.0</strong>
+      <span data-i18n="lbl_running_ver">Running Version:</span> <strong id="otaRunningVer" style="color:var(--signal-orange);">v2.7.0</strong>
     </div>
 
     <table class="param-table">
@@ -1859,7 +1874,7 @@ input:checked + .actuator-label .actuator-box::after,
   <!-- TERMINAL FOOTER -->
   <footer class="terminal-footer">
     <div>ULANZI TC001 EVOLVED // TACTILE FIELD INSTRUMENT &bull; <a href="https://buymeacoffee.com/hackra" target="_blank" rel="noopener" class="footer-coffee-link" onclick="openBmc(event)">&#x2615; BUY ME A COFFEE</a></div>
-    <div id="footerFwVer">FIRMWARE v2.6.0 &bull; NVS ARMED</div>
+    <div id="footerFwVer">FIRMWARE v2.7.0 &bull; NVS ARMED</div>
   </footer>
 </div>
 
@@ -2002,6 +2017,13 @@ const I18N = {
     lbl_pass: "Wi-Fi Password",
     ph_pass: "Leave empty if unchanged",
     btn_save: "Save & Apply Settings",
+    grp_backup: "Configuration Backup & Restore",
+    desc_backup: "Export all system and screen preferences to a JSON file or restore from a previous backup.",
+    btn_export_backup: "\u2913 Download Backup (.json)",
+    btn_restore_backup: "\u21E7 Restore Configuration",
+    msg_restore_confirm: "Are you sure you want to restore settings from this backup file? Parameters will be applied immediately.",
+    msg_restore_success: "Settings restored successfully! Reloading portal...",
+    msg_restore_err: "Configuration restore failed: ",
     grp_ota: "Field Firmware Upgrade (OTA)",
     lbl_running_ver: "Running Version:",
     lbl_flash_local: "Flash Local Binary (.bin)",
@@ -2147,6 +2169,13 @@ const I18N = {
     lbl_pass: "Heslo Wi-Fi",
     ph_pass: "Ponechajte pr\u00E1zdne, ak sa nemenia",
     btn_save: "Ulo\u017Ei\u0165 a pou\u017Ei\u0165 nastavenia",
+    grp_backup: "Z\u00E1loha a obnova konfigur\u00E1cie",
+    desc_backup: "Exportujte v\u0161etky syst\u00E9mov\u00E9 preferencie a nastavenia do s\u00FAboru JSON alebo ich obnovte zo z\u00E1lohy.",
+    btn_export_backup: "\u2913 Stiahnu\u0165 z\u00E1lohu (.json)",
+    btn_restore_backup: "\u21E7 Obnovi\u0165 konfigur\u00E1ciu",
+    msg_restore_confirm: "Naozaj chcete obnovi\u0165 nastavenia z tohto s\u00FAboru z\u00E1lohy? Parametre bud\u00FA okam\u017Eite aplikovan\u00E9.",
+    msg_restore_success: "Nastavenia boli \u00FAspe\u0161ne obnoven\u00E9! Obnovujem port\u00E1l...",
+    msg_restore_err: "Obnova konfigur\u00E1cie zlyhala: ",
     grp_ota: "Aktualiz\u00E1cia firmv\u00E9ru (OTA)",
     lbl_running_ver: "Aktu\u00E1lna verzia:",
     lbl_flash_local: "Nahra\u0165 lok\u00E1lny s\u00FAbor (.bin)",
@@ -2337,6 +2366,47 @@ function installCloudOta(url) {
     .then(d => {
       setTimeout(() => location.reload(), 10000);
     });
+}
+
+function uploadBackupFile() {
+  const fileInput = document.getElementById('backup_file');
+  const statusEl = document.getElementById('backup_status');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert(currentLang === 'sk' ? 'Vyberte s\u00FAbor so z\u00E1lohou (.json)' : 'Please select a backup file (.json)');
+    return;
+  }
+  const file = fileInput.files[0];
+  const confirmMsg = (I18N[currentLang] && I18N[currentLang].msg_restore_confirm) ? I18N[currentLang].msg_restore_confirm : "Restore settings from this backup file?";
+  if (!confirm(confirmMsg)) return;
+
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--signal-orange)';
+  statusEl.textContent = (currentLang === 'sk' ? 'Obnovujem konfigur\u00E1ciu...' : 'Restoring configuration...');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    fetch('/api/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: e.target.result
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        statusEl.style.color = 'var(--phosphor-green)';
+        statusEl.textContent = '\u2713 ' + ((I18N[currentLang] && I18N[currentLang].msg_restore_success) ? I18N[currentLang].msg_restore_success : 'Settings restored successfully! Reloading...');
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        statusEl.style.color = 'var(--signal-red)';
+        statusEl.textContent = '\u2717 ' + (data.error || 'Restore failed');
+      }
+    })
+    .catch(err => {
+      statusEl.style.color = 'var(--signal-red)';
+      statusEl.textContent = '\u2717 ' + ((I18N[currentLang] && I18N[currentLang].msg_restore_err) ? I18N[currentLang].msg_restore_err : 'Failed: ') + err.message;
+    });
+  };
+  reader.readAsText(file);
 }
 
 let currentAppIndex = 0;
@@ -3659,6 +3729,167 @@ void Network_Init() {
   s_server.on("/api/reboot", HTTP_GET, handleRebootApi);
   s_server.on("/reboot", HTTP_POST, handleRebootApi);
   s_server.on("/reboot", HTTP_GET, handleRebootApi);
+
+  // Configuration Backup & Restore REST API
+  s_server.on("/api/backup", HTTP_GET, []() {
+    JsonDocument doc;
+    doc["app"] = FW_NAME;
+    doc["version"] = FW_VERSION;
+    doc["backup_time"] = millis();
+
+    JsonObject s = doc["settings"].to<JsonObject>();
+    // Wi-Fi Profiles
+    for (uint8_t i = 0; i < MAX_WIFI_PROFILES; i++) {
+      s[s_wifiSsidKeys[i]] = s_wifiProfiles[i].ssid;
+      s[s_wifiPassKeys[i]] = s_wifiProfiles[i].pass;
+    }
+    // Carousel & Display
+    s[PREF_KEY_AUTO_ROTATE] = Network_GetAutoRotate();
+    s[PREF_KEY_ACTIVE_APP] = Network_GetActiveApp();
+    s[PREF_KEY_ROTATE_SEC] = Network_GetRotateDelaySec();
+    s[PREF_KEY_CAROUSEL_MASK] = Network_GetCarouselMask();
+    s[PREF_KEY_CAROUSEL_ORDER] = Network_GetCarouselOrderString();
+    s[PREF_KEY_TRANSITION_FX] = Network_GetTransitionFx();
+    s[PREF_KEY_BATTERY_MODE] = Network_GetBatteryMode();
+
+    // Clock, Calendar & Layout
+    s[PREF_KEY_CLOCK_MODE] = Network_GetClockMode();
+    s[PREF_KEY_SHOW_SECONDS] = Network_GetShowSeconds();
+    s[PREF_KEY_WEEKDAY_BAR] = Network_GetWeekdayBar();
+    s[PREF_KEY_WD_START_MON] = Network_GetWeekdayStartMonday();
+    s[PREF_KEY_WD_ACTIVE_COL] = Network_GetWeekdayActiveColorIndex();
+    s[PREF_KEY_WD_INACT_COL] = Network_GetWeekdayInactiveColorIndex();
+    s[PREF_KEY_WD_WKND_COL] = Network_GetWeekdayWeekendColorIndex();
+    s[PREF_KEY_PORTAL_LANG] = Network_GetPortalLanguage();
+    s[PREF_KEY_DATE_FORMAT] = Network_GetDateFormat();
+    s[PREF_KEY_CLOCK_ICON] = Network_GetClockIcon();
+    s[PREF_KEY_TEXT_ALIGN] = Network_GetTextAlign();
+
+    // Ambient & Screensaver
+    s[PREF_KEY_AUTO_BRI] = Network_GetAutoBrightness();
+    s[PREF_KEY_NIGHT_MODE] = Network_GetNightMode();
+    s[PREF_KEY_NIGHT_START] = Network_GetNightStartHour();
+    s[PREF_KEY_NIGHT_END] = Network_GetNightEndHour();
+    s[PREF_KEY_DAY_BRI] = Network_GetDayBrightness();
+    s[PREF_KEY_NIGHT_BRI] = Network_GetNightBrightness();
+    s[PREF_KEY_SS_STYLE] = (uint8_t)Screensaver_GetStyle();
+    s[PREF_KEY_SS_TIMEOUT] = Screensaver_GetTimeoutMin();
+
+    // Feeds & Integrations
+    s[PREF_KEY_WEATHER_LAT] = Network_GetWeatherLat();
+    s[PREF_KEY_WEATHER_LON] = Network_GetWeatherLon();
+    s[PREF_KEY_WEATHER_CITY] = Network_GetWeatherCity();
+    s[PREF_KEY_CRYPTO_SYM] = Network_GetCryptoSymbol();
+    s[PREF_KEY_YT_CHANNEL] = Network_GetYouTubeChannel();
+    s[PREF_KEY_YT_APIKEY] = Network_GetYouTubeApiKey();
+    s[PREF_KEY_MQTT_ENABLED] = Network_GetMqttEnabled();
+    s[PREF_KEY_MQTT_SERVER] = Network_GetMqttServer();
+    s[PREF_KEY_MQTT_PORT] = Network_GetMqttPort();
+    s[PREF_KEY_MQTT_USER] = Network_GetMqttUser();
+    s[PREF_KEY_MQTT_PASS] = Network_GetMqttPass();
+    s[PREF_KEY_MQTT_PREFIX] = Network_GetMqttPrefix();
+
+    String out;
+    serializeJson(doc, out);
+    s_server.sendHeader("Content-Disposition", "attachment; filename=\"ulanzi_tc001_backup.json\"");
+    s_server.sendHeader("Access-Control-Allow-Origin", "*");
+    s_server.send(200, "application/json", out);
+  });
+
+  s_server.on("/api/restore", HTTP_POST, []() {
+    s_server.sendHeader("Access-Control-Allow-Origin", "*");
+    if (!s_server.hasArg("plain")) {
+      s_server.send(400, "application/json", "{\"error\":\"Missing JSON body\"}");
+      return;
+    }
+
+    String body = s_server.arg("plain");
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, body);
+    if (err) {
+      s_server.send(400, "application/json", "{\"error\":\"Invalid JSON: " + String(err.c_str()) + "\"}");
+      return;
+    }
+
+    JsonObjectConst s = doc["settings"].is<JsonObjectConst>() ? doc["settings"].as<JsonObjectConst>() : doc.as<JsonObjectConst>();
+    if (s.isNull() || s.size() == 0) {
+      s_server.send(400, "application/json", "{\"error\":\"No valid settings object found\"}");
+      return;
+    }
+
+    // 1. Wi-Fi Profiles
+    for (uint8_t slot = 0; slot < MAX_WIFI_PROFILES; slot++) {
+      if (s[s_wifiSsidKeys[slot]].is<const char*>()) {
+        String ssid = s[s_wifiSsidKeys[slot]].as<String>();
+        String pass = s[s_wifiPassKeys[slot]].is<const char*>() ? s[s_wifiPassKeys[slot]].as<String>() : "";
+        if (ssid.length() > 0) {
+          Network_SaveProfile(slot, ssid, pass.length() > 0 ? pass : s_wifiProfiles[slot].pass);
+        }
+      }
+    }
+
+    // 2. Carousel & Display
+    if (s[PREF_KEY_AUTO_ROTATE].is<bool>()) Network_SetAutoRotate(s[PREF_KEY_AUTO_ROTATE].as<bool>());
+    if (s[PREF_KEY_ACTIVE_APP].is<int>()) Network_SetActiveApp((uint8_t)s[PREF_KEY_ACTIVE_APP].as<int>());
+    if (s[PREF_KEY_ROTATE_SEC].is<int>()) Network_SetRotateDelaySec((uint16_t)s[PREF_KEY_ROTATE_SEC].as<int>());
+    if (s[PREF_KEY_CAROUSEL_MASK].is<int>()) Network_SetCarouselMask((uint16_t)s[PREF_KEY_CAROUSEL_MASK].as<int>());
+    if (s[PREF_KEY_CAROUSEL_ORDER].is<const char*>()) Network_SetCarouselOrderString(s[PREF_KEY_CAROUSEL_ORDER].as<String>());
+    if (s[PREF_KEY_TRANSITION_FX].is<int>()) Network_SetTransitionFx((uint8_t)s[PREF_KEY_TRANSITION_FX].as<int>());
+    if (s[PREF_KEY_BATTERY_MODE].is<int>()) Network_SetBatteryMode((uint8_t)s[PREF_KEY_BATTERY_MODE].as<int>());
+
+    // 3. Clock, Calendar & Layout
+    if (s[PREF_KEY_CLOCK_MODE].is<int>()) Network_SetClockMode((uint8_t)s[PREF_KEY_CLOCK_MODE].as<int>());
+    if (s[PREF_KEY_SHOW_SECONDS].is<bool>()) Network_SetShowSeconds(s[PREF_KEY_SHOW_SECONDS].as<bool>());
+    if (s[PREF_KEY_WEEKDAY_BAR].is<bool>()) Network_SetWeekdayBar(s[PREF_KEY_WEEKDAY_BAR].as<bool>());
+    if (s[PREF_KEY_WD_START_MON].is<bool>()) Network_SetWeekdayStartMonday(s[PREF_KEY_WD_START_MON].as<bool>());
+    if (s[PREF_KEY_WD_ACTIVE_COL].is<int>()) Network_SetWeekdayActiveColorIndex((uint8_t)s[PREF_KEY_WD_ACTIVE_COL].as<int>());
+    if (s[PREF_KEY_WD_INACT_COL].is<int>()) Network_SetWeekdayInactiveColorIndex((uint8_t)s[PREF_KEY_WD_INACT_COL].as<int>());
+    if (s[PREF_KEY_WD_WKND_COL].is<int>()) Network_SetWeekdayWeekendColorIndex((uint8_t)s[PREF_KEY_WD_WKND_COL].as<int>());
+    if (s[PREF_KEY_PORTAL_LANG].is<const char*>()) Network_SetPortalLanguage(s[PREF_KEY_PORTAL_LANG].as<String>());
+    if (s[PREF_KEY_DATE_FORMAT].is<int>()) Network_SetDateFormat((uint8_t)s[PREF_KEY_DATE_FORMAT].as<int>());
+    if (s[PREF_KEY_CLOCK_ICON].is<int>()) Network_SetClockIcon((uint8_t)s[PREF_KEY_CLOCK_ICON].as<int>());
+    if (s[PREF_KEY_TEXT_ALIGN].is<int>()) Network_SetTextAlign((uint8_t)s[PREF_KEY_TEXT_ALIGN].as<int>());
+
+    // 4. Ambient & Screensaver
+    if (s[PREF_KEY_AUTO_BRI].is<bool>()) Network_SetAutoBrightness(s[PREF_KEY_AUTO_BRI].as<bool>());
+    if (s[PREF_KEY_NIGHT_MODE].is<bool>()) Network_SetNightMode(s[PREF_KEY_NIGHT_MODE].as<bool>());
+    if (s[PREF_KEY_NIGHT_START].is<int>() && s[PREF_KEY_NIGHT_END].is<int>()) {
+      Network_SetNightSchedule((uint8_t)s[PREF_KEY_NIGHT_START].as<int>(), (uint8_t)s[PREF_KEY_NIGHT_END].as<int>());
+    }
+    if (s[PREF_KEY_DAY_BRI].is<int>()) Network_SetDayBrightness((uint8_t)s[PREF_KEY_DAY_BRI].as<int>());
+    if (s[PREF_KEY_NIGHT_BRI].is<int>()) Network_SetNightBrightness((uint8_t)s[PREF_KEY_NIGHT_BRI].as<int>());
+    if (s[PREF_KEY_SS_STYLE].is<int>()) Screensaver_SetStyle((ScreensaverStyle)s[PREF_KEY_SS_STYLE].as<int>());
+    if (s[PREF_KEY_SS_TIMEOUT].is<int>()) Screensaver_SetTimeoutMin((uint8_t)s[PREF_KEY_SS_TIMEOUT].as<int>());
+
+    // 5. Integrations & Services
+    if (s[PREF_KEY_WEATHER_LAT].is<float>() && s[PREF_KEY_WEATHER_LON].is<float>()) {
+      float lat = s[PREF_KEY_WEATHER_LAT].as<float>();
+      float lon = s[PREF_KEY_WEATHER_LON].as<float>();
+      String city = s[PREF_KEY_WEATHER_CITY].is<const char*>() ? s[PREF_KEY_WEATHER_CITY].as<String>() : "";
+      Network_SetWeatherLocation(lat, lon, city);
+    }
+    if (s[PREF_KEY_CRYPTO_SYM].is<const char*>()) {
+      Network_SetCryptoSymbol(s[PREF_KEY_CRYPTO_SYM].as<String>());
+    }
+    if (s[PREF_KEY_YT_CHANNEL].is<const char*>()) {
+      String chan = s[PREF_KEY_YT_CHANNEL].as<String>();
+      String key = s[PREF_KEY_YT_APIKEY].is<const char*>() ? s[PREF_KEY_YT_APIKEY].as<String>() : "";
+      if (key.length() == 0) key = s_ytApiKey;
+      Network_SaveYouTubeConfig(chan, key);
+    }
+    if (s[PREF_KEY_MQTT_ENABLED].is<bool>()) Network_SetMqttEnabled(s[PREF_KEY_MQTT_ENABLED].as<bool>());
+    if (s[PREF_KEY_MQTT_SERVER].is<const char*>()) Network_SetMqttServer(s[PREF_KEY_MQTT_SERVER].as<String>());
+    if (s[PREF_KEY_MQTT_PORT].is<int>()) Network_SetMqttPort((uint16_t)s[PREF_KEY_MQTT_PORT].as<int>());
+    if (s[PREF_KEY_MQTT_USER].is<const char*>()) Network_SetMqttUser(s[PREF_KEY_MQTT_USER].as<String>());
+    if (s[PREF_KEY_MQTT_PASS].is<const char*>()) {
+      String p = s[PREF_KEY_MQTT_PASS].as<String>();
+      if (p.length() > 0) Network_SetMqttPass(p);
+    }
+    if (s[PREF_KEY_MQTT_PREFIX].is<const char*>()) Network_SetMqttPrefix(s[PREF_KEY_MQTT_PREFIX].as<String>());
+
+    Buzzer_Click();
+    s_server.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Settings restored successfully\"}");
+  });
 
   // Initialize Over-The-Air Update System
   OTA_Init(s_server);

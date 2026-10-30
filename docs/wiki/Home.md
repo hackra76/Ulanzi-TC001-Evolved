@@ -1,4 +1,4 @@
-# Welcome to Ulanzi TC001 Evolved Wiki
+﻿# Welcome to Ulanzi TC001 Evolved Wiki
 
 [![YouTube Short](https://img.shields.io/badge/YouTube_Short-Watch_Video-red?logo=youtube)](https://youtube.com/shorts/nju1VtkFuw0?feature=share)
 [![Android Companion](https://img.shields.io/badge/Android_Companion-v1.0.4-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion)

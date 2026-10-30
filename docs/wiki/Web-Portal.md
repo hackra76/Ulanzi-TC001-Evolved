@@ -1,4 +1,4 @@
-# Web Configuration Portal
+﻿# Web Configuration Portal
 
 The web configuration portal is hosted on port 80 of the device's IP address (`http://<device-ip>/`) or `http://192.168.4.1/` when in SoftAP setup mode.
 

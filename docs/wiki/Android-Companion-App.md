@@ -1,4 +1,4 @@
-# Ulanzi TC001 Companion — Android Application Guide 📱
+﻿# Ulanzi TC001 Companion — Android Application Guide 📱
 
 [![Release](https://img.shields.io/github/v/release/hackra76/Ulanzi-TC001-Companion?color=brightgreen&label=Companion%20Release)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--36)-3DDC84?logo=android&logoColor=white)](https://github.com/hackra76/Ulanzi-TC001-Companion)

@@ -1,4 +1,4 @@
-# Anti-Slop Industrial UI Design Protocol
+﻿# Anti-Slop Industrial UI Design Protocol
 
 ## 1. The Anti-Slop Ban List (Strictly Forbidden)
 - **NO slate/zinc blue-gray dark mode backgrounds**: Never use `#0f172a`, `#1e293b`, `#111827`, or blue-tinted dark themes.

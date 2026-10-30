@@ -1,4 +1,4 @@
-# Workspace Guidelines
+﻿# Workspace Guidelines
 
 ## 1. Execution & Build Protocol
 - **Language**: Always communicate in English with the user.

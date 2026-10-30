@@ -12,8 +12,8 @@
 
 ### 📦 Releases & Links
 
-- **[Latest v2.6.0 Release](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases/tag/v2.6.0)**
+- **[Latest v2.7.0 Release](https://github.com/hackra76/Ulanzi-TC001-Evolved/releases/tag/v2.7.0)**
 - **[Android Companion App (GitHub)](https://github.com/hackra76/Ulanzi-TC001-Companion)**
-- **[Download Companion APK (v1.0.5)](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)**
+- **[Download Companion APK](https://github.com/hackra76/Ulanzi-TC001-Companion/releases/latest)**
 - **[Source Repository](https://github.com/hackra76/Ulanzi-TC001-Evolved)**
 - **[Report an Issue](https://github.com/hackra76/Ulanzi-TC001-Evolved/issues)**

@@ -1,4 +1,4 @@
-# Dual OTA Firmware Update System
+﻿# Dual OTA Firmware Update System
 
 Ulanzi TC001 Evolved features a dual Over-The-Air (OTA) update architecture, eliminating the need to connect USB cables for firmware upgrades.
 

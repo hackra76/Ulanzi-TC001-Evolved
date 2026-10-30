@@ -1,4 +1,4 @@
-# Hardware Pinout & Architecture
+﻿# Hardware Pinout & Architecture
 
 The [Ulanzi TC001 Smart Pixel Clock](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882?_pos=1&_psq=clock&_psid=1e85ab0a9&_ss=e) (manufactured by Shenzhen Ulanzi Technology Co., Ltd.) is powered by an ESP32-WROOM-32 module.
 

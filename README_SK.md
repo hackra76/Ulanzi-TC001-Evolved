@@ -111,7 +111,8 @@ RGB LED matica 8×32 WS2812B NeoPixel vykresľuje telemetriu a informácie s vys
   - Taktilné ovládacie prvky: precízne mechanické prepínače, vrúbkované posuvníky, zapustené prístrojové karty a živé zrkadlenie 32×8 NeoPixel matice.
   - **Rozdelené do 4 logických panelov**: **Displej a Hodiny**, **Obrazovky a Rotácia**, **Dátové Služby a Integrácie** a **Sieť a Systém**.
   - **Dvojjazyčná podpora**: Okamžité prepínanie medzi **slovenčinou** a **angličtinou** (`[EN | SK]`) s trvalým uložením voľby v `localStorage` aj v NVS pamäti (`ui_lang`).
-  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.6.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Priamy odkaz na GitHub**: Verzia v hlavičke (`v2.7.0 • GitHub`) vedie priamo na oficiálny repozitár a vydania.
+  - **Záloha a obnova konfigurácie**: Export kompletnej konfigurácie do súboru JSON jedným kliknutím (`GET /api/backup`) a obnova zo súboru (`POST /api/restore`) s validáciou, okamžitým zápisom do NVS a akustickým potvrdením.
   - **REST API pre vzdialený reštart hardvéru**: Plynulý reštart cez `POST /api/reboot` a `POST /reboot` s automatickým obnovením spojenia pre mobilnú aplikáciu a domácu automatizáciu.
   - **Integrácia podpory vývojára**: Interaktívny plávajúci widget Buy Me a Coffee a akčné tlačidlá v hlavičke a pätičke portálu.
   - Automatický prechod do SoftAP režimu (`Ulanzi-Setup-XXXX`) s presmerovaním na captive portál na adrese `192.168.4.1`.

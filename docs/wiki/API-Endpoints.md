@@ -244,3 +244,77 @@ The onboard web server exposes several lightweight REST endpoints for status mon
   ]
 }
 ```
+
+## Configuration Backup & Restore API
+### Export Backup
+- **URL**: `GET /api/backup`
+- **Headers**: Returns `Content-Disposition: attachment; filename="ulanzi_tc001_backup.json"`
+- **Response**: `application/json`
+```json
+{
+  "app": "Ulanzi TC001 Evolved",
+  "version": "2.7.0",
+  "backup_time": 104523,
+  "settings": {
+    "wifi_ssid": "MyHomeNetwork",
+    "wifi_pass": "secret",
+    "wifi_ssid_2": "Office_WiFi",
+    "wifi_pass_2": "secret2",
+    "wifi_ssid_3": "",
+    "wifi_pass_3": "",
+    "wifi_ssid_4": "",
+    "wifi_pass_4": "",
+    "auto_rot": true,
+    "act_app": 0,
+    "rot_sec": 8,
+    "car_mask": 511,
+    "car_ord": "0,1,2,3,4,5,6,7,8",
+    "trans_fx": 1,
+    "bat_mode": 2,
+    "clk_mode": 1,
+    "show_sec": false,
+    "wd_bar": true,
+    "wd_mon": true,
+    "wd_acol": 0,
+    "wd_icol": 0,
+    "wd_wcol": 0,
+    "ui_lang": "en",
+    "date_fmt": 0,
+    "clk_icon": 0,
+    "txt_align": 0,
+    "auto_bri": true,
+    "night_en": true,
+    "night_st": 23,
+    "night_end": 7,
+    "day_bri": 35,
+    "ngt_bri": 2,
+    "ss_style": 0,
+    "ss_time": 0,
+    "w_lat": 48.1486,
+    "w_lon": 17.1077,
+    "w_city": "Bratislava",
+    "c_sym": "BTC",
+    "yt_chan": "",
+    "yt_key": "",
+    "mqtt_en": false,
+    "mqtt_srv": "",
+    "mqtt_port": 1883,
+    "mqtt_user": "",
+    "mqtt_pass": "",
+    "mqtt_pre": "ulanzi-tc001"
+  }
+}
+```
+
+### Restore Backup
+- **URL**: `POST /api/restore`
+- **Content-Type**: `application/json`
+- **Body**: Exported backup JSON or flat settings object
+- **Response**: `application/json`
+```json
+{
+  "status": "ok",
+  "message": "Settings restored successfully"
+}
+```
+*Applies all received parameters to NVS flash memory, reconfigures active services dynamically, and sounds an acoustic confirmation click.*
