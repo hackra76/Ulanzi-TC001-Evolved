@@ -17,6 +17,7 @@
 #include "CustomAppService.h"
 #include "TimerService.h"
 #include "ScreensaverService.h"
+#include "ServiceWorker.h"
 
 // --- Application Modes ---
 enum AppMode {
@@ -349,6 +350,7 @@ void setup() {
     // Initialize Network, Captive Portal & MQTT
     Network_Init();
     MqttService_Init();
+    ServiceWorker_Init();
     DisplayMatrix_SetBrightness(Network_GetDayBrightness());
 
     s_autoRotate = Network_GetAutoRotate();
@@ -374,12 +376,13 @@ void loop() {
 
     // 1. Service Network state machine & Captive Portal WebServer
     Network_Poll();
+    Buzzer_Poll();
 
     // 2. Background HTTP & MQTT Services polling
-    YouTube_Update();
-    Weather_Update();
-    Crypto_Update();
-    Airspace_Update();
+
+
+
+    Airspace_PollUI();
     MqttService_Update();
     Timer_Update();
     Screensaver_Update();

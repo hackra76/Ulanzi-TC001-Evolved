@@ -6,6 +6,8 @@
 static Adafruit_SHT31 s_sht = Adafruit_SHT31();
 static SensorData s_data = { 0.0f, 0.0f, false, 4.0f, 100, 2048 };
 static float s_smoothedLdr = 1800.0f;
+static float s_currentAutoBri = -1.0f;
+static uint32_t s_lastBriStepMs = 0;
 
 void Sensors_Init() {
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL, 100000);
@@ -60,6 +62,24 @@ uint8_t Sensors_CalculateAutoBrightness(uint8_t minBri, uint8_t maxBri) {
     float norm = (s_smoothedLdr - 200.0f) / (3600.0f - 200.0f);
     norm = constrain(norm, 0.0f, 1.0f);
     float curved = powf(norm, 1.4f);
-    uint8_t bri = minBri + (uint8_t)roundf(curved * (maxBri - minBri));
-    return constrain(bri, minBri, maxBri);
+    float targetBri = (float)minBri + curved * (float)(maxBri - minBri);
+    targetBri = constrain(targetBri, (float)minBri, (float)maxBri);
+
+    if (s_currentAutoBri < 0.0f) {
+        s_currentAutoBri = targetBri;
+        return (uint8_t)roundf(s_currentAutoBri);
+    }
+
+    uint32_t now = millis();
+    // Smooth cinematic slew limiting: max 1 brightness step every 40ms with deadband hysteresis
+    if (now - s_lastBriStepMs >= 40) {
+        s_lastBriStepMs = now;
+        float diff = targetBri - s_currentAutoBri;
+        if (fabsf(diff) >= 0.8f) {
+            if (diff > 0.0f) s_currentAutoBri += fminf(diff, 1.0f);
+            else s_currentAutoBri -= fminf(-diff, 1.0f);
+        }
+    }
+
+    return constrain((uint8_t)roundf(s_currentAutoBri), minBri, maxBri);
 }

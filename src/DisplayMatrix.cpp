@@ -21,7 +21,9 @@ void DisplayMatrix_Init() {
 }
 
 void DisplayMatrix_SetBrightness(uint8_t brightness) {
-    s_brightness = constrain(brightness, (uint8_t)1, (uint8_t)MAX_BRIGHTNESS);
+    uint8_t target = constrain(brightness, (uint8_t)1, (uint8_t)MAX_BRIGHTNESS);
+    if (target == s_brightness) return;
+    s_brightness = target;
     s_matrix.setBrightness(s_brightness);
 }
 

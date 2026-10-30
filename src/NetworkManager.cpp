@@ -1,16 +1,17 @@
 #include "NetworkManager.h"
-#include <ArduinoJson.h>
-#include "YouTubeService.h"
-#include "WeatherService.h"
-#include "CryptoService.h"
-#include "Sensors.h"
-#include "OtaManager.h"
-#include "DisplayMatrix.h"
 #include "Buzzer.h"
-#include "MqttService.h"
+#include "CryptoService.h"
 #include "CustomAppService.h"
-#include "TimerService.h"
+#include "DisplayMatrix.h"
+#include "MqttService.h"
+#include "OtaManager.h"
 #include "ScreensaverService.h"
+#include "Sensors.h"
+#include "TimerService.h"
+#include "WeatherService.h"
+#include "YouTubeService.h"
+#include <ArduinoJson.h>
+
 
 static Preferences s_prefs;
 static WebServer s_server(80);
@@ -21,18 +22,16 @@ static String s_ssid = "";
 static String s_pass = "";
 
 struct WifiProfile {
-    String ssid;
-    String pass;
+  String ssid;
+  String pass;
 };
 static WifiProfile s_wifiProfiles[MAX_WIFI_PROFILES];
 static int s_activeProfileIdx = 0;
 
-static const char* const s_wifiSsidKeys[MAX_WIFI_PROFILES] = {
-    PREF_KEY_SSID, PREF_KEY_SSID_2, PREF_KEY_SSID_3, PREF_KEY_SSID_4
-};
-static const char* const s_wifiPassKeys[MAX_WIFI_PROFILES] = {
-    PREF_KEY_PASS, PREF_KEY_PASS_2, PREF_KEY_PASS_3, PREF_KEY_PASS_4
-};
+static const char *const s_wifiSsidKeys[MAX_WIFI_PROFILES] = {
+    PREF_KEY_SSID, PREF_KEY_SSID_2, PREF_KEY_SSID_3, PREF_KEY_SSID_4};
+static const char *const s_wifiPassKeys[MAX_WIFI_PROFILES] = {
+    PREF_KEY_PASS, PREF_KEY_PASS_2, PREF_KEY_PASS_3, PREF_KEY_PASS_4};
 
 static String s_apSSID = "";
 static IPAddress s_apIP(192, 168, 4, 1);
@@ -41,9 +40,12 @@ static IPAddress s_apNetmask(255, 255, 255, 0);
 static bool s_autoRotate = true;
 static uint8_t s_activeApp = 0;
 static uint16_t s_rotateSec = DEFAULT_ROTATE_SEC;
-static uint16_t s_carouselMask = 0x1FF; // Bitmask of enabled carousel screens (default: all 9 active)
-static uint8_t s_carouselOrder[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8}; // Screen display sequence
-static uint8_t s_transitionFx = DEFAULT_TRANSITION_FX; // Screen transition animation effect
+static uint16_t s_carouselMask =
+    0x1FF; // Bitmask of enabled carousel screens (default: all 9 active)
+static uint8_t s_carouselOrder[9] = {0, 1, 2, 3, 4,
+                                     5, 6, 7, 8}; // Screen display sequence
+static uint8_t s_transitionFx =
+    DEFAULT_TRANSITION_FX;        // Screen transition animation effect
 static uint8_t s_batteryMode = 2; // 0: Percentage, 1: Voltage, 2: Alternating
 static String s_ytChannel = "";
 static String s_ytApiKey = "";
@@ -77,13 +79,16 @@ static uint8_t s_clockMode = 1;       // 0: Time Only, 1: Combined, 2: Date Only
 static bool s_showSeconds = false;    // Option to show seconds in time display
 static bool s_weekdayBar = true;      // 7 bars under time
 static bool s_weekdayStartMon = true; // Start Monday
-static uint8_t s_weekdayActiveColIdx = 0;   // Active day color
-static uint8_t s_weekdayInactColIdx = 0;    // Inactive day color
-static uint8_t s_weekdayWeekendColIdx = 0;  // Weekend day color (0: Same as active)
-static String s_portalLang = "en";          // Portal language ("en" or "sk")
-static uint8_t s_dateFormat = 0;      // 0: DD.MM., 1: DD MMM, 2: MM/DD, 3: DAY DD
-static uint8_t s_clockIcon = 0;       // 0: Dynamic Calendar, 1: Heart, 2: Clock Face, 3: None
-static uint8_t s_textAlign = 0;       // 0: Left-Aligned with Icon (Awtrix), 1: Centered
+static uint8_t s_weekdayActiveColIdx = 0; // Active day color
+static uint8_t s_weekdayInactColIdx = 0;  // Inactive day color
+static uint8_t s_weekdayWeekendColIdx =
+    0;                             // Weekend day color (0: Same as active)
+static String s_portalLang = "en"; // Portal language ("en" or "sk")
+static uint8_t s_dateFormat = 0;   // 0: DD.MM., 1: DD MMM, 2: MM/DD, 3: DAY DD
+static uint8_t s_clockIcon =
+    0; // 0: Dynamic Calendar, 1: Heart, 2: Clock Face, 3: None
+static uint8_t s_textAlign =
+    0; // 0: Left-Aligned with Icon (Awtrix), 1: Centered
 
 static const uint16_t s_wdActiveColors[] = {
     0x07FF, // 0: Cyan (#00F0FF)
@@ -98,10 +103,12 @@ static const uint16_t s_wdActiveColors[] = {
     0xFE00, // 9: Amber Gold (#FFC107)
     0xFA10  // 10: Soft Pink (#FF4081)
 };
-static const size_t s_numWdActiveColors = sizeof(s_wdActiveColors) / sizeof(s_wdActiveColors[0]);
+static const size_t s_numWdActiveColors =
+    sizeof(s_wdActiveColors) / sizeof(s_wdActiveColors[0]);
 
 static const uint16_t s_wdInactiveColors[] = {
-    0x0000, // 0: Auto (computed dynamically from active color at ~65% intensity)
+    0x0000, // 0: Auto (computed dynamically from active color at ~65%
+            // intensity)
     0x7412, // 1: Slate Gray (#708090)
     0x9342, // 2: Dim Amber (#906810)
     0x00C8, // 3: Dark Blue (#001A40)
@@ -112,7 +119,8 @@ static const uint16_t s_wdInactiveColors[] = {
     0x0187, // 8: Dark Cyan (#003038)
     0x0000  // 9: Off (Black)
 };
-static const size_t s_numWdInactiveColors = sizeof(s_wdInactiveColors) / sizeof(s_wdInactiveColors[0]);
+static const size_t s_numWdInactiveColors =
+    sizeof(s_wdInactiveColors) / sizeof(s_wdInactiveColors[0]);
 
 static const uint16_t s_wdWeekendColors[] = {
     0x0000, // 0: Same as Active Day Color
@@ -127,7 +135,8 @@ static const uint16_t s_wdWeekendColors[] = {
     0x05FF, // 9: Sky Blue (#00BFFF)
     0x072E  // 10: Emerald (#00E676)
 };
-static const size_t s_numWdWeekendColors = sizeof(s_wdWeekendColors) / sizeof(s_wdWeekendColors[0]);
+static const size_t s_numWdWeekendColors =
+    sizeof(s_wdWeekendColors) / sizeof(s_wdWeekendColors[0]);
 
 static uint32_t s_connectStartMs = 0;
 static uint32_t s_lastWifiCheckMs = 0;
@@ -139,6 +148,8 @@ static uint32_t s_lastApRetryMs = 0;
 static bool s_apConnectingSta = false;
 static uint32_t s_apConnectStartMs = 0;
 static int s_apRetryProfileIdx = 0;
+static bool s_prefsBriDirty = false;
+static uint32_t s_prefsBriSaveMs = 0;
 
 static const char PAGE_PORTAL[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -2712,1414 +2723,1487 @@ body {
 </html>
 )rawliteral";
 
-static bool isIp(const String& str) {
-    for (size_t i = 0; i < str.length(); i++) {
-        char c = str.charAt(i);
-        if (c != '.' && (c < '0' || c > '9')) return false;
-    }
-    return true;
+static bool isIp(const String &str) {
+  for (size_t i = 0; i < str.length(); i++) {
+    char c = str.charAt(i);
+    if (c != '.' && (c < '0' || c > '9'))
+      return false;
+  }
+  return true;
 }
 
 static void handleCaptiveRedirect() {
-    String host = s_server.hostHeader();
-    if (!isIp(host) && host != "192.168.4.1") {
-        s_server.sendHeader("Location", String("http://192.168.4.1/"), true);
-        s_server.send(302, "text/plain", "");
-        return;
-    }
-    s_server.send_P(200, "text/html", PAGE_PORTAL);
+  String host = s_server.hostHeader();
+  if (!isIp(host) && host != "192.168.4.1") {
+    s_server.sendHeader("Location", String("http://192.168.4.1/"), true);
+    s_server.send(302, "text/plain", "");
+    return;
+  }
+  s_server.send_P(200, "text/html", PAGE_PORTAL);
 }
 
 static void handleScan() {
-    int n = WiFi.scanNetworks();
-    JsonDocument doc;
-    JsonArray arr = doc.to<JsonArray>();
+  int n = WiFi.scanNetworks();
+  JsonDocument doc;
+  JsonArray arr = doc.to<JsonArray>();
 
-    for (int i = 0; i < n; i++) {
-        String curSsid = WiFi.SSID(i);
-        if (curSsid.length() == 0) continue;
-        JsonObject item = arr.add<JsonObject>();
-        item["ssid"] = curSsid;
-        item["rssi"] = WiFi.RSSI(i);
-        item["secure"] = (WiFi.encryptionType(i) != WIFI_AUTH_OPEN);
-    }
-    String out;
-    serializeJson(doc, out);
-    s_server.send(200, "application/json", out);
+  for (int i = 0; i < n; i++) {
+    String curSsid = WiFi.SSID(i);
+    if (curSsid.length() == 0)
+      continue;
+    JsonObject item = arr.add<JsonObject>();
+    item["ssid"] = curSsid;
+    item["rssi"] = WiFi.RSSI(i);
+    item["secure"] = (WiFi.encryptionType(i) != WIFI_AUTH_OPEN);
+  }
+  String out;
+  serializeJson(doc, out);
+  s_server.send(200, "application/json", out);
 }
 
 static void handleSave() {
-    bool wifiChanged = false;
+  bool wifiChanged = false;
 
-    // 1. Process Wi-Fi credentials (Multi-Profile Memory)
-    for (uint8_t slot = 0; slot < MAX_WIFI_PROFILES; slot++) {
-        String ssidKey = (slot == 0) ? "ssid" : ("ssid_" + String(slot + 1));
-        String passKey = (slot == 0) ? "password" : ("password_" + String(slot + 1));
-        String delKey  = "del_wifi_" + String(slot + 1);
+  // 1. Process Wi-Fi credentials (Multi-Profile Memory)
+  for (uint8_t slot = 0; slot < MAX_WIFI_PROFILES; slot++) {
+    String ssidKey = (slot == 0) ? "ssid" : ("ssid_" + String(slot + 1));
+    String passKey =
+        (slot == 0) ? "password" : ("password_" + String(slot + 1));
+    String delKey = "del_wifi_" + String(slot + 1);
 
-        if (s_server.hasArg(delKey) && s_server.arg(delKey) == "1") {
-            Network_DeleteProfile(slot);
-            wifiChanged = true;
-        } else if (s_server.hasArg(ssidKey)) {
-            String newSsid = s_server.arg(ssidKey);
-            String newPass = s_server.hasArg(passKey) ? s_server.arg(passKey) : "";
-            newSsid.trim();
-            newPass.trim();
+    if (s_server.hasArg(delKey) && s_server.arg(delKey) == "1") {
+      Network_DeleteProfile(slot);
+      wifiChanged = true;
+    } else if (s_server.hasArg(ssidKey)) {
+      String newSsid = s_server.arg(ssidKey);
+      String newPass = s_server.hasArg(passKey) ? s_server.arg(passKey) : "";
+      newSsid.trim();
+      newPass.trim();
 
-            if (newSsid.length() > 0) {
-                if (newSsid != s_wifiProfiles[slot].ssid || newPass.length() > 0) {
-                    Network_SaveProfile(slot, newSsid, (newPass.length() > 0) ? newPass : s_wifiProfiles[slot].pass);
-                    wifiChanged = true;
-                }
-            } else if (s_server.hasArg(passKey) && s_wifiProfiles[slot].ssid.length() > 0) {
-                Network_DeleteProfile(slot);
-                wifiChanged = true;
-            }
+      if (newSsid.length() > 0) {
+        if (newSsid != s_wifiProfiles[slot].ssid || newPass.length() > 0) {
+          Network_SaveProfile(
+              slot, newSsid,
+              (newPass.length() > 0) ? newPass : s_wifiProfiles[slot].pass);
+          wifiChanged = true;
         }
+      } else if (s_server.hasArg(passKey) &&
+                 s_wifiProfiles[slot].ssid.length() > 0) {
+        Network_DeleteProfile(slot);
+        wifiChanged = true;
+      }
     }
+  }
 
-    // 2. Process Carousel & Screen Navigation
-    Network_SetAutoRotate(s_server.hasArg("auto_rotate"));
-    if (s_server.hasArg("car_ord")) {
-        Network_SetCarouselOrderString(s_server.arg("car_ord"));
+  // 2. Process Carousel & Screen Navigation
+  Network_SetAutoRotate(s_server.hasArg("auto_rotate"));
+  if (s_server.hasArg("car_ord")) {
+    Network_SetCarouselOrderString(s_server.arg("car_ord"));
+  }
+  uint16_t carMask = 0;
+  for (int i = 0; i < 9; i++) {
+    char argName[16];
+    snprintf(argName, sizeof(argName), "car_app_%d", i);
+    if (s_server.hasArg(argName)) {
+      carMask |= (1 << i);
     }
-    uint16_t carMask = 0;
-    for (int i = 0; i < 9; i++) {
-        char argName[16];
-        snprintf(argName, sizeof(argName), "car_app_%d", i);
-        if (s_server.hasArg(argName)) {
-            carMask |= (1 << i);
-        }
-    }
-    if (carMask == 0) carMask = 0x01; // Ensure at least clock is selected
-    Network_SetCarouselMask(carMask);
+  }
+  if (carMask == 0)
+    carMask = 0x01; // Ensure at least clock is selected
+  Network_SetCarouselMask(carMask);
 
-    if (s_server.hasArg("bat_mode")) {
-        Network_SetBatteryMode((uint8_t)s_server.arg("bat_mode").toInt());
-    }
+  if (s_server.hasArg("bat_mode")) {
+    Network_SetBatteryMode((uint8_t)s_server.arg("bat_mode").toInt());
+  }
 
-    if (s_server.hasArg("active_app")) {
-        int app = s_server.arg("active_app").toInt();
-        if (app >= 0 && app < 9) {
-            Network_SetActiveApp((uint8_t)app);
-        }
+  if (s_server.hasArg("active_app")) {
+    int app = s_server.arg("active_app").toInt();
+    if (app >= 0 && app < 9) {
+      Network_SetActiveApp((uint8_t)app);
     }
+  }
 
-    if (s_server.hasArg("ss_style")) {
-        int st = s_server.arg("ss_style").toInt();
-        if (st >= 0 && st < SCREENSAVER_STYLE_COUNT) {
-            Screensaver_SetStyle((ScreensaverStyle)st);
-        }
+  if (s_server.hasArg("ss_style")) {
+    int st = s_server.arg("ss_style").toInt();
+    if (st >= 0 && st < SCREENSAVER_STYLE_COUNT) {
+      Screensaver_SetStyle((ScreensaverStyle)st);
     }
-    if (s_server.hasArg("ss_time")) {
-        int to = s_server.arg("ss_time").toInt();
-        if (to >= 0 && to <= 60) {
-            Screensaver_SetTimeoutMin((uint8_t)to);
-        }
+  }
+  if (s_server.hasArg("ss_time")) {
+    int to = s_server.arg("ss_time").toInt();
+    if (to >= 0 && to <= 60) {
+      Screensaver_SetTimeoutMin((uint8_t)to);
     }
-    if (s_server.hasArg("rotate")) {
-        int r = s_server.arg("rotate").toInt();
-        if (r >= MIN_ROTATE_SEC && r <= MAX_ROTATE_SEC) {
-            Network_SetRotateDelaySec((uint16_t)r);
-        }
+  }
+  if (s_server.hasArg("rotate")) {
+    int r = s_server.arg("rotate").toInt();
+    if (r >= MIN_ROTATE_SEC && r <= MAX_ROTATE_SEC) {
+      Network_SetRotateDelaySec((uint16_t)r);
     }
-    if (s_server.hasArg("trans_fx")) {
-        Network_SetTransitionFx((uint8_t)s_server.arg("trans_fx").toInt());
-    }
+  }
+  if (s_server.hasArg("trans_fx")) {
+    Network_SetTransitionFx((uint8_t)s_server.arg("trans_fx").toInt());
+  }
 
-    // 3. Process Clock & Date Layout (Awtrix Style)
-    if (s_server.hasArg("clk_mode")) {
-        Network_SetClockMode((uint8_t)s_server.arg("clk_mode").toInt());
-    }
-    Network_SetShowSeconds(s_server.hasArg("show_sec"));
-    Network_SetWeekdayBar(s_server.hasArg("wd_bar"));
-    if (s_server.hasArg("wd_mon")) {
-        Network_SetWeekdayStartMonday(s_server.arg("wd_mon").toInt() == 1);
-    }
-    if (s_server.hasArg("wd_acol")) {
-        Network_SetWeekdayActiveColorIndex((uint8_t)s_server.arg("wd_acol").toInt());
-    }
-    if (s_server.hasArg("wd_icol")) {
-        Network_SetWeekdayInactiveColorIndex((uint8_t)s_server.arg("wd_icol").toInt());
-    }
-    if (s_server.hasArg("wd_wcol")) {
-        Network_SetWeekdayWeekendColorIndex((uint8_t)s_server.arg("wd_wcol").toInt());
-    }
-    if (s_server.hasArg("ui_lang")) {
-        Network_SetPortalLanguage(s_server.arg("ui_lang"));
-    }
-    if (s_server.hasArg("date_fmt")) {
-        Network_SetDateFormat((uint8_t)s_server.arg("date_fmt").toInt());
-    }
-    if (s_server.hasArg("clk_icon")) {
-        Network_SetClockIcon((uint8_t)s_server.arg("clk_icon").toInt());
-    }
-    if (s_server.hasArg("txt_align")) {
-        Network_SetTextAlign((uint8_t)s_server.arg("txt_align").toInt());
-    }
+  // 3. Process Clock & Date Layout (Awtrix Style)
+  if (s_server.hasArg("clk_mode")) {
+    Network_SetClockMode((uint8_t)s_server.arg("clk_mode").toInt());
+  }
+  Network_SetShowSeconds(s_server.hasArg("show_sec"));
+  Network_SetWeekdayBar(s_server.hasArg("wd_bar"));
+  if (s_server.hasArg("wd_mon")) {
+    Network_SetWeekdayStartMonday(s_server.arg("wd_mon").toInt() == 1);
+  }
+  if (s_server.hasArg("wd_acol")) {
+    Network_SetWeekdayActiveColorIndex(
+        (uint8_t)s_server.arg("wd_acol").toInt());
+  }
+  if (s_server.hasArg("wd_icol")) {
+    Network_SetWeekdayInactiveColorIndex(
+        (uint8_t)s_server.arg("wd_icol").toInt());
+  }
+  if (s_server.hasArg("wd_wcol")) {
+    Network_SetWeekdayWeekendColorIndex(
+        (uint8_t)s_server.arg("wd_wcol").toInt());
+  }
+  if (s_server.hasArg("ui_lang")) {
+    Network_SetPortalLanguage(s_server.arg("ui_lang"));
+  }
+  if (s_server.hasArg("date_fmt")) {
+    Network_SetDateFormat((uint8_t)s_server.arg("date_fmt").toInt());
+  }
+  if (s_server.hasArg("clk_icon")) {
+    Network_SetClockIcon((uint8_t)s_server.arg("clk_icon").toInt());
+  }
+  if (s_server.hasArg("txt_align")) {
+    Network_SetTextAlign((uint8_t)s_server.arg("txt_align").toInt());
+  }
 
-    // 4. Process Ambient, Day/Night Brightness & Night Mode
-    Network_SetAutoBrightness(s_server.hasArg("auto_bri"));
-    Network_SetNightMode(s_server.hasArg("night_mode"));
-    if (s_server.hasArg("night_start") && s_server.hasArg("night_end")) {
-        uint8_t st = (uint8_t)constrain(s_server.arg("night_start").toInt(), 0, 23);
-        uint8_t en = (uint8_t)constrain(s_server.arg("night_end").toInt(), 0, 23);
-        Network_SetNightSchedule(st, en);
-    }
-    if (s_server.hasArg("day_bri")) {
-        uint8_t db = (uint8_t)constrain(s_server.arg("day_bri").toInt(), 5, 100);
-        Network_SetDayBrightness(db);
-    }
-    if (s_server.hasArg("night_bri")) {
-        uint8_t nb = (uint8_t)constrain(s_server.arg("night_bri").toInt(), 1, 25);
-        Network_SetNightBrightness(nb);
-    }
+  // 4. Process Ambient, Day/Night Brightness & Night Mode
+  Network_SetAutoBrightness(s_server.hasArg("auto_bri"));
+  Network_SetNightMode(s_server.hasArg("night_mode"));
+  if (s_server.hasArg("night_start") && s_server.hasArg("night_end")) {
+    uint8_t st = (uint8_t)constrain(s_server.arg("night_start").toInt(), 0, 23);
+    uint8_t en = (uint8_t)constrain(s_server.arg("night_end").toInt(), 0, 23);
+    Network_SetNightSchedule(st, en);
+  }
+  if (s_server.hasArg("day_bri")) {
+    uint8_t db = (uint8_t)constrain(s_server.arg("day_bri").toInt(), 5, 100);
+    Network_SetDayBrightness(db);
+  }
+  if (s_server.hasArg("night_bri")) {
+    uint8_t nb = (uint8_t)constrain(s_server.arg("night_bri").toInt(), 1, 25);
+    Network_SetNightBrightness(nb);
+  }
 
-    // 4. Process Outdoor Weather
-    if (s_server.hasArg("w_lat") && s_server.hasArg("w_lon")) {
-        float lat = s_server.arg("w_lat").toFloat();
-        float lon = s_server.arg("w_lon").toFloat();
-        String city = s_server.hasArg("w_city") ? s_server.arg("w_city") : "";
-        Network_SetWeatherLocation(lat, lon, city);
-    }
+  // 4. Process Outdoor Weather
+  if (s_server.hasArg("w_lat") && s_server.hasArg("w_lon")) {
+    float lat = s_server.arg("w_lat").toFloat();
+    float lon = s_server.arg("w_lon").toFloat();
+    String city = s_server.hasArg("w_city") ? s_server.arg("w_city") : "";
+    Network_SetWeatherLocation(lat, lon, city);
+  }
 
-    // 5. Process Markets / Crypto Symbol
-    if (s_server.hasArg("c_sym_custom") && s_server.arg("c_sym_custom").length() > 0) {
-        Network_SetCryptoSymbol(s_server.arg("c_sym_custom"));
-    } else if (s_server.hasArg("c_sym")) {
-        Network_SetCryptoSymbol(s_server.arg("c_sym"));
-    }
+  // 5. Process Markets / Crypto Symbol
+  if (s_server.hasArg("c_sym_custom") &&
+      s_server.arg("c_sym_custom").length() > 0) {
+    Network_SetCryptoSymbol(s_server.arg("c_sym_custom"));
+  } else if (s_server.hasArg("c_sym")) {
+    Network_SetCryptoSymbol(s_server.arg("c_sym"));
+  }
 
-    // 6. Process YouTube Analytics
-    if (s_server.hasArg("yt_channel")) {
-        String ch = s_server.arg("yt_channel");
-        String key = s_server.arg("yt_key");
-        ch.trim();
-        key.trim();
-        if (key == "********" || key.length() == 0) {
-            key = s_ytApiKey;
-        }
-        Network_SaveYouTubeConfig(ch, key);
+  // 6. Process YouTube Analytics
+  if (s_server.hasArg("yt_channel")) {
+    String ch = s_server.arg("yt_channel");
+    String key = s_server.arg("yt_key");
+    ch.trim();
+    key.trim();
+    if (key == "********" || key.length() == 0) {
+      key = s_ytApiKey;
     }
+    Network_SaveYouTubeConfig(ch, key);
+  }
 
-    // 7. Process Home Assistant & MQTT
-    Network_SetMqttEnabled(s_server.hasArg("mqtt_en"));
-    if (s_server.hasArg("mqtt_srv")) {
-        Network_SetMqttServer(s_server.arg("mqtt_srv"));
+  // 7. Process Home Assistant & MQTT
+  Network_SetMqttEnabled(s_server.hasArg("mqtt_en"));
+  if (s_server.hasArg("mqtt_srv")) {
+    Network_SetMqttServer(s_server.arg("mqtt_srv"));
+  }
+  if (s_server.hasArg("mqtt_port")) {
+    Network_SetMqttPort((uint16_t)s_server.arg("mqtt_port").toInt());
+  }
+  if (s_server.hasArg("mqtt_user")) {
+    Network_SetMqttUser(s_server.arg("mqtt_user"));
+  }
+  if (s_server.hasArg("mqtt_pass")) {
+    String p = s_server.arg("mqtt_pass");
+    if (p != "********") {
+      Network_SetMqttPass(p);
     }
-    if (s_server.hasArg("mqtt_port")) {
-        Network_SetMqttPort((uint16_t)s_server.arg("mqtt_port").toInt());
-    }
-    if (s_server.hasArg("mqtt_user")) {
-        Network_SetMqttUser(s_server.arg("mqtt_user"));
-    }
-    if (s_server.hasArg("mqtt_pass")) {
-        String p = s_server.arg("mqtt_pass");
-        if (p != "********") {
-            Network_SetMqttPass(p);
-        }
-    }
-    if (s_server.hasArg("mqtt_pre")) {
-        String pre = s_server.arg("mqtt_pre");
-        pre.trim();
-        if (pre.length() > 0) Network_SetMqttPrefix(pre);
-    }
+  }
+  if (s_server.hasArg("mqtt_pre")) {
+    String pre = s_server.arg("mqtt_pre");
+    pre.trim();
+    if (pre.length() > 0)
+      Network_SetMqttPrefix(pre);
+  }
 
-    s_server.sendHeader("Access-Control-Allow-Origin", "*");
-    if (s_server.hasArg("ajax") || s_server.header("X-Requested-With") == "XMLHttpRequest") {
-        s_server.send(200, "application/json", "{\"status\":\"success\"}");
-    } else {
-        s_server.send_P(200, "text/html", PAGE_SAVED);
-    }
+  s_server.sendHeader("Access-Control-Allow-Origin", "*");
+  if (s_server.hasArg("ajax") ||
+      s_server.header("X-Requested-With") == "XMLHttpRequest") {
+    s_server.send(200, "application/json", "{\"status\":\"success\"}");
+  } else {
+    s_server.send_P(200, "text/html", PAGE_SAVED);
+  }
 
-    if (wifiChanged || s_netState == NET_STATE_AP_PORTAL) {
-        s_pendingReconnect = true;
-        s_reconnectTriggerMs = millis() + 1500;
-    }
+  if (wifiChanged || s_netState == NET_STATE_AP_PORTAL) {
+    s_pendingReconnect = true;
+    s_reconnectTriggerMs = millis() + 1500;
+  }
 }
 
 static void handleStatus() {
-    JsonDocument doc;
-    doc["state"] = (s_netState == NET_STATE_CONNECTED) ? "connected" : 
-                   (s_netState == NET_STATE_AP_PORTAL ? "ap_portal" : "connecting");
-    doc["ip"] = Network_GetLocalIP();
-    doc["ap_ip"] = Network_GetAPIP();
-    doc["ssid"] = Network_GetSSID();
-    doc["rssi"] = Network_GetRSSI();
+  JsonDocument doc;
+  doc["state"] =
+      (s_netState == NET_STATE_CONNECTED)
+          ? "connected"
+          : (s_netState == NET_STATE_AP_PORTAL ? "ap_portal" : "connecting");
+  doc["ip"] = Network_GetLocalIP();
+  doc["ap_ip"] = Network_GetAPIP();
+  doc["ssid"] = Network_GetSSID();
+  doc["rssi"] = Network_GetRSSI();
 
-    JsonArray wifiArr = doc["wifi_profiles"].to<JsonArray>();
-    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
-        JsonObject p = wifiArr.add<JsonObject>();
-        p["slot"] = i + 1;
-        p["ssid"] = s_wifiProfiles[i].ssid;
-        p["has_pass"] = (s_wifiProfiles[i].pass.length() > 0);
-        p["active"] = (s_netState == NET_STATE_CONNECTED && s_wifiProfiles[i].ssid.length() > 0 && s_wifiProfiles[i].ssid == WiFi.SSID());
-    }
-    doc["rotate_sec"] = s_rotateSec;
-    doc["auto_rotate"] = s_autoRotate;
-    doc["carousel_mask"] = s_carouselMask;
-    doc["transition_fx"] = s_transitionFx;
-    doc["active_app"] = s_activeApp;
-    static const char* kScreenNamesList[] = {
-        "Clock", "Indoor Environment", "Outdoor Weather",
-        "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power",
-        "Stopwatch & Timer", "Ambient Screensaver"
-    };
-    doc["app_name"] = kScreenNamesList[s_activeApp % 9];
-    doc["firmware_version"] = FW_VERSION;
+  JsonArray wifiArr = doc["wifi_profiles"].to<JsonArray>();
+  for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+    JsonObject p = wifiArr.add<JsonObject>();
+    p["slot"] = i + 1;
+    p["ssid"] = s_wifiProfiles[i].ssid;
+    p["has_pass"] = (s_wifiProfiles[i].pass.length() > 0);
+    p["active"] = (s_netState == NET_STATE_CONNECTED &&
+                   s_wifiProfiles[i].ssid.length() > 0 &&
+                   s_wifiProfiles[i].ssid == WiFi.SSID());
+  }
+  doc["rotate_sec"] = s_rotateSec;
+  doc["auto_rotate"] = s_autoRotate;
+  doc["carousel_mask"] = s_carouselMask;
+  doc["transition_fx"] = s_transitionFx;
+  doc["active_app"] = s_activeApp;
+  static const char *kScreenNamesList[] = {
+      "Clock",           "Indoor Environment", "Outdoor Weather",
+      "Crypto Ticker",   "YouTube Analytics",  "Live Airspace",
+      "Battery & Power", "Stopwatch & Timer",  "Ambient Screensaver"};
+  doc["app_name"] = kScreenNamesList[s_activeApp % 9];
+  doc["firmware_version"] = FW_VERSION;
 
-    doc["car_ord"] = Network_GetCarouselOrderString();
-    doc["bat_mode"] = s_batteryMode;
-    doc["clk_mode"] = s_clockMode;
-    doc["show_sec"] = s_showSeconds;
-    doc["wd_bar"] = s_weekdayBar;
-    doc["wd_mon"] = s_weekdayStartMon;
-    doc["wd_acol"] = s_weekdayActiveColIdx;
-    doc["wd_icol"] = s_weekdayInactColIdx;
-    doc["wd_wcol"] = s_weekdayWeekendColIdx;
-    doc["date_fmt"] = s_dateFormat;
-    doc["clk_icon"] = s_clockIcon;
-    doc["txt_align"] = s_textAlign;
-    doc["night_start"] = s_nightStart;
-    doc["night_end"] = s_nightEnd;
-    doc["weather_lat"] = s_wLat;
-    doc["weather_lon"] = s_wLon;
-    doc["yt_channel"] = s_ytChannel;
-    doc["yt_has_key"] = (s_ytApiKey.length() > 0);
-    doc["mqtt_en"] = s_mqttEn;
-    doc["mqtt_srv"] = s_mqttServer;
-    doc["mqtt_port"] = s_mqttPort;
-    doc["mqtt_user"] = s_mqttUser;
-    doc["mqtt_has_pass"] = (s_mqttPass.length() > 0);
-    doc["mqtt_pre"] = s_mqttPrefix;
-    doc["ui_lang"] = s_portalLang;
-    doc["github_repo"] = GITHUB_REPO;
+  doc["car_ord"] = Network_GetCarouselOrderString();
+  doc["bat_mode"] = s_batteryMode;
+  doc["clk_mode"] = s_clockMode;
+  doc["show_sec"] = s_showSeconds;
+  doc["wd_bar"] = s_weekdayBar;
+  doc["wd_mon"] = s_weekdayStartMon;
+  doc["wd_acol"] = s_weekdayActiveColIdx;
+  doc["wd_icol"] = s_weekdayInactColIdx;
+  doc["wd_wcol"] = s_weekdayWeekendColIdx;
+  doc["date_fmt"] = s_dateFormat;
+  doc["clk_icon"] = s_clockIcon;
+  doc["txt_align"] = s_textAlign;
+  doc["night_start"] = s_nightStart;
+  doc["night_end"] = s_nightEnd;
+  doc["weather_lat"] = s_wLat;
+  doc["weather_lon"] = s_wLon;
+  doc["yt_channel"] = s_ytChannel;
+  doc["yt_has_key"] = (s_ytApiKey.length() > 0);
+  doc["mqtt_en"] = s_mqttEn;
+  doc["mqtt_srv"] = s_mqttServer;
+  doc["mqtt_port"] = s_mqttPort;
+  doc["mqtt_user"] = s_mqttUser;
+  doc["mqtt_has_pass"] = (s_mqttPass.length() > 0);
+  doc["mqtt_pre"] = s_mqttPrefix;
+  doc["ui_lang"] = s_portalLang;
+  doc["github_repo"] = GITHUB_REPO;
 
-    // Ambient & Sensor telemetry
-    const SensorData& s = Sensors_GetData();
-    doc["temperature_in"] = s.temperature;
-    doc["humidity_in"] = s.humidity;
-    doc["battery_volts"] = s.batteryVolts;
-    doc["battery_pct"] = s.batteryPercent;
-    doc["ldr_raw"] = s.ldrRaw;
-    doc["auto_bri"] = s_autoBri;
-    doc["day_bri"] = s_dayBri;
-    doc["night_bri"] = s_nightBri;
-    doc["night_mode"] = s_nightMode;
+  // Ambient & Sensor telemetry
+  const SensorData &s = Sensors_GetData();
+  doc["temperature_in"] = s.temperature;
+  doc["humidity_in"] = s.humidity;
+  doc["battery_volts"] = s.batteryVolts;
+  doc["battery_pct"] = s.batteryPercent;
+  doc["ldr_raw"] = s.ldrRaw;
+  doc["auto_bri"] = s_autoBri;
+  doc["day_bri"] = s_dayBri;
+  doc["night_bri"] = s_nightBri;
+  doc["night_mode"] = s_nightMode;
 
-    // Services
-    doc["weather_temp"] = Weather_GetFormattedTemp();
-    doc["weather_city"] = Weather_GetCity();
-    doc["crypto_symbol"] = Crypto_GetSymbol();
-    doc["crypto_price"] = Crypto_GetFormattedPrice();
-    doc["yt_subscribers"] = YouTube_GetFormattedSubs();
-    doc["mqtt_connected"] = MqttService_IsConnected();
+  // Services
+  doc["weather_temp"] = Weather_GetFormattedTemp();
+  doc["weather_city"] = Weather_GetCity();
+  doc["crypto_symbol"] = Crypto_GetSymbol();
+  doc["crypto_price"] = Crypto_GetFormattedPrice();
+  doc["yt_subscribers"] = YouTube_GetFormattedSubs();
+  doc["mqtt_connected"] = MqttService_IsConnected();
 
-    // Timer & Stopwatch telemetry
-    doc["timer_mode"] = (Timer_GetMode() == TIMER_MODE_STOPWATCH) ? "stopwatch" : "countdown";
-    doc["timer_state"] = (Timer_GetState() == TIMER_STATE_RUNNING) ? "running" :
-                         (Timer_GetState() == TIMER_STATE_PAUSED) ? "paused" :
-                         (Timer_GetState() == TIMER_STATE_EXPIRED) ? "expired" : "stopped";
-    doc["timer_duration"] = Timer_GetDuration();
-    doc["timer_remaining"] = Timer_GetRemainingSeconds();
-    doc["timer_elapsed_ms"] = Timer_GetElapsedMillis();
+  // Timer & Stopwatch telemetry
+  doc["timer_mode"] =
+      (Timer_GetMode() == TIMER_MODE_STOPWATCH) ? "stopwatch" : "countdown";
+  doc["timer_state"] = (Timer_GetState() == TIMER_STATE_RUNNING)   ? "running"
+                       : (Timer_GetState() == TIMER_STATE_PAUSED)  ? "paused"
+                       : (Timer_GetState() == TIMER_STATE_EXPIRED) ? "expired"
+                                                                   : "stopped";
+  doc["timer_duration"] = Timer_GetDuration();
+  doc["timer_remaining"] = Timer_GetRemainingSeconds();
+  doc["timer_elapsed_ms"] = Timer_GetElapsedMillis();
 
-    // Retro Ambient Screensaver telemetry
-    doc["screensaver_style"] = (int)Screensaver_GetStyle();
-    doc["screensaver_timeout"] = Screensaver_GetTimeoutMin();
-    doc["screensaver_active"] = Screensaver_IsActive();
+  // Retro Ambient Screensaver telemetry
+  doc["screensaver_style"] = (int)Screensaver_GetStyle();
+  doc["screensaver_timeout"] = Screensaver_GetTimeoutMin();
+  doc["screensaver_active"] = Screensaver_IsActive();
 
-    String out;
-    serializeJson(doc, out);
-    s_server.send(200, "application/json", out);
+  String out;
+  serializeJson(doc, out);
+  s_server.send(200, "application/json", out);
 }
 
-
-static uint16_t parseHexColor565(const char* str) {
-    if (!str) return 0;
-    if (str[0] == '#') str++;
-    uint32_t rgb = strtoul(str, nullptr, 16);
-    return DisplayMatrix_Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+static uint16_t parseHexColor565(const char *str) {
+  if (!str)
+    return 0;
+  if (str[0] == '#')
+    str++;
+  uint32_t rgb = strtoul(str, nullptr, 16);
+  return DisplayMatrix_Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 }
 
 static uint16_t parseColorVariant(JsonVariantConst v) {
-    if (v.is<const char*>()) {
-        return parseHexColor565(v.as<const char*>());
-    } else if (v.is<uint32_t>()) {
-        uint32_t rgb = v.as<uint32_t>();
-        return DisplayMatrix_Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-    } else if (v.is<JsonArrayConst>()) {
-        JsonArrayConst a = v.as<JsonArrayConst>();
-        if (a.size() >= 3) {
-            return DisplayMatrix_Color(a[0] | 0, a[1] | 0, a[2] | 0);
-        }
+  if (v.is<const char *>()) {
+    return parseHexColor565(v.as<const char *>());
+  } else if (v.is<uint32_t>()) {
+    uint32_t rgb = v.as<uint32_t>();
+    return DisplayMatrix_Color((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF,
+                               rgb & 0xFF);
+  } else if (v.is<JsonArrayConst>()) {
+    JsonArrayConst a = v.as<JsonArrayConst>();
+    if (a.size() >= 3) {
+      return DisplayMatrix_Color(a[0] | 0, a[1] | 0, a[2] | 0);
     }
-    return 0;
+  }
+  return 0;
 }
 
 static void handleApiDisplayPost() {
+  String body = s_server.arg("plain");
+  JsonDocument doc;
+  DeserializationError err = deserializeJson(doc, body);
+  if (err) {
+    s_server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+    return;
+  }
+
+  uint16_t durationSec = doc["duration"] | 60;
+  uint16_t canvas[MATRIX_HEIGHT][MATRIX_WIDTH];
+  memset(canvas, 0, sizeof(canvas));
+
+  if (doc["pixels"].is<JsonArrayConst>()) {
+    JsonArrayConst rows = doc["pixels"].as<JsonArrayConst>();
+    if (rows.size() == MATRIX_HEIGHT && rows[0].is<JsonArrayConst>()) {
+      // 2D 8x32 array
+      for (size_t y = 0; y < MATRIX_HEIGHT && y < rows.size(); y++) {
+        JsonArrayConst cols = rows[y].as<JsonArrayConst>();
+        for (size_t x = 0; x < MATRIX_WIDTH && x < cols.size(); x++) {
+          canvas[y][x] = parseColorVariant(cols[x]);
+        }
+      }
+    } else if (rows.size() == MATRIX_WIDTH * MATRIX_HEIGHT) {
+      // Flat 1D 256 array
+      for (size_t i = 0; i < MATRIX_WIDTH * MATRIX_HEIGHT; i++) {
+        int y = i / MATRIX_WIDTH;
+        int x = i % MATRIX_WIDTH;
+        canvas[y][x] = parseColorVariant(rows[i]);
+      }
+    }
+  } else if (doc["draw"].is<JsonArrayConst>()) {
+    JsonArrayConst cmds = doc["draw"].as<JsonArrayConst>();
+    for (JsonVariantConst cmd : cmds) {
+      if (cmd["dp"].is<JsonArrayConst>()) {
+        JsonArrayConst dp = cmd["dp"].as<JsonArrayConst>();
+        if (dp.size() >= 3) {
+          int x = dp[0].as<int>();
+          int y = dp[1].as<int>();
+          if (x >= 0 && x < MATRIX_WIDTH && y >= 0 && y < MATRIX_HEIGHT) {
+            canvas[y][x] = parseColorVariant(dp[2]);
+          }
+        }
+      }
+    }
+  } else {
+    s_server.send(400, "application/json",
+                  "{\"error\":\"Missing pixels or draw array\"}");
+    return;
+  }
+
+  DisplayMatrix_SetCanvas(canvas, durationSec);
+  Buzzer_Click();
+  s_server.send(
+      200, "application/json",
+      "{\"status\":\"ok\",\"message\":\"Canvas rendered on matrix\"}");
+}
+
+void Network_Init() {
+  uint32_t chipId = 0;
+  for (int i = 0; i < 17; i = i + 8) {
+    chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+  }
+  char buf[32];
+  snprintf(buf, sizeof(buf), "%s%04X", WIFI_AP_SSID_PREFIX,
+           (uint16_t)(chipId & 0xFFFF));
+  s_apSSID = String(buf);
+
+  s_prefs.begin(PREF_NAMESPACE, false);
+  for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+    s_wifiProfiles[i].ssid = s_prefs.getString(s_wifiSsidKeys[i], "");
+    s_wifiProfiles[i].pass = s_prefs.getString(s_wifiPassKeys[i], "");
+  }
+  s_ssid = s_wifiProfiles[0].ssid;
+  s_pass = s_wifiProfiles[0].pass;
+  s_autoRotate = s_prefs.getBool(PREF_KEY_AUTO_ROTATE, true);
+  s_activeApp = (uint8_t)s_prefs.getUChar(PREF_KEY_ACTIVE_APP, 0);
+  if (s_activeApp >= 9)
+    s_activeApp = 0;
+  s_rotateSec =
+      (uint16_t)s_prefs.getUInt(PREF_KEY_ROTATE_SEC, DEFAULT_ROTATE_SEC);
+  if (s_rotateSec < MIN_ROTATE_SEC || s_rotateSec > MAX_ROTATE_SEC) {
+    s_rotateSec = DEFAULT_ROTATE_SEC;
+  }
+  s_carouselMask = s_prefs.getUShort(PREF_KEY_CAROUSEL_MASK, 0x1FF);
+  if (s_carouselMask == 0)
+    s_carouselMask = 0x1FF;
+
+  String savedOrder =
+      s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6,7,8");
+  Network_SetCarouselOrderString(savedOrder);
+  s_transitionFx =
+      (uint8_t)s_prefs.getUChar(PREF_KEY_TRANSITION_FX, DEFAULT_TRANSITION_FX);
+  if (s_transitionFx > 7)
+    s_transitionFx = DEFAULT_TRANSITION_FX;
+  s_batteryMode = (uint8_t)s_prefs.getUChar(PREF_KEY_BATTERY_MODE, 2);
+  if (s_batteryMode > 2)
+    s_batteryMode = 2;
+
+  s_clockMode = (uint8_t)s_prefs.getUChar(PREF_KEY_CLOCK_MODE, 1);
+  if (s_clockMode > 2)
+    s_clockMode = 0;
+  s_showSeconds = s_prefs.getBool(PREF_KEY_SHOW_SECONDS, false);
+  s_weekdayBar = s_prefs.getBool(PREF_KEY_WEEKDAY_BAR, true);
+  s_weekdayStartMon = s_prefs.getBool(PREF_KEY_WD_START_MON, true);
+  s_weekdayActiveColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_ACTIVE_COL, 0);
+  if (s_weekdayActiveColIdx >= s_numWdActiveColors)
+    s_weekdayActiveColIdx = 0;
+  s_weekdayInactColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_INACT_COL, 0);
+  if (s_weekdayInactColIdx >= s_numWdInactiveColors)
+    s_weekdayInactColIdx = 0;
+  s_weekdayWeekendColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_WKND_COL, 0);
+  if (s_weekdayWeekendColIdx >= s_numWdWeekendColors)
+    s_weekdayWeekendColIdx = 0;
+  s_portalLang = s_prefs.getString(PREF_KEY_PORTAL_LANG, "en");
+  if (s_portalLang != "sk" && s_portalLang != "en")
+    s_portalLang = "en";
+  s_dateFormat = (uint8_t)s_prefs.getUChar(PREF_KEY_DATE_FORMAT, 0);
+  if (s_dateFormat > 3)
+    s_dateFormat = 0;
+  s_clockIcon = (uint8_t)s_prefs.getUChar(PREF_KEY_CLOCK_ICON, 0);
+  if (s_clockIcon > 3)
+    s_clockIcon = 0;
+  s_textAlign = (uint8_t)s_prefs.getUChar(PREF_KEY_TEXT_ALIGN, 0);
+  if (s_textAlign > 1)
+    s_textAlign = 0;
+
+  s_autoBri = s_prefs.getBool(PREF_KEY_AUTO_BRI, true);
+  s_nightMode = s_prefs.getBool(PREF_KEY_NIGHT_MODE, true);
+  s_nightStart =
+      (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_START, DEFAULT_NIGHT_START);
+  s_nightEnd = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_END, DEFAULT_NIGHT_END);
+  s_dayBri = (uint8_t)s_prefs.getUChar(PREF_KEY_DAY_BRI, DEFAULT_DAY_BRI);
+  s_nightBri = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_BRI, DEFAULT_NIGHT_BRI);
+
+  s_wLat = s_prefs.getFloat(PREF_KEY_WEATHER_LAT, DEFAULT_WEATHER_LAT);
+  s_wLon = s_prefs.getFloat(PREF_KEY_WEATHER_LON, DEFAULT_WEATHER_LON);
+  s_wCity = s_prefs.getString(PREF_KEY_WEATHER_CITY, DEFAULT_WEATHER_CITY);
+  Weather_SetConfig(s_wLat, s_wLon, s_wCity);
+
+  s_cryptoSym = s_prefs.getString(PREF_KEY_CRYPTO_SYM, DEFAULT_CRYPTO_SYM);
+  Crypto_SetSymbol(s_cryptoSym);
+
+  s_ytChannel = s_prefs.getString(PREF_KEY_YT_CHANNEL, "");
+  s_ytApiKey = s_prefs.getString(PREF_KEY_YT_APIKEY, "");
+  YouTube_SetCredentials(s_ytChannel, s_ytApiKey);
+
+  s_mqttEn = s_prefs.getBool(PREF_KEY_MQTT_ENABLED, false);
+  s_mqttServer = s_prefs.getString(PREF_KEY_MQTT_SERVER, "");
+  s_mqttPort = s_prefs.getUShort(PREF_KEY_MQTT_PORT, DEFAULT_MQTT_PORT);
+  s_mqttUser = s_prefs.getString(PREF_KEY_MQTT_USER, "");
+  s_mqttPass = s_prefs.getString(PREF_KEY_MQTT_PASS, "");
+  s_mqttPrefix = s_prefs.getString(PREF_KEY_MQTT_PREFIX, DEFAULT_MQTT_PREFIX);
+
+  WiFi.persistent(false);
+  WiFi.mode(WIFI_OFF);
+
+  s_server.on("/", HTTP_GET,
+              []() { s_server.send_P(200, "text/html", PAGE_PORTAL); });
+  s_server.on("/save", HTTP_POST, handleSave);
+  s_server.on("/scan", HTTP_GET, handleScan);
+  s_server.on("/status", HTTP_GET, handleStatus);
+  s_server.on("/api/wifi", HTTP_GET, []() {
+    JsonDocument doc;
+    doc["connected"] = (WiFi.status() == WL_CONNECTED);
+    doc["active_ssid"] = (WiFi.status() == WL_CONNECTED) ? WiFi.SSID() : "";
+    doc["ip"] = Network_GetLocalIP();
+    doc["rssi"] = Network_GetRSSI();
+    JsonArray arr = doc["profiles"].to<JsonArray>();
+    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+      JsonObject p = arr.add<JsonObject>();
+      p["slot"] = i + 1;
+      p["ssid"] = s_wifiProfiles[i].ssid;
+      p["has_pass"] = (s_wifiProfiles[i].pass.length() > 0);
+      p["connected"] = (WiFi.status() == WL_CONNECTED &&
+                        s_wifiProfiles[i].ssid.length() > 0 &&
+                        s_wifiProfiles[i].ssid == WiFi.SSID());
+    }
+    String out;
+    serializeJson(doc, out);
+    s_server.send(200, "application/json", out);
+  });
+
+  s_server.on("/api/display", HTTP_GET, []() {
+    String json;
+    DisplayMatrix_GetJson(json);
+    s_server.send(200, "application/json", json);
+  });
+
+  s_server.on("/api/display", HTTP_POST, handleApiDisplayPost);
+  s_server.on("/api/draw", HTTP_POST, handleApiDisplayPost);
+
+  s_server.on("/api/display/screenshot", HTTP_GET, []() {
+    s_server.sendHeader("Content-Disposition",
+                        "inline; filename=\"tc001_screenshot.bmp\"");
+    s_server.setContentLength(76854);
+    s_server.send(200, "image/bmp", "");
+    WiFiClient client = s_server.client();
+    DisplayMatrix_StreamBMP(client, 10);
+  });
+
+  s_server.on("/api/display/text", HTTP_GET, []() {
+    String ascii = DisplayMatrix_GetAsciiArt();
+    s_server.send(200, "text/plain", ascii);
+  });
+
+  s_server.on("/api/screen", HTTP_GET, []() {
+    if (s_server.hasArg("auto")) {
+      Network_SetAutoRotate(s_server.arg("auto").toInt() != 0);
+    }
+    if (s_server.hasArg("set")) {
+      int app = s_server.arg("set").toInt();
+      if (app >= 0 && app < 9) {
+        Network_SetActiveApp((uint8_t)app);
+        if (!s_server.hasArg("auto")) {
+          Network_SetAutoRotate(false);
+        }
+      }
+    }
+    JsonDocument doc;
+    doc["active_app"] = Network_GetActiveApp();
+    doc["auto_rotate"] = Network_GetAutoRotate();
+    static const char *kNames[] = {
+        "Clock",           "Indoor Environment", "Outdoor Weather",
+        "Crypto Ticker",   "YouTube Analytics",  "Live Airspace",
+        "Battery & Power", "Stopwatch & Timer",  "Ambient Screensaver"};
+    doc["app_name"] = kNames[Network_GetActiveApp() % 9];
+    String out;
+    serializeJson(doc, out);
+    s_server.send(200, "application/json", out);
+  });
+
+  // Stopwatch & Countdown Timer REST API
+  auto handleTimerApi = []() {
+    if (s_server.hasArg("mode")) {
+      String m = s_server.arg("mode");
+      m.toLowerCase();
+      if (m == "stopwatch" || m == "0") {
+        Timer_SetMode(TIMER_MODE_STOPWATCH);
+      } else if (m == "countdown" || m == "timer" || m == "1") {
+        Timer_SetMode(TIMER_MODE_COUNTDOWN);
+      }
+    }
+    if (s_server.hasArg("duration")) {
+      uint32_t dur = (uint32_t)s_server.arg("duration").toInt();
+      if (dur > 0) {
+        Timer_SetDuration(dur);
+      }
+    }
+    if (s_server.hasArg("action")) {
+      String act = s_server.arg("action");
+      act.toLowerCase();
+      if (act == "start") {
+        Timer_Start();
+      } else if (act == "pause") {
+        Timer_Pause();
+      } else if (act == "toggle") {
+        Timer_Toggle();
+      } else if (act == "reset") {
+        Timer_Reset();
+      }
+    }
+    JsonDocument doc;
+    doc["mode"] =
+        (Timer_GetMode() == TIMER_MODE_STOPWATCH) ? "stopwatch" : "countdown";
+    doc["state"] = (Timer_GetState() == TIMER_STATE_RUNNING)   ? "running"
+                   : (Timer_GetState() == TIMER_STATE_PAUSED)  ? "paused"
+                   : (Timer_GetState() == TIMER_STATE_EXPIRED) ? "expired"
+                                                               : "stopped";
+    doc["duration"] = Timer_GetDuration();
+    doc["remaining"] = Timer_GetRemainingSeconds();
+    doc["elapsed_ms"] = Timer_GetElapsedMillis();
+    String out;
+    serializeJson(doc, out);
+    s_server.send(200, "application/json", out);
+  };
+
+  s_server.on("/api/timer", HTTP_GET, handleTimerApi);
+  s_server.on("/api/timer", HTTP_POST, handleTimerApi);
+
+  // Retro Ambient Screensaver REST API
+  auto handleScreensaverApi = []() {
+    if (s_server.hasArg("style")) {
+      int st = s_server.arg("style").toInt();
+      if (st >= 0 && st < SCREENSAVER_STYLE_COUNT) {
+        Screensaver_SetStyle((ScreensaverStyle)st);
+      }
+    }
+    if (s_server.hasArg("timeout")) {
+      int to = s_server.arg("timeout").toInt();
+      if (to >= 0 && to <= 60) {
+        Screensaver_SetTimeoutMin((uint8_t)to);
+      }
+    }
+    if (s_server.hasArg("action")) {
+      String act = s_server.arg("action");
+      act.toLowerCase();
+      if (act == "start" || act == "activate") {
+        Screensaver_Activate();
+      } else if (act == "stop" || act == "deactivate" || act == "wake") {
+        Screensaver_Deactivate();
+      }
+    }
+    JsonDocument doc;
+    doc["style"] = (int)Screensaver_GetStyle();
+    doc["active_style"] = (int)Screensaver_GetActiveStyle();
+    doc["timeout"] = Screensaver_GetTimeoutMin();
+    doc["active"] = Screensaver_IsActive();
+    doc["idle_ms"] = Screensaver_GetIdleMs();
+    String out;
+    serializeJson(doc, out);
+    s_server.send(200, "application/json", out);
+  };
+
+  s_server.on("/api/screensaver", HTTP_GET, handleScreensaverApi);
+  s_server.on("/api/screensaver", HTTP_POST, handleScreensaverApi);
+
+  // Custom App & Notification REST Push API
+  s_server.on("/api/custom", HTTP_GET, []() {
+    String json;
+    CustomApp_GetJsonList(json);
+    s_server.send(200, "application/json", json);
+  });
+
+  s_server.on("/api/custom", HTTP_POST, []() {
+    String appName = s_server.hasArg("name") ? s_server.arg("name") : "custom";
+    if (s_server.hasArg("delete") && s_server.arg("delete").toInt() != 0) {
+      CustomApp_Delete(appName);
+      s_server.send(200, "application/json", "{\"status\":\"deleted\"}");
+      return;
+    }
+
     String body = s_server.arg("plain");
     JsonDocument doc;
     DeserializationError err = deserializeJson(doc, body);
     if (err) {
-        s_server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
+      if (s_server.hasArg("text")) {
+        doc["text"] = s_server.arg("text");
+        if (s_server.hasArg("icon"))
+          doc["icon"] = s_server.arg("icon");
+        if (s_server.hasArg("progress"))
+          doc["progress"] = s_server.arg("progress").toInt();
+        if (s_server.hasArg("duration"))
+          doc["duration"] = s_server.arg("duration").toInt();
+        if (s_server.hasArg("lifetime"))
+          doc["lifetime"] = s_server.arg("lifetime").toInt();
+      } else {
+        s_server.send(400, "application/json",
+                      "{\"error\":\"Invalid JSON or missing text\"}");
         return;
+      }
+    }
+    if (doc["name"].is<const char *>()) {
+      appName = doc["name"].as<const char *>();
     }
 
-    uint16_t durationSec = doc["duration"] | 60;
-    uint16_t canvas[MATRIX_HEIGHT][MATRIX_WIDTH];
-    memset(canvas, 0, sizeof(canvas));
-
-    if (doc["pixels"].is<JsonArrayConst>()) {
-        JsonArrayConst rows = doc["pixels"].as<JsonArrayConst>();
-        if (rows.size() == MATRIX_HEIGHT && rows[0].is<JsonArrayConst>()) {
-            // 2D 8x32 array
-            for (size_t y = 0; y < MATRIX_HEIGHT && y < rows.size(); y++) {
-                JsonArrayConst cols = rows[y].as<JsonArrayConst>();
-                for (size_t x = 0; x < MATRIX_WIDTH && x < cols.size(); x++) {
-                    canvas[y][x] = parseColorVariant(cols[x]);
-                }
-            }
-        } else if (rows.size() == MATRIX_WIDTH * MATRIX_HEIGHT) {
-            // Flat 1D 256 array
-            for (size_t i = 0; i < MATRIX_WIDTH * MATRIX_HEIGHT; i++) {
-                int y = i / MATRIX_WIDTH;
-                int x = i % MATRIX_WIDTH;
-                canvas[y][x] = parseColorVariant(rows[i]);
-            }
-        }
-    } else if (doc["draw"].is<JsonArrayConst>()) {
-        JsonArrayConst cmds = doc["draw"].as<JsonArrayConst>();
-        for (JsonVariantConst cmd : cmds) {
-            if (cmd["dp"].is<JsonArrayConst>()) {
-                JsonArrayConst dp = cmd["dp"].as<JsonArrayConst>();
-                if (dp.size() >= 3) {
-                    int x = dp[0].as<int>();
-                    int y = dp[1].as<int>();
-                    if (x >= 0 && x < MATRIX_WIDTH && y >= 0 && y < MATRIX_HEIGHT) {
-                        canvas[y][x] = parseColorVariant(dp[2]);
-                    }
-                }
-            }
-        }
+    bool ok = CustomApp_Push(appName, doc.as<JsonVariantConst>());
+    if (ok) {
+      s_server.send(200, "application/json",
+                    "{\"status\":\"ok\",\"app\":\"" + appName + "\"}");
     } else {
-        s_server.send(400, "application/json", "{\"error\":\"Missing pixels or draw array\"}");
+      s_server.send(500, "application/json",
+                    "{\"error\":\"Failed to store app\"}");
+    }
+  });
+
+  s_server.on("/api/custom", HTTP_DELETE, []() {
+    String appName = s_server.hasArg("name") ? s_server.arg("name") : "";
+    if (appName.length() > 0) {
+      CustomApp_Delete(appName);
+      s_server.send(200, "application/json", "{\"status\":\"deleted\"}");
+    } else {
+      CustomApp_Clear();
+      s_server.send(200, "application/json", "{\"status\":\"all_cleared\"}");
+    }
+  });
+
+  s_server.on("/api/notify", HTTP_POST, []() {
+    String body = s_server.arg("plain");
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, body);
+    if (err) {
+      if (s_server.hasArg("text")) {
+        doc["text"] = s_server.arg("text");
+        if (s_server.hasArg("icon"))
+          doc["icon"] = s_server.arg("icon");
+        if (s_server.hasArg("sound"))
+          doc["sound"] = s_server.arg("sound").toInt();
+        if (s_server.hasArg("duration"))
+          doc["duration"] = s_server.arg("duration").toInt();
+      } else {
+        s_server.send(400, "application/json",
+                      "{\"error\":\"Invalid JSON or missing text\"}");
         return;
+      }
     }
+    CustomApp_PushNotification(doc.as<JsonVariantConst>());
+    s_server.send(200, "application/json", "{\"status\":\"notified\"}");
+  });
 
-    DisplayMatrix_SetCanvas(canvas, durationSec);
-    Buzzer_Click();
-    s_server.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Canvas rendered on matrix\"}");
-}
+  // Remote Hardware Reboot REST API
+  auto handleRebootApi = []() {
+    s_server.sendHeader("Connection", "close");
+    s_server.send(
+        200, "application/json",
+        "{\"status\":\"rebooting\",\"message\":\"ESP32 rebooting now...\"}");
+    s_pendingReboot = true;
+    s_rebootTriggerMs = millis() + 500;
+  };
+  s_server.on("/api/reboot", HTTP_POST, handleRebootApi);
+  s_server.on("/api/reboot", HTTP_GET, handleRebootApi);
+  s_server.on("/reboot", HTTP_POST, handleRebootApi);
+  s_server.on("/reboot", HTTP_GET, handleRebootApi);
 
-void Network_Init() {
-    uint32_t chipId = 0;
-    for (int i = 0; i < 17; i = i + 8) {
-        chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
-    }
-    char buf[32];
-    snprintf(buf, sizeof(buf), "%s%04X", WIFI_AP_SSID_PREFIX, (uint16_t)(chipId & 0xFFFF));
-    s_apSSID = String(buf);
+  // Initialize Over-The-Air Update System
+  OTA_Init(s_server);
 
-    s_prefs.begin(PREF_NAMESPACE, false);
-    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
-        s_wifiProfiles[i].ssid = s_prefs.getString(s_wifiSsidKeys[i], "");
-        s_wifiProfiles[i].pass = s_prefs.getString(s_wifiPassKeys[i], "");
-    }
-    s_ssid = s_wifiProfiles[0].ssid;
-    s_pass = s_wifiProfiles[0].pass;
-    s_autoRotate = s_prefs.getBool(PREF_KEY_AUTO_ROTATE, true);
-    s_activeApp = (uint8_t)s_prefs.getUChar(PREF_KEY_ACTIVE_APP, 0);
-    if (s_activeApp >= 9) s_activeApp = 0;
-    s_rotateSec = (uint16_t)s_prefs.getUInt(PREF_KEY_ROTATE_SEC, DEFAULT_ROTATE_SEC);
-    if (s_rotateSec < MIN_ROTATE_SEC || s_rotateSec > MAX_ROTATE_SEC) {
-        s_rotateSec = DEFAULT_ROTATE_SEC;
-    }
-    s_carouselMask = s_prefs.getUShort(PREF_KEY_CAROUSEL_MASK, 0x1FF);
-    if (s_carouselMask == 0) s_carouselMask = 0x1FF;
+  // Captive Portal OS detection probes
+  s_server.on("/generate_204", HTTP_GET, handleCaptiveRedirect);
+  s_server.on("/hotspot-detect.html", HTTP_GET, handleCaptiveRedirect);
+  s_server.on("/ncsi.txt", HTTP_GET, handleCaptiveRedirect);
+  s_server.on("/connecttest.txt", HTTP_GET, handleCaptiveRedirect);
+  s_server.on("/redirect", HTTP_GET, handleCaptiveRedirect);
+  s_server.on("/canonical.html", HTTP_GET, handleCaptiveRedirect);
 
-    String savedOrder = s_prefs.getString(PREF_KEY_CAROUSEL_ORDER, "0,1,2,3,4,5,6,7,8");
-    Network_SetCarouselOrderString(savedOrder);
-    s_transitionFx = (uint8_t)s_prefs.getUChar(PREF_KEY_TRANSITION_FX, DEFAULT_TRANSITION_FX);
-    if (s_transitionFx > 7) s_transitionFx = DEFAULT_TRANSITION_FX;
-    s_batteryMode = (uint8_t)s_prefs.getUChar(PREF_KEY_BATTERY_MODE, 2);
-    if (s_batteryMode > 2) s_batteryMode = 2;
-
-    s_clockMode = (uint8_t)s_prefs.getUChar(PREF_KEY_CLOCK_MODE, 1);
-    if (s_clockMode > 2) s_clockMode = 0;
-    s_showSeconds = s_prefs.getBool(PREF_KEY_SHOW_SECONDS, false);
-    s_weekdayBar = s_prefs.getBool(PREF_KEY_WEEKDAY_BAR, true);
-    s_weekdayStartMon = s_prefs.getBool(PREF_KEY_WD_START_MON, true);
-    s_weekdayActiveColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_ACTIVE_COL, 0);
-    if (s_weekdayActiveColIdx >= s_numWdActiveColors) s_weekdayActiveColIdx = 0;
-    s_weekdayInactColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_INACT_COL, 0);
-    if (s_weekdayInactColIdx >= s_numWdInactiveColors) s_weekdayInactColIdx = 0;
-    s_weekdayWeekendColIdx = (uint8_t)s_prefs.getUChar(PREF_KEY_WD_WKND_COL, 0);
-    if (s_weekdayWeekendColIdx >= s_numWdWeekendColors) s_weekdayWeekendColIdx = 0;
-    s_portalLang = s_prefs.getString(PREF_KEY_PORTAL_LANG, "en");
-    if (s_portalLang != "sk" && s_portalLang != "en") s_portalLang = "en";
-    s_dateFormat = (uint8_t)s_prefs.getUChar(PREF_KEY_DATE_FORMAT, 0);
-    if (s_dateFormat > 3) s_dateFormat = 0;
-    s_clockIcon = (uint8_t)s_prefs.getUChar(PREF_KEY_CLOCK_ICON, 0);
-    if (s_clockIcon > 3) s_clockIcon = 0;
-    s_textAlign = (uint8_t)s_prefs.getUChar(PREF_KEY_TEXT_ALIGN, 0);
-    if (s_textAlign > 1) s_textAlign = 0;
-
-    s_autoBri = s_prefs.getBool(PREF_KEY_AUTO_BRI, true);
-    s_nightMode = s_prefs.getBool(PREF_KEY_NIGHT_MODE, true);
-    s_nightStart = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_START, DEFAULT_NIGHT_START);
-    s_nightEnd = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_END, DEFAULT_NIGHT_END);
-    s_dayBri = (uint8_t)s_prefs.getUChar(PREF_KEY_DAY_BRI, DEFAULT_DAY_BRI);
-    s_nightBri = (uint8_t)s_prefs.getUChar(PREF_KEY_NIGHT_BRI, DEFAULT_NIGHT_BRI);
-
-    s_wLat = s_prefs.getFloat(PREF_KEY_WEATHER_LAT, DEFAULT_WEATHER_LAT);
-    s_wLon = s_prefs.getFloat(PREF_KEY_WEATHER_LON, DEFAULT_WEATHER_LON);
-    s_wCity = s_prefs.getString(PREF_KEY_WEATHER_CITY, DEFAULT_WEATHER_CITY);
-    Weather_SetConfig(s_wLat, s_wLon, s_wCity);
-
-    s_cryptoSym = s_prefs.getString(PREF_KEY_CRYPTO_SYM, DEFAULT_CRYPTO_SYM);
-    Crypto_SetSymbol(s_cryptoSym);
-
-    s_ytChannel = s_prefs.getString(PREF_KEY_YT_CHANNEL, "");
-    s_ytApiKey = s_prefs.getString(PREF_KEY_YT_APIKEY, "");
-    YouTube_SetCredentials(s_ytChannel, s_ytApiKey);
-
-    s_mqttEn = s_prefs.getBool(PREF_KEY_MQTT_ENABLED, false);
-    s_mqttServer = s_prefs.getString(PREF_KEY_MQTT_SERVER, "");
-    s_mqttPort = s_prefs.getUShort(PREF_KEY_MQTT_PORT, DEFAULT_MQTT_PORT);
-    s_mqttUser = s_prefs.getString(PREF_KEY_MQTT_USER, "");
-    s_mqttPass = s_prefs.getString(PREF_KEY_MQTT_PASS, "");
-    s_mqttPrefix = s_prefs.getString(PREF_KEY_MQTT_PREFIX, DEFAULT_MQTT_PREFIX);
-
-    WiFi.persistent(false);
-    WiFi.mode(WIFI_OFF);
-
-    s_server.on("/", HTTP_GET, []() {
-        s_server.send_P(200, "text/html", PAGE_PORTAL);
-    });
-    s_server.on("/save", HTTP_POST, handleSave);
-    s_server.on("/scan", HTTP_GET, handleScan);
-    s_server.on("/status", HTTP_GET, handleStatus);
-    s_server.on("/api/wifi", HTTP_GET, []() {
-        JsonDocument doc;
-        doc["connected"] = (WiFi.status() == WL_CONNECTED);
-        doc["active_ssid"] = (WiFi.status() == WL_CONNECTED) ? WiFi.SSID() : "";
-        doc["ip"] = Network_GetLocalIP();
-        doc["rssi"] = Network_GetRSSI();
-        JsonArray arr = doc["profiles"].to<JsonArray>();
-        for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
-            JsonObject p = arr.add<JsonObject>();
-            p["slot"] = i + 1;
-            p["ssid"] = s_wifiProfiles[i].ssid;
-            p["has_pass"] = (s_wifiProfiles[i].pass.length() > 0);
-            p["connected"] = (WiFi.status() == WL_CONNECTED && s_wifiProfiles[i].ssid.length() > 0 && s_wifiProfiles[i].ssid == WiFi.SSID());
-        }
-        String out;
-        serializeJson(doc, out);
-        s_server.send(200, "application/json", out);
-    });
-
-
-    s_server.on("/api/display", HTTP_GET, []() {
-        String json;
-        DisplayMatrix_GetJson(json);
-        s_server.send(200, "application/json", json);
-    });
-
-    s_server.on("/api/display", HTTP_POST, handleApiDisplayPost);
-    s_server.on("/api/draw", HTTP_POST, handleApiDisplayPost);
-
-    s_server.on("/api/display/screenshot", HTTP_GET, []() {
-        s_server.sendHeader("Content-Disposition", "inline; filename=\"tc001_screenshot.bmp\"");
-        s_server.setContentLength(76854);
-        s_server.send(200, "image/bmp", "");
-        WiFiClient client = s_server.client();
-        DisplayMatrix_StreamBMP(client, 10);
-    });
-
-    s_server.on("/api/display/text", HTTP_GET, []() {
-        String ascii = DisplayMatrix_GetAsciiArt();
-        s_server.send(200, "text/plain", ascii);
-    });
-
-    s_server.on("/api/screen", HTTP_GET, []() {
-        if (s_server.hasArg("auto")) {
-            Network_SetAutoRotate(s_server.arg("auto").toInt() != 0);
-        }
-        if (s_server.hasArg("set")) {
-            int app = s_server.arg("set").toInt();
-            if (app >= 0 && app < 9) {
-                Network_SetActiveApp((uint8_t)app);
-                if (!s_server.hasArg("auto")) {
-                    Network_SetAutoRotate(false);
-                }
-            }
-        }
-        JsonDocument doc;
-        doc["active_app"] = Network_GetActiveApp();
-        doc["auto_rotate"] = Network_GetAutoRotate();
-        static const char* kNames[] = {
-            "Clock", "Indoor Environment", "Outdoor Weather",
-            "Crypto Ticker", "YouTube Analytics", "Live Airspace", "Battery & Power",
-            "Stopwatch & Timer", "Ambient Screensaver"
-        };
-        doc["app_name"] = kNames[Network_GetActiveApp() % 9];
-        String out;
-        serializeJson(doc, out);
-        s_server.send(200, "application/json", out);
-    });
-
-    // Stopwatch & Countdown Timer REST API
-    auto handleTimerApi = []() {
-        if (s_server.hasArg("mode")) {
-            String m = s_server.arg("mode");
-            m.toLowerCase();
-            if (m == "stopwatch" || m == "0") {
-                Timer_SetMode(TIMER_MODE_STOPWATCH);
-            } else if (m == "countdown" || m == "timer" || m == "1") {
-                Timer_SetMode(TIMER_MODE_COUNTDOWN);
-            }
-        }
-        if (s_server.hasArg("duration")) {
-            uint32_t dur = (uint32_t)s_server.arg("duration").toInt();
-            if (dur > 0) {
-                Timer_SetDuration(dur);
-            }
-        }
-        if (s_server.hasArg("action")) {
-            String act = s_server.arg("action");
-            act.toLowerCase();
-            if (act == "start") {
-                Timer_Start();
-            } else if (act == "pause") {
-                Timer_Pause();
-            } else if (act == "toggle") {
-                Timer_Toggle();
-            } else if (act == "reset") {
-                Timer_Reset();
-            }
-        }
-        JsonDocument doc;
-        doc["mode"] = (Timer_GetMode() == TIMER_MODE_STOPWATCH) ? "stopwatch" : "countdown";
-        doc["state"] = (Timer_GetState() == TIMER_STATE_RUNNING) ? "running" :
-                       (Timer_GetState() == TIMER_STATE_PAUSED) ? "paused" :
-                       (Timer_GetState() == TIMER_STATE_EXPIRED) ? "expired" : "stopped";
-        doc["duration"] = Timer_GetDuration();
-        doc["remaining"] = Timer_GetRemainingSeconds();
-        doc["elapsed_ms"] = Timer_GetElapsedMillis();
-        String out;
-        serializeJson(doc, out);
-        s_server.send(200, "application/json", out);
-    };
-
-    s_server.on("/api/timer", HTTP_GET, handleTimerApi);
-    s_server.on("/api/timer", HTTP_POST, handleTimerApi);
-
-    // Retro Ambient Screensaver REST API
-    auto handleScreensaverApi = []() {
-        if (s_server.hasArg("style")) {
-            int st = s_server.arg("style").toInt();
-            if (st >= 0 && st < SCREENSAVER_STYLE_COUNT) {
-                Screensaver_SetStyle((ScreensaverStyle)st);
-            }
-        }
-        if (s_server.hasArg("timeout")) {
-            int to = s_server.arg("timeout").toInt();
-            if (to >= 0 && to <= 60) {
-                Screensaver_SetTimeoutMin((uint8_t)to);
-            }
-        }
-        if (s_server.hasArg("action")) {
-            String act = s_server.arg("action");
-            act.toLowerCase();
-            if (act == "start" || act == "activate") {
-                Screensaver_Activate();
-            } else if (act == "stop" || act == "deactivate" || act == "wake") {
-                Screensaver_Deactivate();
-            }
-        }
-        JsonDocument doc;
-        doc["style"] = (int)Screensaver_GetStyle();
-        doc["active_style"] = (int)Screensaver_GetActiveStyle();
-        doc["timeout"] = Screensaver_GetTimeoutMin();
-        doc["active"] = Screensaver_IsActive();
-        doc["idle_ms"] = Screensaver_GetIdleMs();
-        String out;
-        serializeJson(doc, out);
-        s_server.send(200, "application/json", out);
-    };
-
-    s_server.on("/api/screensaver", HTTP_GET, handleScreensaverApi);
-    s_server.on("/api/screensaver", HTTP_POST, handleScreensaverApi);
-
-    // Custom App & Notification REST Push API
-    s_server.on("/api/custom", HTTP_GET, []() {
-        String json;
-        CustomApp_GetJsonList(json);
-        s_server.send(200, "application/json", json);
-    });
-
-    s_server.on("/api/custom", HTTP_POST, []() {
-        String appName = s_server.hasArg("name") ? s_server.arg("name") : "custom";
-        if (s_server.hasArg("delete") && s_server.arg("delete").toInt() != 0) {
-            CustomApp_Delete(appName);
-            s_server.send(200, "application/json", "{\"status\":\"deleted\"}");
-            return;
-        }
-
-        String body = s_server.arg("plain");
-        JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, body);
-        if (err) {
-            if (s_server.hasArg("text")) {
-                doc["text"] = s_server.arg("text");
-                if (s_server.hasArg("icon")) doc["icon"] = s_server.arg("icon");
-                if (s_server.hasArg("progress")) doc["progress"] = s_server.arg("progress").toInt();
-                if (s_server.hasArg("duration")) doc["duration"] = s_server.arg("duration").toInt();
-                if (s_server.hasArg("lifetime")) doc["lifetime"] = s_server.arg("lifetime").toInt();
-            } else {
-                s_server.send(400, "application/json", "{\"error\":\"Invalid JSON or missing text\"}");
-                return;
-            }
-        }
-        if (doc["name"].is<const char*>()) {
-            appName = doc["name"].as<const char*>();
-        }
-
-        bool ok = CustomApp_Push(appName, doc.as<JsonVariantConst>());
-        if (ok) {
-            s_server.send(200, "application/json", "{\"status\":\"ok\",\"app\":\"" + appName + "\"}");
-        } else {
-            s_server.send(500, "application/json", "{\"error\":\"Failed to store app\"}");
-        }
-    });
-
-    s_server.on("/api/custom", HTTP_DELETE, []() {
-        String appName = s_server.hasArg("name") ? s_server.arg("name") : "";
-        if (appName.length() > 0) {
-            CustomApp_Delete(appName);
-            s_server.send(200, "application/json", "{\"status\":\"deleted\"}");
-        } else {
-            CustomApp_Clear();
-            s_server.send(200, "application/json", "{\"status\":\"all_cleared\"}");
-        }
-    });
-
-    s_server.on("/api/notify", HTTP_POST, []() {
-        String body = s_server.arg("plain");
-        JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, body);
-        if (err) {
-            if (s_server.hasArg("text")) {
-                doc["text"] = s_server.arg("text");
-                if (s_server.hasArg("icon")) doc["icon"] = s_server.arg("icon");
-                if (s_server.hasArg("sound")) doc["sound"] = s_server.arg("sound").toInt();
-                if (s_server.hasArg("duration")) doc["duration"] = s_server.arg("duration").toInt();
-            } else {
-                s_server.send(400, "application/json", "{\"error\":\"Invalid JSON or missing text\"}");
-                return;
-            }
-        }
-        CustomApp_PushNotification(doc.as<JsonVariantConst>());
-        s_server.send(200, "application/json", "{\"status\":\"notified\"}");
-    });
-
-    // Remote Hardware Reboot REST API
-    auto handleRebootApi = []() {
-        s_server.sendHeader("Connection", "close");
-        s_server.send(200, "application/json", "{\"status\":\"rebooting\",\"message\":\"ESP32 rebooting now...\"}");
-        s_pendingReboot = true;
-        s_rebootTriggerMs = millis() + 500;
-    };
-    s_server.on("/api/reboot", HTTP_POST, handleRebootApi);
-    s_server.on("/api/reboot", HTTP_GET, handleRebootApi);
-    s_server.on("/reboot", HTTP_POST, handleRebootApi);
-    s_server.on("/reboot", HTTP_GET, handleRebootApi);
-
-    // Initialize Over-The-Air Update System
-    OTA_Init(s_server);
-
-    // Captive Portal OS detection probes
-    s_server.on("/generate_204", HTTP_GET, handleCaptiveRedirect);
-    s_server.on("/hotspot-detect.html", HTTP_GET, handleCaptiveRedirect);
-    s_server.on("/ncsi.txt", HTTP_GET, handleCaptiveRedirect);
-    s_server.on("/connecttest.txt", HTTP_GET, handleCaptiveRedirect);
-    s_server.on("/redirect", HTTP_GET, handleCaptiveRedirect);
-    s_server.on("/canonical.html", HTTP_GET, handleCaptiveRedirect);
-
-    s_server.onNotFound([]() {
-        if (s_netState == NET_STATE_AP_PORTAL) {
-            handleCaptiveRedirect();
-        } else {
-            s_server.send(404, "text/plain", "Not Found");
-        }
-    });
-
-    if (Network_HasSavedCredentials()) {
-        Network_ConnectStation();
+  s_server.onNotFound([]() {
+    if (s_netState == NET_STATE_AP_PORTAL) {
+      handleCaptiveRedirect();
     } else {
-        Network_StartAP();
+      s_server.send(404, "text/plain", "Not Found");
     }
+  });
+
+  if (Network_HasSavedCredentials()) {
+    Network_ConnectStation();
+  } else {
+    Network_StartAP();
+  }
 }
 
 void Network_ConnectStation() {
-    int savedCount = 0;
-    int firstValid = -1;
-    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
-        if (s_wifiProfiles[i].ssid.length() > 0) {
-            savedCount++;
-            if (firstValid < 0) firstValid = i;
-        }
+  int savedCount = 0;
+  int firstValid = -1;
+  for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+    if (s_wifiProfiles[i].ssid.length() > 0) {
+      savedCount++;
+      if (firstValid < 0)
+        firstValid = i;
     }
+  }
 
-    if (savedCount == 0) {
-        Serial.println("[WiFi] No saved credentials found. Starting AP...");
-        Network_StartAP();
-        return;
-    }
+  if (savedCount == 0) {
+    Serial.println("[WiFi] No saved credentials found. Starting AP...");
+    Network_StartAP();
+    return;
+  }
 
-    int targetSlot = firstValid;
+  int targetSlot = firstValid;
 
-    // If multiple profiles exist, perform an intelligent fast RF scan to find which network is in range
-    if (savedCount > 1) {
-        Serial.printf("[WiFi] %d saved profiles found. Scanning for available networks...\n", savedCount);
-        WiFi.softAPdisconnect(true);
-        WiFi.mode(WIFI_STA);
-        WiFi.disconnect(true);
-        delay(50);
-        int16_t n = WiFi.scanNetworks(false, false, false, 250);
-        int bestProfile = -1;
-        int bestRssi = -1000;
-        if (n > 0) {
-            for (int i = 0; i < n; i++) {
-                String foundSsid = WiFi.SSID(i);
-                for (int p = 0; p < MAX_WIFI_PROFILES; p++) {
-                    if (s_wifiProfiles[p].ssid.length() > 0 && s_wifiProfiles[p].ssid == foundSsid) {
-                        int rssi = WiFi.RSSI(i);
-                        Serial.printf("[WiFi] Scan matched saved profile %d '%s' (RSSI: %d dBm)\n",
-                                      p + 1, foundSsid.c_str(), rssi);
-                        if (rssi > bestRssi) {
-                            bestRssi = rssi;
-                            bestProfile = p;
-                        }
-                    }
-                }
-            }
-            WiFi.scanDelete();
-        }
-        if (bestProfile >= 0) {
-            targetSlot = bestProfile;
-            Serial.printf("[WiFi] Selected best in-range profile %d: '%s' (%d dBm)\n",
-                          targetSlot + 1, s_wifiProfiles[targetSlot].ssid.c_str(), bestRssi);
-        } else {
-            Serial.printf("[WiFi] None of the %d saved networks detected in scan. Trying profile %d ('%s')...\n",
-                          savedCount, targetSlot + 1, s_wifiProfiles[targetSlot].ssid.c_str());
-        }
-    } else {
-        Serial.printf("[WiFi] Single saved profile %d: '%s'\n", targetSlot + 1, s_wifiProfiles[targetSlot].ssid.c_str());
-    }
-
-    s_activeProfileIdx = targetSlot;
-    s_ssid = s_wifiProfiles[targetSlot].ssid;
-    s_pass = s_wifiProfiles[targetSlot].pass;
-    s_netState = NET_STATE_CONNECTING;
-    s_connectStartMs = millis();
-    s_apConnectingSta = false;
-
-    if (WiFi.getMode() != WIFI_STA) {
-        WiFi.softAPdisconnect(true);
-        WiFi.mode(WIFI_STA);
-    }
+  // If multiple profiles exist, perform an intelligent fast RF scan to find
+  // which network is in range
+  if (savedCount > 1) {
+    Serial.printf(
+        "[WiFi] %d saved profiles found. Scanning for available networks...\n",
+        savedCount);
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_STA);
     WiFi.disconnect(true);
-    WiFi.begin(s_ssid.c_str(), s_pass.c_str());
-    s_server.begin();
-    Serial.printf("[WiFi] Connecting to profile %d ('%s')...\n", s_activeProfileIdx + 1, s_ssid.c_str());
+    delay(50);
+    int16_t n = WiFi.scanNetworks(false, false, false, 250);
+    int bestProfile = -1;
+    int bestRssi = -1000;
+    if (n > 0) {
+      for (int i = 0; i < n; i++) {
+        String foundSsid = WiFi.SSID(i);
+        for (int p = 0; p < MAX_WIFI_PROFILES; p++) {
+          if (s_wifiProfiles[p].ssid.length() > 0 &&
+              s_wifiProfiles[p].ssid == foundSsid) {
+            int rssi = WiFi.RSSI(i);
+            Serial.printf(
+                "[WiFi] Scan matched saved profile %d '%s' (RSSI: %d dBm)\n",
+                p + 1, foundSsid.c_str(), rssi);
+            if (rssi > bestRssi) {
+              bestRssi = rssi;
+              bestProfile = p;
+            }
+          }
+        }
+      }
+      WiFi.scanDelete();
+    }
+    if (bestProfile >= 0) {
+      targetSlot = bestProfile;
+      Serial.printf("[WiFi] Selected best in-range profile %d: '%s' (%d dBm)\n",
+                    targetSlot + 1, s_wifiProfiles[targetSlot].ssid.c_str(),
+                    bestRssi);
+    } else {
+      Serial.printf("[WiFi] None of the %d saved networks detected in scan. "
+                    "Trying profile %d ('%s')...\n",
+                    savedCount, targetSlot + 1,
+                    s_wifiProfiles[targetSlot].ssid.c_str());
+    }
+  } else {
+    Serial.printf("[WiFi] Single saved profile %d: '%s'\n", targetSlot + 1,
+                  s_wifiProfiles[targetSlot].ssid.c_str());
+  }
+
+  s_activeProfileIdx = targetSlot;
+  s_ssid = s_wifiProfiles[targetSlot].ssid;
+  s_pass = s_wifiProfiles[targetSlot].pass;
+  s_netState = NET_STATE_CONNECTING;
+  s_connectStartMs = millis();
+  s_apConnectingSta = false;
+
+  if (WiFi.getMode() != WIFI_STA) {
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_STA);
+  }
+  WiFi.disconnect(true);
+  WiFi.begin(s_ssid.c_str(), s_pass.c_str());
+  s_server.begin();
+  Serial.printf("[WiFi] Connecting to profile %d ('%s')...\n",
+                s_activeProfileIdx + 1, s_ssid.c_str());
 }
 
 void Network_StartAP() {
-    Serial.printf("[WiFi] Starting AP: %s (IP: %s)\n", s_apSSID.c_str(), s_apIP.toString().c_str());
-    if (WiFi.getMode() == WIFI_STA) {
-        WiFi.disconnect(true);
-    }
-    wifi_mode_t targetMode = Network_HasSavedCredentials() ? WIFI_AP_STA : WIFI_AP;
-    WiFi.mode(targetMode);
-    WiFi.softAPConfig(s_apIP, s_apIP, s_apNetmask);
-    WiFi.softAP(s_apSSID.c_str());
+  Serial.printf("[WiFi] Starting AP: %s (IP: %s)\n", s_apSSID.c_str(),
+                s_apIP.toString().c_str());
+  if (WiFi.getMode() == WIFI_STA) {
+    WiFi.disconnect(true);
+  }
+  wifi_mode_t targetMode =
+      Network_HasSavedCredentials() ? WIFI_AP_STA : WIFI_AP;
+  WiFi.mode(targetMode);
+  WiFi.softAPConfig(s_apIP, s_apIP, s_apNetmask);
+  WiFi.softAP(s_apSSID.c_str());
 
-    s_dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
-    s_dnsServer.start(53, "*", s_apIP);
+  s_dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  s_dnsServer.start(53, "*", s_apIP);
 
-    s_server.begin();
-    s_netState = NET_STATE_AP_PORTAL;
-    s_lastApRetryMs = millis();
-    s_apConnectingSta = false;
+  s_server.begin();
+  s_netState = NET_STATE_AP_PORTAL;
+  s_lastApRetryMs = millis();
+  s_apConnectingSta = false;
 }
 
 void Network_Poll() {
-    uint32_t now = millis();
+  uint32_t now = millis();
 
-    // Service OTA Reboot Timer
-    OTA_Poll();
+  // Service OTA Reboot Timer
+  OTA_Poll();
 
-    if (s_pendingReboot && (now >= s_rebootTriggerMs)) {
-        s_pendingReboot = false;
-        Serial.println("[System] Remote reboot requested via REST API. Restarting ESP32...");
-        ESP.restart();
-        return;
-    }
+  if (s_pendingReboot && (now >= s_rebootTriggerMs)) {
+    s_pendingReboot = false;
+    Serial.println(
+        "[System] Remote reboot requested via REST API. Restarting ESP32...");
+    ESP.restart();
+    return;
+  }
 
-    if (s_pendingReconnect && (now >= s_reconnectTriggerMs)) {
-        s_pendingReconnect = false;
-        s_dnsServer.stop();
-        Network_ConnectStation();
-        return;
-    }
+  if (s_prefsBriDirty && (now >= s_prefsBriSaveMs)) {
+    s_prefsBriDirty = false;
+    s_prefs.putUChar(PREF_KEY_DAY_BRI, s_dayBri);
+    s_prefs.putUChar(PREF_KEY_NIGHT_BRI, s_nightBri);
+  }
 
-    if (s_netState == NET_STATE_AP_PORTAL) {
-        s_dnsServer.processNextRequest();
+  if (s_pendingReconnect && (now >= s_reconnectTriggerMs)) {
+    s_pendingReconnect = false;
+    s_dnsServer.stop();
+    Network_ConnectStation();
+    return;
+  }
 
-        // If saved credentials exist, periodically attempt background reconnection to Wi-Fi
-        if (Network_HasSavedCredentials()) {
-            if (s_apConnectingSta) {
-                if (WiFi.status() == WL_CONNECTED) {
-                    s_dnsServer.stop();
-                    WiFi.softAPdisconnect(true);
-                    WiFi.mode(WIFI_STA);
-                    s_netState = NET_STATE_CONNECTED;
-                    s_activeProfileIdx = s_apRetryProfileIdx;
-                    s_ssid = WiFi.SSID();
-                    s_pass = s_wifiProfiles[s_apRetryProfileIdx].pass;
-                    s_apConnectingSta = false;
-                    s_lastWifiCheckMs = now;
-                    Serial.printf("[WiFi] Successfully reconnected from AP mode to '%s'! IP: %s, RSSI: %d dBm\n",
-                                  WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI());
-                    return;
-                } else if (now - s_apConnectStartMs >= WIFI_CONNECT_TIMEOUT_MS) {
-                    // Timeout on this profile, check if next saved profile exists
-                    int nextSlot = -1;
-                    for (int p = s_apRetryProfileIdx + 1; p < MAX_WIFI_PROFILES; p++) {
-                        if (s_wifiProfiles[p].ssid.length() > 0) {
-                            nextSlot = p;
-                            break;
-                        }
-                    }
-                    if (nextSlot >= 0) {
-                        s_apRetryProfileIdx = nextSlot;
-                        s_apConnectStartMs = now;
-                        Serial.printf("[WiFi] AP retry timeout on previous profile. Trying profile %d ('%s')...\n",
-                                      nextSlot + 1, s_wifiProfiles[nextSlot].ssid.c_str());
-                        WiFi.disconnect(false);
-                        WiFi.begin(s_wifiProfiles[nextSlot].ssid.c_str(), s_wifiProfiles[nextSlot].pass.c_str());
-                    } else {
-                        Serial.println("[WiFi] AP background retry timeout on all saved profiles. Will retry again in 30s.");
-                        WiFi.disconnect(false);
-                        s_apConnectingSta = false;
-                        s_lastApRetryMs = now;
-                    }
-                }
-            } else {
-                // Not currently connecting station. Check if it is time to retry.
-                // Do not disrupt if a client is actively connected to the SoftAP web portal
-                bool hasClients = (WiFi.softAPgetStationNum() > 0);
-                if (hasClients) {
-                    s_lastApRetryMs = now; // postpone retry while client is actively connected to AP
-                } else if (now - s_lastApRetryMs >= WIFI_AP_RETRY_INTERVAL_MS) {
-                    s_lastApRetryMs = now;
-                    int firstSlot = -1;
-                    for (int p = 0; p < MAX_WIFI_PROFILES; p++) {
-                        if (s_wifiProfiles[p].ssid.length() > 0) {
-                            firstSlot = p;
-                            break;
-                        }
-                    }
-                    if (firstSlot >= 0) {
-                        s_apRetryProfileIdx = firstSlot;
-                        s_apConnectingSta = true;
-                        s_apConnectStartMs = now;
-                        if (WiFi.getMode() != WIFI_AP_STA) {
-                            WiFi.mode(WIFI_AP_STA);
-                        }
-                        Serial.printf("[WiFi] Attempting background reconnection to saved Wi-Fi '%s' (profile %d)...\n",
-                                      s_wifiProfiles[firstSlot].ssid.c_str(), firstSlot + 1);
-                        WiFi.disconnect(false);
-                        WiFi.begin(s_wifiProfiles[firstSlot].ssid.c_str(), s_wifiProfiles[firstSlot].pass.c_str());
-                    }
-                }
-            }
-        }
-        s_server.handleClient();
-        return;
-    }
+  if (s_netState == NET_STATE_AP_PORTAL) {
+    s_dnsServer.processNextRequest();
 
-    if (s_netState == NET_STATE_CONNECTING) {
-        s_server.handleClient();
+    // If saved credentials exist, periodically attempt background reconnection
+    // to Wi-Fi
+    if (Network_HasSavedCredentials()) {
+      if (s_apConnectingSta) {
         if (WiFi.status() == WL_CONNECTED) {
-            s_netState = NET_STATE_CONNECTED;
-            Serial.printf("[WiFi] Connected to '%s'! IP: %s, RSSI: %d dBm\n",
-                          WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI());
-        } else if (now - s_connectStartMs >= WIFI_CONNECT_TIMEOUT_MS) {
-            // Find next saved profile that hasn't been tried yet
-            int nextSlot = -1;
-            for (int p = s_activeProfileIdx + 1; p < MAX_WIFI_PROFILES; p++) {
-                if (s_wifiProfiles[p].ssid.length() > 0) {
-                    nextSlot = p;
-                    break;
-                }
+          s_dnsServer.stop();
+          WiFi.softAPdisconnect(true);
+          WiFi.mode(WIFI_STA);
+          s_netState = NET_STATE_CONNECTED;
+          s_activeProfileIdx = s_apRetryProfileIdx;
+          s_ssid = WiFi.SSID();
+          s_pass = s_wifiProfiles[s_apRetryProfileIdx].pass;
+          s_apConnectingSta = false;
+          s_lastWifiCheckMs = now;
+          Serial.printf("[WiFi] Successfully reconnected from AP mode to '%s'! "
+                        "IP: %s, RSSI: %d dBm\n",
+                        WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(),
+                        WiFi.RSSI());
+          return;
+        } else if (now - s_apConnectStartMs >= WIFI_CONNECT_TIMEOUT_MS) {
+          // Timeout on this profile, check if next saved profile exists
+          int nextSlot = -1;
+          for (int p = s_apRetryProfileIdx + 1; p < MAX_WIFI_PROFILES; p++) {
+            if (s_wifiProfiles[p].ssid.length() > 0) {
+              nextSlot = p;
+              break;
             }
-            if (nextSlot >= 0) {
-                s_activeProfileIdx = nextSlot;
-                s_ssid = s_wifiProfiles[nextSlot].ssid;
-                s_pass = s_wifiProfiles[nextSlot].pass;
-                s_connectStartMs = now;
-                Serial.printf("[WiFi] Timeout on previous profile. Trying profile %d ('%s')...\n",
-                              nextSlot + 1, s_ssid.c_str());
-                WiFi.disconnect(true);
-                WiFi.begin(s_ssid.c_str(), s_pass.c_str());
-            } else {
-                Serial.printf("[WiFi] Connection timeout on all saved profiles. Starting AP mode.\n");
-                Network_StartAP();
-            }
+          }
+          if (nextSlot >= 0) {
+            s_apRetryProfileIdx = nextSlot;
+            s_apConnectStartMs = now;
+            Serial.printf("[WiFi] AP retry timeout on previous profile. Trying "
+                          "profile %d ('%s')...\n",
+                          nextSlot + 1, s_wifiProfiles[nextSlot].ssid.c_str());
+            WiFi.disconnect(false);
+            WiFi.begin(s_wifiProfiles[nextSlot].ssid.c_str(),
+                       s_wifiProfiles[nextSlot].pass.c_str());
+          } else {
+            Serial.println("[WiFi] AP background retry timeout on all saved "
+                           "profiles. Will retry again in 30s.");
+            WiFi.disconnect(false);
+            s_apConnectingSta = false;
+            s_lastApRetryMs = now;
+          }
         }
-        return;
-    }
-
-    if (s_netState == NET_STATE_CONNECTED) {
-        s_server.handleClient();
-
-        if (now - s_lastWifiCheckMs >= 10000) {
-            s_lastWifiCheckMs = now;
-            if (WiFi.status() != WL_CONNECTED) {
-                Serial.printf("[WiFi] Connection lost. Reconnecting...\n");
-                Network_ConnectStation();
+      } else {
+        // Not currently connecting station. Check if it is time to retry.
+        // Do not disrupt if a client is actively connected to the SoftAP web
+        // portal
+        bool hasClients = (WiFi.softAPgetStationNum() > 0);
+        if (hasClients) {
+          s_lastApRetryMs =
+              now; // postpone retry while client is actively connected to AP
+        } else if (now - s_lastApRetryMs >= WIFI_AP_RETRY_INTERVAL_MS) {
+          s_lastApRetryMs = now;
+          int firstSlot = -1;
+          for (int p = 0; p < MAX_WIFI_PROFILES; p++) {
+            if (s_wifiProfiles[p].ssid.length() > 0) {
+              firstSlot = p;
+              break;
             }
+          }
+          if (firstSlot >= 0) {
+            s_apRetryProfileIdx = firstSlot;
+            s_apConnectingSta = true;
+            s_apConnectStartMs = now;
+            if (WiFi.getMode() != WIFI_AP_STA) {
+              WiFi.mode(WIFI_AP_STA);
+            }
+            Serial.printf("[WiFi] Attempting background reconnection to saved "
+                          "Wi-Fi '%s' (profile %d)...\n",
+                          s_wifiProfiles[firstSlot].ssid.c_str(),
+                          firstSlot + 1);
+            WiFi.disconnect(false);
+            WiFi.begin(s_wifiProfiles[firstSlot].ssid.c_str(),
+                       s_wifiProfiles[firstSlot].pass.c_str());
+          }
         }
+      }
     }
+    s_server.handleClient();
+    return;
+  }
+
+  if (s_netState == NET_STATE_CONNECTING) {
+    s_server.handleClient();
+    if (WiFi.status() == WL_CONNECTED) {
+      s_netState = NET_STATE_CONNECTED;
+      Serial.printf("[WiFi] Connected to '%s'! IP: %s, RSSI: %d dBm\n",
+                    WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(),
+                    WiFi.RSSI());
+    } else if (now - s_connectStartMs >= WIFI_CONNECT_TIMEOUT_MS) {
+      // Find next saved profile that hasn't been tried yet
+      int nextSlot = -1;
+      for (int p = s_activeProfileIdx + 1; p < MAX_WIFI_PROFILES; p++) {
+        if (s_wifiProfiles[p].ssid.length() > 0) {
+          nextSlot = p;
+          break;
+        }
+      }
+      if (nextSlot >= 0) {
+        s_activeProfileIdx = nextSlot;
+        s_ssid = s_wifiProfiles[nextSlot].ssid;
+        s_pass = s_wifiProfiles[nextSlot].pass;
+        s_connectStartMs = now;
+        Serial.printf(
+            "[WiFi] Timeout on previous profile. Trying profile %d ('%s')...\n",
+            nextSlot + 1, s_ssid.c_str());
+        WiFi.disconnect(true);
+        WiFi.begin(s_ssid.c_str(), s_pass.c_str());
+      } else {
+        Serial.printf("[WiFi] Connection timeout on all saved profiles. "
+                      "Starting AP mode.\n");
+        Network_StartAP();
+      }
+    }
+    return;
+  }
+
+  if (s_netState == NET_STATE_CONNECTED) {
+    s_server.handleClient();
+
+    if (now - s_lastWifiCheckMs >= 10000) {
+      s_lastWifiCheckMs = now;
+      if (WiFi.status() != WL_CONNECTED) {
+        Serial.printf("[WiFi] Connection lost. Reconnecting...\n");
+        Network_ConnectStation();
+      }
+    }
+  }
 }
 
-NetworkState Network_GetState() {
-    return s_netState;
-}
+NetworkState Network_GetState() { return s_netState; }
 
 bool Network_IsConnected() {
-    return (s_netState == NET_STATE_CONNECTED && WiFi.status() == WL_CONNECTED);
+  return (s_netState == NET_STATE_CONNECTED && WiFi.status() == WL_CONNECTED);
 }
 
-bool Network_IsAPActive() {
-    return (s_netState == NET_STATE_AP_PORTAL);
-}
+bool Network_IsAPActive() { return (s_netState == NET_STATE_AP_PORTAL); }
 
 String Network_GetSSID() {
-    return (s_netState == NET_STATE_CONNECTED) ? WiFi.SSID() : s_ssid;
+  return (s_netState == NET_STATE_CONNECTED) ? WiFi.SSID() : s_ssid;
 }
 
 String Network_GetLocalIP() {
-    return (WiFi.status() == WL_CONNECTED) ? WiFi.localIP().toString() : "";
+  return (WiFi.status() == WL_CONNECTED) ? WiFi.localIP().toString() : "";
 }
 
-String Network_GetAPIP() {
-    return s_apIP.toString();
-}
+String Network_GetAPIP() { return s_apIP.toString(); }
 
-String Network_GetAPSSID() {
-    return s_apSSID;
-}
+String Network_GetAPSSID() { return s_apSSID; }
 
 int8_t Network_GetRSSI() {
-    return (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : 0;
+  return (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : 0;
 }
 
 bool Network_HasSavedCredentials() {
-    for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
-        if (s_wifiProfiles[i].ssid.length() > 0) return true;
-    }
-    return false;
+  for (int i = 0; i < MAX_WIFI_PROFILES; i++) {
+    if (s_wifiProfiles[i].ssid.length() > 0)
+      return true;
+  }
+  return false;
 }
 
-void Network_SaveProfile(uint8_t slot, const String& ssid, const String& pass) {
-    if (slot >= MAX_WIFI_PROFILES) return;
-    s_wifiProfiles[slot].ssid = ssid;
-    s_wifiProfiles[slot].pass = pass;
-    s_prefs.putString(s_wifiSsidKeys[slot], ssid);
-    s_prefs.putString(s_wifiPassKeys[slot], pass);
-    if (slot == 0) {
-        s_ssid = ssid;
-        s_pass = pass;
-    }
-    Serial.printf("[WiFi] Saved profile %u: '%s'\n", (unsigned)(slot + 1), ssid.c_str());
+void Network_SaveProfile(uint8_t slot, const String &ssid, const String &pass) {
+  if (slot >= MAX_WIFI_PROFILES)
+    return;
+  s_wifiProfiles[slot].ssid = ssid;
+  s_wifiProfiles[slot].pass = pass;
+  s_prefs.putString(s_wifiSsidKeys[slot], ssid);
+  s_prefs.putString(s_wifiPassKeys[slot], pass);
+  if (slot == 0) {
+    s_ssid = ssid;
+    s_pass = pass;
+  }
+  Serial.printf("[WiFi] Saved profile %u: '%s'\n", (unsigned)(slot + 1),
+                ssid.c_str());
 }
 
 void Network_DeleteProfile(uint8_t slot) {
-    if (slot >= MAX_WIFI_PROFILES) return;
-    s_wifiProfiles[slot].ssid = "";
-    s_wifiProfiles[slot].pass = "";
-    s_prefs.remove(s_wifiSsidKeys[slot]);
-    s_prefs.remove(s_wifiPassKeys[slot]);
-    if (slot == 0) {
-        s_ssid = "";
-        s_pass = "";
-    }
-    Serial.printf("[WiFi] Deleted profile %u from NVS\n", (unsigned)(slot + 1));
+  if (slot >= MAX_WIFI_PROFILES)
+    return;
+  s_wifiProfiles[slot].ssid = "";
+  s_wifiProfiles[slot].pass = "";
+  s_prefs.remove(s_wifiSsidKeys[slot]);
+  s_prefs.remove(s_wifiPassKeys[slot]);
+  if (slot == 0) {
+    s_ssid = "";
+    s_pass = "";
+  }
+  Serial.printf("[WiFi] Deleted profile %u from NVS\n", (unsigned)(slot + 1));
 }
 
 String Network_GetProfileSSID(uint8_t slot) {
-    if (slot >= MAX_WIFI_PROFILES) return "";
-    return s_wifiProfiles[slot].ssid;
+  if (slot >= MAX_WIFI_PROFILES)
+    return "";
+  return s_wifiProfiles[slot].ssid;
 }
 
 bool Network_HasProfilePass(uint8_t slot) {
-    if (slot >= MAX_WIFI_PROFILES) return false;
-    return (s_wifiProfiles[slot].pass.length() > 0);
+  if (slot >= MAX_WIFI_PROFILES)
+    return false;
+  return (s_wifiProfiles[slot].pass.length() > 0);
 }
 
-void Network_SaveCredentials(const String& ssid, const String& pass) {
-    Network_SaveProfile(0, ssid, pass);
+void Network_SaveCredentials(const String &ssid, const String &pass) {
+  Network_SaveProfile(0, ssid, pass);
 }
 
 void Network_ForgetCredentials() {
-    for (uint8_t i = 0; i < MAX_WIFI_PROFILES; i++) {
-        Network_DeleteProfile(i);
-    }
-    Serial.printf("[WiFi] Cleared all Wi-Fi credentials from NVS\n");
-    Network_StartAP();
+  for (uint8_t i = 0; i < MAX_WIFI_PROFILES; i++) {
+    Network_DeleteProfile(i);
+  }
+  Serial.printf("[WiFi] Cleared all Wi-Fi credentials from NVS\n");
+  Network_StartAP();
 }
 
-uint16_t Network_GetRotateDelaySec() {
-    return s_rotateSec;
-}
+uint16_t Network_GetRotateDelaySec() { return s_rotateSec; }
 
-bool Network_GetAutoRotate() {
-    return s_autoRotate;
-}
+bool Network_GetAutoRotate() { return s_autoRotate; }
 
 void Network_SetAutoRotate(bool en) {
-    if (s_autoRotate != en) {
-        s_autoRotate = en;
-        s_prefs.putBool(PREF_KEY_AUTO_ROTATE, s_autoRotate);
-        Serial.printf("[Settings] Carousel auto-rotate set to %s\n", s_autoRotate ? "ENABLED" : "DISABLED");
-    }
+  if (s_autoRotate != en) {
+    s_autoRotate = en;
+    s_prefs.putBool(PREF_KEY_AUTO_ROTATE, s_autoRotate);
+    Serial.printf("[Settings] Carousel auto-rotate set to %s\n",
+                  s_autoRotate ? "ENABLED" : "DISABLED");
+  }
 }
 
-uint8_t Network_GetActiveApp() {
-    return s_activeApp;
-}
+uint8_t Network_GetActiveApp() { return s_activeApp; }
 
 void Network_SetActiveApp(uint8_t app) {
-    if (app < 9) {
-        s_activeApp = app;
-        s_prefs.putUChar(PREF_KEY_ACTIVE_APP, s_activeApp);
-        Serial.printf("[Settings] Active screen set to %u\n", s_activeApp);
-    }
+  if (app < 9) {
+    s_activeApp = app;
+    s_prefs.putUChar(PREF_KEY_ACTIVE_APP, s_activeApp);
+    Serial.printf("[Settings] Active screen set to %u\n", s_activeApp);
+  }
 }
 
 void Network_SetRotateDelaySec(uint16_t sec) {
-    s_rotateSec = constrain(sec, (uint16_t)MIN_ROTATE_SEC, (uint16_t)MAX_ROTATE_SEC);
-    s_prefs.putUInt(PREF_KEY_ROTATE_SEC, s_rotateSec);
-    Serial.printf("[Settings] Carousel rotate delay set to %u sec\n", s_rotateSec);
+  s_rotateSec =
+      constrain(sec, (uint16_t)MIN_ROTATE_SEC, (uint16_t)MAX_ROTATE_SEC);
+  s_prefs.putUInt(PREF_KEY_ROTATE_SEC, s_rotateSec);
+  Serial.printf("[Settings] Carousel rotate delay set to %u sec\n",
+                s_rotateSec);
 }
 
-String Network_GetYouTubeChannel() {
-    return s_ytChannel;
+String Network_GetYouTubeChannel() { return s_ytChannel; }
+
+String Network_GetYouTubeApiKey() { return s_ytApiKey; }
+
+void Network_SaveYouTubeConfig(const String &channel, const String &apiKey) {
+  s_ytChannel = channel;
+  s_ytApiKey = apiKey;
+  s_prefs.putString(PREF_KEY_YT_CHANNEL, s_ytChannel);
+  s_prefs.putString(PREF_KEY_YT_APIKEY, s_ytApiKey);
+  YouTube_SetCredentials(s_ytChannel, s_ytApiKey);
 }
 
-String Network_GetYouTubeApiKey() {
-    return s_ytApiKey;
-}
-
-void Network_SaveYouTubeConfig(const String& channel, const String& apiKey) {
-    s_ytChannel = channel;
-    s_ytApiKey = apiKey;
-    s_prefs.putString(PREF_KEY_YT_CHANNEL, s_ytChannel);
-    s_prefs.putString(PREF_KEY_YT_APIKEY, s_ytApiKey);
-    YouTube_SetCredentials(s_ytChannel, s_ytApiKey);
-}
-
-bool Network_GetAutoBrightness() {
-    return s_autoBri;
-}
+bool Network_GetAutoBrightness() { return s_autoBri; }
 
 void Network_SetAutoBrightness(bool en) {
-    s_autoBri = en;
-    s_prefs.putBool(PREF_KEY_AUTO_BRI, s_autoBri);
+  s_autoBri = en;
+  s_prefs.putBool(PREF_KEY_AUTO_BRI, s_autoBri);
 }
 
-bool Network_GetNightMode() {
-    return s_nightMode;
-}
+bool Network_GetNightMode() { return s_nightMode; }
 
 void Network_SetNightMode(bool en) {
-    s_nightMode = en;
-    s_prefs.putBool(PREF_KEY_NIGHT_MODE, s_nightMode);
+  s_nightMode = en;
+  s_prefs.putBool(PREF_KEY_NIGHT_MODE, s_nightMode);
 }
 
-uint8_t Network_GetNightStartHour() {
-    return s_nightStart;
-}
+uint8_t Network_GetNightStartHour() { return s_nightStart; }
 
-uint8_t Network_GetNightEndHour() {
-    return s_nightEnd;
-}
+uint8_t Network_GetNightEndHour() { return s_nightEnd; }
 
 void Network_SetNightSchedule(uint8_t startHour, uint8_t endHour) {
-    s_nightStart = startHour;
-    s_nightEnd = endHour;
-    s_prefs.putUChar(PREF_KEY_NIGHT_START, s_nightStart);
-    s_prefs.putUChar(PREF_KEY_NIGHT_END, s_nightEnd);
+  s_nightStart = startHour;
+  s_nightEnd = endHour;
+  s_prefs.putUChar(PREF_KEY_NIGHT_START, s_nightStart);
+  s_prefs.putUChar(PREF_KEY_NIGHT_END, s_nightEnd);
 }
 
-uint8_t Network_GetDayBrightness() {
-    return s_dayBri;
-}
+uint8_t Network_GetDayBrightness() { return s_dayBri; }
 
 void Network_SetDayBrightness(uint8_t bri) {
-    s_dayBri = constrain(bri, (uint8_t)5, (uint8_t)100);
-    s_prefs.putUChar(PREF_KEY_DAY_BRI, s_dayBri);
+  uint8_t val = constrain(bri, (uint8_t)5, (uint8_t)100);
+  if (val == s_dayBri)
+    return;
+  s_dayBri = val;
+  s_prefsBriDirty = true;
+  s_prefsBriSaveMs = millis() + 500;
 }
 
-uint8_t Network_GetNightBrightness() {
-    return s_nightBri;
-}
+uint8_t Network_GetNightBrightness() { return s_nightBri; }
 
 void Network_SetNightBrightness(uint8_t bri) {
-    s_nightBri = constrain(bri, (uint8_t)1, (uint8_t)25);
-    s_prefs.putUChar(PREF_KEY_NIGHT_BRI, s_nightBri);
+  uint8_t val = constrain(bri, (uint8_t)1, (uint8_t)25);
+  if (val == s_nightBri)
+    return;
+  s_nightBri = val;
+  s_prefsBriDirty = true;
+  s_prefsBriSaveMs = millis() + 500;
 }
 
-float Network_GetWeatherLat() {
-    return s_wLat;
+float Network_GetWeatherLat() { return s_wLat; }
+
+float Network_GetWeatherLon() { return s_wLon; }
+
+String Network_GetWeatherCity() { return s_wCity; }
+
+void Network_SetWeatherLocation(float lat, float lon, const String &city) {
+  s_wLat = lat;
+  s_wLon = lon;
+  s_wCity = city;
+  s_prefs.putFloat(PREF_KEY_WEATHER_LAT, s_wLat);
+  s_prefs.putFloat(PREF_KEY_WEATHER_LON, s_wLon);
+  s_prefs.putString(PREF_KEY_WEATHER_CITY, s_wCity);
+  Weather_SetConfig(s_wLat, s_wLon, s_wCity);
 }
 
-float Network_GetWeatherLon() {
-    return s_wLon;
-}
+String Network_GetCryptoSymbol() { return s_cryptoSym; }
 
-String Network_GetWeatherCity() {
-    return s_wCity;
-}
-
-void Network_SetWeatherLocation(float lat, float lon, const String& city) {
-    s_wLat = lat;
-    s_wLon = lon;
-    s_wCity = city;
-    s_prefs.putFloat(PREF_KEY_WEATHER_LAT, s_wLat);
-    s_prefs.putFloat(PREF_KEY_WEATHER_LON, s_wLon);
-    s_prefs.putString(PREF_KEY_WEATHER_CITY, s_wCity);
-    Weather_SetConfig(s_wLat, s_wLon, s_wCity);
-}
-
-String Network_GetCryptoSymbol() {
-    return s_cryptoSym;
-}
-
-void Network_SetCryptoSymbol(const String& sym) {
-    s_cryptoSym = sym;
-    s_prefs.putString(PREF_KEY_CRYPTO_SYM, s_cryptoSym);
-    Crypto_SetSymbol(s_cryptoSym);
+void Network_SetCryptoSymbol(const String &sym) {
+  s_cryptoSym = sym;
+  s_prefs.putString(PREF_KEY_CRYPTO_SYM, s_cryptoSym);
+  Crypto_SetSymbol(s_cryptoSym);
 }
 
 uint8_t Network_GetClockMode() { return s_clockMode; }
 void Network_SetClockMode(uint8_t mode) {
-    s_clockMode = (mode <= 2) ? mode : 0;
-    s_prefs.putUChar(PREF_KEY_CLOCK_MODE, s_clockMode);
+  s_clockMode = (mode <= 2) ? mode : 0;
+  s_prefs.putUChar(PREF_KEY_CLOCK_MODE, s_clockMode);
 }
 
 bool Network_GetWeekdayBar() { return s_weekdayBar; }
 void Network_SetWeekdayBar(bool en) {
-    s_weekdayBar = en;
-    s_prefs.putBool(PREF_KEY_WEEKDAY_BAR, s_weekdayBar);
+  s_weekdayBar = en;
+  s_prefs.putBool(PREF_KEY_WEEKDAY_BAR, s_weekdayBar);
 }
 
 bool Network_GetWeekdayStartMonday() { return s_weekdayStartMon; }
 void Network_SetWeekdayStartMonday(bool startMonday) {
-    s_weekdayStartMon = startMonday;
-    s_prefs.putBool(PREF_KEY_WD_START_MON, s_weekdayStartMon);
+  s_weekdayStartMon = startMonday;
+  s_prefs.putBool(PREF_KEY_WD_START_MON, s_weekdayStartMon);
 }
 
 uint8_t Network_GetWeekdayActiveColorIndex() { return s_weekdayActiveColIdx; }
 void Network_SetWeekdayActiveColorIndex(uint8_t idx) {
-    s_weekdayActiveColIdx = (idx < s_numWdActiveColors) ? idx : 0;
-    s_prefs.putUChar(PREF_KEY_WD_ACTIVE_COL, s_weekdayActiveColIdx);
+  s_weekdayActiveColIdx = (idx < s_numWdActiveColors) ? idx : 0;
+  s_prefs.putUChar(PREF_KEY_WD_ACTIVE_COL, s_weekdayActiveColIdx);
 }
 uint16_t Network_GetWeekdayActiveColor() {
-    return s_wdActiveColors[(s_weekdayActiveColIdx < s_numWdActiveColors) ? s_weekdayActiveColIdx : 0];
+  return s_wdActiveColors[(s_weekdayActiveColIdx < s_numWdActiveColors)
+                              ? s_weekdayActiveColIdx
+                              : 0];
 }
 
 uint8_t Network_GetWeekdayInactiveColorIndex() { return s_weekdayInactColIdx; }
 void Network_SetWeekdayInactiveColorIndex(uint8_t idx) {
-    s_weekdayInactColIdx = (idx < s_numWdInactiveColors) ? idx : 0;
-    s_prefs.putUChar(PREF_KEY_WD_INACT_COL, s_weekdayInactColIdx);
+  s_weekdayInactColIdx = (idx < s_numWdInactiveColors) ? idx : 0;
+  s_prefs.putUChar(PREF_KEY_WD_INACT_COL, s_weekdayInactColIdx);
 }
 uint16_t Network_GetWeekdayInactiveColor() {
-    if (s_weekdayInactColIdx == 0) {
-        // Slightly dimmer than active day color (~65% intensity)
-        uint16_t ac = Network_GetWeekdayActiveColor();
-        uint8_t r = (ac >> 11) & 0x1F;
-        uint8_t g = (ac >> 5) & 0x3F;
-        uint8_t b = ac & 0x1F;
-        r = (uint8_t)(((uint16_t)r * 170) >> 8);
-        g = (uint8_t)(((uint16_t)g * 170) >> 8);
-        b = (uint8_t)(((uint16_t)b * 170) >> 8);
-        return (r << 11) | (g << 5) | b;
-    }
-    return s_wdInactiveColors[(s_weekdayInactColIdx < s_numWdInactiveColors) ? s_weekdayInactColIdx : 0];
+  if (s_weekdayInactColIdx == 0) {
+    // Slightly dimmer than active day color (~65% intensity)
+    uint16_t ac = Network_GetWeekdayActiveColor();
+    uint8_t r = (ac >> 11) & 0x1F;
+    uint8_t g = (ac >> 5) & 0x3F;
+    uint8_t b = ac & 0x1F;
+    r = (uint8_t)(((uint16_t)r * 170) >> 8);
+    g = (uint8_t)(((uint16_t)g * 170) >> 8);
+    b = (uint8_t)(((uint16_t)b * 170) >> 8);
+    return (r << 11) | (g << 5) | b;
+  }
+  return s_wdInactiveColors[(s_weekdayInactColIdx < s_numWdInactiveColors)
+                                ? s_weekdayInactColIdx
+                                : 0];
 }
 
 uint8_t Network_GetWeekdayWeekendColorIndex() { return s_weekdayWeekendColIdx; }
 void Network_SetWeekdayWeekendColorIndex(uint8_t idx) {
-    s_weekdayWeekendColIdx = (idx < s_numWdWeekendColors) ? idx : 0;
-    s_prefs.putUChar(PREF_KEY_WD_WKND_COL, s_weekdayWeekendColIdx);
+  s_weekdayWeekendColIdx = (idx < s_numWdWeekendColors) ? idx : 0;
+  s_prefs.putUChar(PREF_KEY_WD_WKND_COL, s_weekdayWeekendColIdx);
 }
 uint16_t Network_GetWeekdayWeekendColor() {
-    if (s_weekdayWeekendColIdx == 0) {
-        return 0; // 0 indicates "Same as Active Weekday" (no dedicated weekend accent)
-    }
-    return s_wdWeekendColors[(s_weekdayWeekendColIdx < s_numWdWeekendColors) ? s_weekdayWeekendColIdx : 0];
+  if (s_weekdayWeekendColIdx == 0) {
+    return 0; // 0 indicates "Same as Active Weekday" (no dedicated weekend
+              // accent)
+  }
+  return s_wdWeekendColors[(s_weekdayWeekendColIdx < s_numWdWeekendColors)
+                               ? s_weekdayWeekendColIdx
+                               : 0];
 }
 uint16_t Network_GetWeekdayInactiveWeekendColor() {
-    return Network_GetWeekdayWeekendColor();
+  return Network_GetWeekdayWeekendColor();
 }
 
 String Network_GetPortalLanguage() { return s_portalLang; }
-void Network_SetPortalLanguage(const String& lang) {
-    s_portalLang = (lang == "sk") ? "sk" : "en";
-    s_prefs.putString(PREF_KEY_PORTAL_LANG, s_portalLang);
+void Network_SetPortalLanguage(const String &lang) {
+  s_portalLang = (lang == "sk") ? "sk" : "en";
+  s_prefs.putString(PREF_KEY_PORTAL_LANG, s_portalLang);
 }
 
 uint8_t Network_GetDateFormat() { return s_dateFormat; }
 void Network_SetDateFormat(uint8_t fmt) {
-    s_dateFormat = (fmt <= 3) ? fmt : 0;
-    s_prefs.putUChar(PREF_KEY_DATE_FORMAT, s_dateFormat);
+  s_dateFormat = (fmt <= 3) ? fmt : 0;
+  s_prefs.putUChar(PREF_KEY_DATE_FORMAT, s_dateFormat);
 }
 
 uint8_t Network_GetClockIcon() { return s_clockIcon; }
 void Network_SetClockIcon(uint8_t icon) {
-    s_clockIcon = (icon <= 3) ? icon : 0;
-    s_prefs.putUChar(PREF_KEY_CLOCK_ICON, s_clockIcon);
+  s_clockIcon = (icon <= 3) ? icon : 0;
+  s_prefs.putUChar(PREF_KEY_CLOCK_ICON, s_clockIcon);
 }
 
 uint8_t Network_GetTextAlign() { return s_textAlign; }
 void Network_SetTextAlign(uint8_t align) {
-    s_textAlign = (align <= 1) ? align : 0;
-    s_prefs.putUChar(PREF_KEY_TEXT_ALIGN, s_textAlign);
+  s_textAlign = (align <= 1) ? align : 0;
+  s_prefs.putUChar(PREF_KEY_TEXT_ALIGN, s_textAlign);
 }
 
 uint16_t Network_GetCarouselMask() { return s_carouselMask; }
 void Network_SetCarouselMask(uint16_t mask) {
-    s_carouselMask = (mask == 0) ? 0x01 : (mask & 0x1FF);
-    s_prefs.putUShort(PREF_KEY_CAROUSEL_MASK, s_carouselMask);
+  s_carouselMask = (mask == 0) ? 0x01 : (mask & 0x1FF);
+  s_prefs.putUShort(PREF_KEY_CAROUSEL_MASK, s_carouselMask);
 }
 
 bool Network_IsAppInCarousel(uint8_t appIndex) {
-    if (appIndex >= 9) return false;
-    return (s_carouselMask & (1 << appIndex)) != 0;
+  if (appIndex >= 9)
+    return false;
+  return (s_carouselMask & (1 << appIndex)) != 0;
 }
 
-uint8_t Network_GetTransitionFx() {
-    return s_transitionFx;
-}
+uint8_t Network_GetTransitionFx() { return s_transitionFx; }
 
 void Network_SetTransitionFx(uint8_t fx) {
-    s_transitionFx = (fx <= 7) ? fx : DEFAULT_TRANSITION_FX;
-    s_prefs.putUChar(PREF_KEY_TRANSITION_FX, s_transitionFx);
-    Serial.printf("[Settings] Transition effect set to %u\n", s_transitionFx);
+  s_transitionFx = (fx <= 7) ? fx : DEFAULT_TRANSITION_FX;
+  s_prefs.putUChar(PREF_KEY_TRANSITION_FX, s_transitionFx);
+  Serial.printf("[Settings] Transition effect set to %u\n", s_transitionFx);
 }
 
 bool Network_GetShowSeconds() { return s_showSeconds; }
 void Network_SetShowSeconds(bool en) {
-    s_showSeconds = en;
-    s_prefs.putBool(PREF_KEY_SHOW_SECONDS, s_showSeconds);
+  s_showSeconds = en;
+  s_prefs.putBool(PREF_KEY_SHOW_SECONDS, s_showSeconds);
 }
 
-const uint8_t* Network_GetCarouselOrder() {
-    return s_carouselOrder;
-}
+const uint8_t *Network_GetCarouselOrder() { return s_carouselOrder; }
 
 String Network_GetCarouselOrderString() {
-    String res = "";
-    for (int i = 0; i < 9; i++) {
-        if (i > 0) res += ",";
-        res += String(s_carouselOrder[i]);
-    }
-    return res;
+  String res = "";
+  for (int i = 0; i < 9; i++) {
+    if (i > 0)
+      res += ",";
+    res += String(s_carouselOrder[i]);
+  }
+  return res;
 }
 
-void Network_SetCarouselOrderString(const String& str) {
-    int idx = 0;
-    int start = 0;
-    bool seen[9] = {false};
-    uint8_t newOrder[9];
-    
-    while (idx < 9 && start < (int)str.length()) {
-        int comma = str.indexOf(',', start);
-        String token = (comma == -1) ? str.substring(start) : str.substring(start, comma);
-        token.trim();
-        int val = token.toInt();
-        if (val >= 0 && val < 9 && !seen[val]) {
-            newOrder[idx++] = (uint8_t)val;
-            seen[val] = true;
-        }
-        if (comma == -1) break;
-        start = comma + 1;
+void Network_SetCarouselOrderString(const String &str) {
+  int idx = 0;
+  int start = 0;
+  bool seen[9] = {false};
+  uint8_t newOrder[9];
+
+  while (idx < 9 && start < (int)str.length()) {
+    int comma = str.indexOf(',', start);
+    String token =
+        (comma == -1) ? str.substring(start) : str.substring(start, comma);
+    token.trim();
+    int val = token.toInt();
+    if (val >= 0 && val < 9 && !seen[val]) {
+      newOrder[idx++] = (uint8_t)val;
+      seen[val] = true;
     }
-    for (int i = 0; i < 9; i++) {
-        if (!seen[i] && idx < 9) {
-            newOrder[idx++] = (uint8_t)i;
-            seen[i] = true;
-        }
+    if (comma == -1)
+      break;
+    start = comma + 1;
+  }
+  for (int i = 0; i < 9; i++) {
+    if (!seen[i] && idx < 9) {
+      newOrder[idx++] = (uint8_t)i;
+      seen[i] = true;
     }
-    for (int i = 0; i < 9; i++) {
-        s_carouselOrder[i] = newOrder[i];
-    }
-    s_prefs.putString(PREF_KEY_CAROUSEL_ORDER, Network_GetCarouselOrderString());
+  }
+  for (int i = 0; i < 9; i++) {
+    s_carouselOrder[i] = newOrder[i];
+  }
+  s_prefs.putString(PREF_KEY_CAROUSEL_ORDER, Network_GetCarouselOrderString());
 }
 
-uint8_t Network_GetBatteryMode() {
-    return s_batteryMode;
-}
+uint8_t Network_GetBatteryMode() { return s_batteryMode; }
 
 void Network_SetBatteryMode(uint8_t mode) {
-    s_batteryMode = (mode <= 2) ? mode : 2;
-    s_prefs.putUChar(PREF_KEY_BATTERY_MODE, s_batteryMode);
+  s_batteryMode = (mode <= 2) ? mode : 2;
+  s_prefs.putUChar(PREF_KEY_BATTERY_MODE, s_batteryMode);
 }
 
 // Home Assistant & MQTT Getters & Setters
 bool Network_GetMqttEnabled() { return s_mqttEn; }
 void Network_SetMqttEnabled(bool en) {
-    s_mqttEn = en;
-    s_prefs.putBool(PREF_KEY_MQTT_ENABLED, s_mqttEn);
-    MqttService_SetEnabled(en);
+  s_mqttEn = en;
+  s_prefs.putBool(PREF_KEY_MQTT_ENABLED, s_mqttEn);
+  MqttService_SetEnabled(en);
 }
 
 String Network_GetMqttServer() { return s_mqttServer; }
-void Network_SetMqttServer(const String& srv) {
-    s_mqttServer = srv;
-    s_prefs.putString(PREF_KEY_MQTT_SERVER, s_mqttServer);
-    MqttService_SetServer(srv);
+void Network_SetMqttServer(const String &srv) {
+  s_mqttServer = srv;
+  s_prefs.putString(PREF_KEY_MQTT_SERVER, s_mqttServer);
+  MqttService_SetServer(srv);
 }
 
 uint16_t Network_GetMqttPort() { return s_mqttPort; }
 void Network_SetMqttPort(uint16_t port) {
-    s_mqttPort = port;
-    s_prefs.putUShort(PREF_KEY_MQTT_PORT, s_mqttPort);
-    MqttService_SetPort(port);
+  s_mqttPort = port;
+  s_prefs.putUShort(PREF_KEY_MQTT_PORT, s_mqttPort);
+  MqttService_SetPort(port);
 }
 
 String Network_GetMqttUser() { return s_mqttUser; }
-void Network_SetMqttUser(const String& user) {
-    s_mqttUser = user;
-    s_prefs.putString(PREF_KEY_MQTT_USER, s_mqttUser);
-    MqttService_SetUser(user);
+void Network_SetMqttUser(const String &user) {
+  s_mqttUser = user;
+  s_prefs.putString(PREF_KEY_MQTT_USER, s_mqttUser);
+  MqttService_SetUser(user);
 }
 
 String Network_GetMqttPass() { return s_mqttPass; }
-void Network_SetMqttPass(const String& pass) {
-    s_mqttPass = pass;
-    s_prefs.putString(PREF_KEY_MQTT_PASS, s_mqttPass);
-    MqttService_SetPass(pass);
+void Network_SetMqttPass(const String &pass) {
+  s_mqttPass = pass;
+  s_prefs.putString(PREF_KEY_MQTT_PASS, s_mqttPass);
+  MqttService_SetPass(pass);
 }
 
 String Network_GetMqttPrefix() { return s_mqttPrefix; }
-void Network_SetMqttPrefix(const String& prefix) {
-    s_mqttPrefix = prefix;
-    s_prefs.putString(PREF_KEY_MQTT_PREFIX, s_mqttPrefix);
-    MqttService_SetPrefix(prefix);
+void Network_SetMqttPrefix(const String &prefix) {
+  s_mqttPrefix = prefix;
+  s_prefs.putString(PREF_KEY_MQTT_PREFIX, s_mqttPrefix);
+  MqttService_SetPrefix(prefix);
 }

@@ -115,6 +115,12 @@ static void publishAllDiscovery() {
         publishDiscoveryEntity("select", "screen", "Select Screen", payload.c_str());
     }
 
+    // 13. Night Mode Switch
+    {
+        String payload = "{\"name\":\"Night Mode\",\"cmd_t\":\"" + s_prefix + "/switch/night_mode/set\",\"stat_t\":\"" + s_prefix + "/switch/night_mode/state\",\"uniq_id\":\"" + s_nodeId + "_night_mode\"" + devCommon + "}";
+        publishDiscoveryEntity("switch", "night_mode", "Night Mode", payload.c_str());
+    }
+
     s_discoveryPublished = true;
     Serial.println("[MQTT] Auto-Discovery payloads published successfully.");
 }
@@ -201,6 +207,14 @@ static void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     if (topicStr == s_prefix + "/switch/auto_rotate/set") {
         bool en = msgStr.equalsIgnoreCase("ON") || msgStr == "1";
         Network_SetAutoRotate(en);
+        MqttService_PublishState();
+        return;
+    }
+
+    // 6b. Night Mode
+    if (topicStr == s_prefix + "/switch/night_mode/set") {
+        bool en = msgStr.equalsIgnoreCase("ON") || msgStr == "1";
+        Network_SetNightMode(en);
         MqttService_PublishState();
         return;
     }
@@ -300,6 +314,7 @@ void MqttService_Update() {
                 s_mqttClient.subscribe((s_prefix + "/light/brightness/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/switch/auto_brightness/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/switch/auto_rotate/set").c_str());
+                s_mqttClient.subscribe((s_prefix + "/switch/night_mode/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/select/screen/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/button/buzzer/set").c_str());
                 s_mqttClient.subscribe((s_prefix + "/button/reboot/set").c_str());
@@ -342,6 +357,8 @@ void MqttService_PublishState() {
                          Network_GetAutoBrightness() ? "ON" : "OFF", true);
     s_mqttClient.publish((s_prefix + "/switch/auto_rotate/state").c_str(),
                          Network_GetAutoRotate() ? "ON" : "OFF", true);
+    s_mqttClient.publish((s_prefix + "/switch/night_mode/state").c_str(),
+                         Network_GetNightMode() ? "ON" : "OFF", true);
 
     // Active Screen
     uint8_t app = Network_GetActiveApp();

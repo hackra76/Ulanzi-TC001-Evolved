@@ -33,15 +33,18 @@ int Airspace_GetFlightCount() {
     return s_flightCount;
 }
 
-void Airspace_Update() {
+void Airspace_PollUI() {
     uint32_t now = millis();
-
     // Cycle between detected overhead flights every 4 seconds
     if (s_flightCount > 0 && (now - s_lastCycleMs >= 4000)) {
         s_lastCycleMs = now;
         s_currentFlightIndex = (s_currentFlightIndex + 1) % s_flightCount;
         snprintf(s_displayCallsign, sizeof(s_displayCallsign), "%s", s_flights[s_currentFlightIndex]);
     }
+}
+
+void Airspace_Fetch() {
+    uint32_t now = millis();
 
     if (WiFi.status() != WL_CONNECTED) {
         return;
@@ -109,4 +112,9 @@ void Airspace_Update() {
         }
         https.end();
     }
+}
+
+void Airspace_Update() {
+    Airspace_PollUI();
+    Airspace_Fetch();
 }

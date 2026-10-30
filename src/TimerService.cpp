@@ -56,6 +56,7 @@ void Timer_Toggle() {
 }
 
 void Timer_Reset() {
+    Buzzer_Stop();
     s_state = TIMER_STATE_STOPPED;
     s_accumulatedMs = 0;
     s_startMs = 0;
